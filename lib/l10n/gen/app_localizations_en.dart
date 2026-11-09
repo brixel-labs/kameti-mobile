@@ -258,4 +258,86 @@ class AppLocalizationsEn extends AppLocalizations {
   String dsMoreCount(int count) {
     return '$count more';
   }
+
+  @override
+  String get errNetwork => 'You\'re offline. Connect and try again.';
+
+  @override
+  String get errSession => 'Your session has ended. Please sign in again.';
+
+  @override
+  String get errUnknown => 'Something went wrong. Please try again.';
+
+  @override
+  String get errNotOwner => 'Only the person running this kameti can do that.';
+
+  @override
+  String get errKametiNotDraft =>
+      'This can only be changed before the kameti starts.';
+
+  @override
+  String get errKametiNotActive => 'This kameti hasn\'t started yet.';
+
+  @override
+  String get errKametiNotReady =>
+      'Fill every slot and payout month before starting.';
+
+  @override
+  String get errKametiNameTaken => 'You already have a kameti with this name.';
+
+  @override
+  String get errInvalidName => 'Name must be 3 to 40 characters.';
+
+  @override
+  String get errInvalidAmount => 'Enter an amount above zero.';
+
+  @override
+  String get errInvalidShareAmount => 'Shares must be whole Rs 1,000 steps.';
+
+  @override
+  String get errSharesMustSum =>
+      'The shares must add up exactly to the slot amount.';
+
+  @override
+  String get errTooManySharers => 'A slot can be shared by at most 4 people.';
+
+  @override
+  String get errMemberSlotLimit =>
+      'This person has reached the slot limit for this kameti.';
+
+  @override
+  String get errFutureDate => 'The date can\'t be in the future.';
+
+  @override
+  String get errMonthLocked =>
+      'Months that have been paid out can\'t be moved.';
+
+  @override
+  String get errMemberHasHistory =>
+      'This person has payments, so they can\'t be removed.';
+
+  @override
+  String get errAlreadyMember => 'This person is already in the kameti.';
+
+  @override
+  String get errAlreadyVoided => 'This entry was already voided.';
+
+  @override
+  String get errVoidReasonRequired => 'Add a reason for voiding.';
+
+  @override
+  String get errEmptyBatch => 'Mark at least one payment.';
+
+  @override
+  String get errPayoutNoteRequired =>
+      'Add a note: the payout differs from the expected amount.';
+
+  @override
+  String get devSignInOwner => 'Dev: sign in as owner';
+
+  @override
+  String get devSignInMember => 'Dev: sign in as member';
+
+  @override
+  String get signOut => 'Sign out';
 }

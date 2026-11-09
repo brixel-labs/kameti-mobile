@@ -501,6 +501,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} more'**
   String dsMoreCount(int count);
+
+  /// No description provided for @errNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Connect and try again.'**
+  String get errNetwork;
+
+  /// No description provided for @errSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has ended. Please sign in again.'**
+  String get errSession;
+
+  /// No description provided for @errUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errUnknown;
+
+  /// No description provided for @errNotOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the person running this kameti can do that.'**
+  String get errNotOwner;
+
+  /// No description provided for @errKametiNotDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'This can only be changed before the kameti starts.'**
+  String get errKametiNotDraft;
+
+  /// No description provided for @errKametiNotActive.
+  ///
+  /// In en, this message translates to:
+  /// **'This kameti hasn\'t started yet.'**
+  String get errKametiNotActive;
+
+  /// No description provided for @errKametiNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill every slot and payout month before starting.'**
+  String get errKametiNotReady;
+
+  /// No description provided for @errKametiNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a kameti with this name.'**
+  String get errKametiNameTaken;
+
+  /// No description provided for @errInvalidName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name must be 3 to 40 characters.'**
+  String get errInvalidName;
+
+  /// No description provided for @errInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above zero.'**
+  String get errInvalidAmount;
+
+  /// No description provided for @errInvalidShareAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares must be whole Rs 1,000 steps.'**
+  String get errInvalidShareAmount;
+
+  /// No description provided for @errSharesMustSum.
+  ///
+  /// In en, this message translates to:
+  /// **'The shares must add up exactly to the slot amount.'**
+  String get errSharesMustSum;
+
+  /// No description provided for @errTooManySharers.
+  ///
+  /// In en, this message translates to:
+  /// **'A slot can be shared by at most 4 people.'**
+  String get errTooManySharers;
+
+  /// No description provided for @errMemberSlotLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'This person has reached the slot limit for this kameti.'**
+  String get errMemberSlotLimit;
+
+  /// No description provided for @errFutureDate.
+  ///
+  /// In en, this message translates to:
+  /// **'The date can\'t be in the future.'**
+  String get errFutureDate;
+
+  /// No description provided for @errMonthLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Months that have been paid out can\'t be moved.'**
+  String get errMonthLocked;
+
+  /// No description provided for @errMemberHasHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'This person has payments, so they can\'t be removed.'**
+  String get errMemberHasHistory;
+
+  /// No description provided for @errAlreadyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'This person is already in the kameti.'**
+  String get errAlreadyMember;
+
+  /// No description provided for @errAlreadyVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'This entry was already voided.'**
+  String get errAlreadyVoided;
+
+  /// No description provided for @errVoidReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reason for voiding.'**
+  String get errVoidReasonRequired;
+
+  /// No description provided for @errEmptyBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark at least one payment.'**
+  String get errEmptyBatch;
+
+  /// No description provided for @errPayoutNoteRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note: the payout differs from the expected amount.'**
+  String get errPayoutNoteRequired;
+
+  /// No description provided for @devSignInOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Dev: sign in as owner'**
+  String get devSignInOwner;
+
+  /// No description provided for @devSignInMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Dev: sign in as member'**
+  String get devSignInMember;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
 }
 
 class _AppLocalizationsDelegate
