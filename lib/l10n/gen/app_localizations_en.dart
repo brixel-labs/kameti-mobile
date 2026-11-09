@@ -33,6 +33,314 @@ class AppLocalizationsEn extends AppLocalizations {
       'Start one for your family, office or friends. Or join one you\'ve been invited to.';
 
   @override
+  String get homeRunningByMe => 'Running by me';
+
+  @override
+  String get homeImAMember => 'I\'m a member';
+
+  @override
+  String get homePast => 'Past';
+
+  @override
+  String get homeNewKameti => 'New kameti';
+
+  @override
+  String get homeSignOut => 'Sign out';
+
+  @override
+  String get homeRoleOwner => 'Owner';
+
+  @override
+  String get homeRoleViewOnly => 'View only';
+
+  @override
+  String homeMonthOf(int current, int total) {
+    return 'Month $current of $total';
+  }
+
+  @override
+  String get homeNotStarted => 'Not started yet';
+
+  @override
+  String get homeStatusCompleted => 'Completed';
+
+  @override
+  String get homeStatusArchived => 'Archived';
+
+  @override
+  String get homeStatusCancelled => 'Cancelled';
+
+  @override
+  String homeThisMonth(String names) {
+    return 'This month: $names';
+  }
+
+  @override
+  String homeYouOwe(String amount) {
+    return 'You owe $amount';
+  }
+
+  @override
+  String get homeAllPaid => 'Paid up';
+
+  @override
+  String homeYourTurn(String month, String amount) {
+    return 'Your turn: $month · $amount';
+  }
+
+  @override
+  String homePaidOfMembers(int paid, int total) {
+    return '$paid of $total paid';
+  }
+
+  @override
+  String homeDueBy(String date) {
+    return 'Due by $date';
+  }
+
+  @override
+  String get detailOfflineBanner =>
+      'You\'re offline. Showing the last saved data.';
+
+  @override
+  String get detailTabOverview => 'Overview';
+
+  @override
+  String get detailTabMembers => 'Members';
+
+  @override
+  String get detailTabSchedule => 'Schedule';
+
+  @override
+  String get detailTabPayments => 'Payments';
+
+  @override
+  String get detailTabNotes => 'Notes';
+
+  @override
+  String detailSubtitle(int months, String amount) {
+    return '$months months · $amount per slot';
+  }
+
+  @override
+  String detailMonthHeader(String month, int index) {
+    return '$month · Month $index';
+  }
+
+  @override
+  String detailToGo(String amount) {
+    return '$amount still to collect';
+  }
+
+  @override
+  String detailPaidCount(int count) {
+    return '$count paid';
+  }
+
+  @override
+  String detailPartialCount(int count) {
+    return '$count partial';
+  }
+
+  @override
+  String detailUnpaidCount(int count) {
+    return '$count unpaid';
+  }
+
+  @override
+  String detailPotPerRecipient(String amount) {
+    return 'Gets $amount';
+  }
+
+  @override
+  String get detailNoRecipients => 'No one is assigned to this month yet';
+
+  @override
+  String get detailWhoOwes => 'Still owes this month';
+
+  @override
+  String detailPaidOfDue(String paid, String due) {
+    return '$paid of $due';
+  }
+
+  @override
+  String get detailEveryonePaid => 'Everyone has paid this month';
+
+  @override
+  String get detailNotStartedTitle => 'Not started yet';
+
+  @override
+  String get detailNotStartedBody =>
+      'Month-by-month collection shows here once the kameti starts.';
+
+  @override
+  String get detailRecordPayment => 'Record payment';
+
+  @override
+  String get detailRecordMany => 'Record many';
+
+  @override
+  String get detailPayOut => 'Pay out';
+
+  @override
+  String get detailStatusOverdue => 'Overdue';
+
+  @override
+  String get detailStatusAdvance => 'Advance';
+
+  @override
+  String get detailStatusUpcoming => 'Upcoming';
+
+  @override
+  String detailMemberDue(String amount) {
+    return '$amount a month';
+  }
+
+  @override
+  String get detailNoMembersTitle => 'No members yet';
+
+  @override
+  String get detailNoMembersBody =>
+      'People you add to this kameti show up here.';
+
+  @override
+  String get detailSelectMonthHint => 'Tap a month to see who gets paid.';
+
+  @override
+  String get detailYou => 'You';
+
+  @override
+  String get detailReceived => 'Received';
+
+  @override
+  String detailPaymentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count payments',
+      one: '1 payment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get detailNoPaymentsTitle => 'No payments yet';
+
+  @override
+  String get detailNoPaymentsBody => 'Payments you record show up here.';
+
+  @override
+  String detailVoided(String reason) {
+    return 'Voided · $reason';
+  }
+
+  @override
+  String get detailVoidedLabel => 'Voided';
+
+  @override
+  String get detailVoidPayment => 'Void payment';
+
+  @override
+  String get detailVoidHint =>
+      'Voiding keeps the entry in the history but stops it counting.';
+
+  @override
+  String get detailVoidReasonLabel => 'Reason';
+
+  @override
+  String get detailVoidReasonHint => 'e.g. entered for the wrong member';
+
+  @override
+  String get detailVoidConfirmTitle => 'Void this payment?';
+
+  @override
+  String detailVoidConfirmBody(String amount, String name) {
+    return '$amount from $name will stop counting toward their dues. This can\'t be undone.';
+  }
+
+  @override
+  String get detailVoidDone => 'Payment voided';
+
+  @override
+  String get detailMethodCash => 'Cash';
+
+  @override
+  String get detailMethodBank => 'Bank';
+
+  @override
+  String get detailMethodOther => 'Other';
+
+  @override
+  String detailPaidBy(String name) {
+    return 'paid by $name';
+  }
+
+  @override
+  String get detailNotesTitle => 'Notes are on the way';
+
+  @override
+  String get detailNotesBody =>
+      'You\'ll be able to keep notes for this kameti in a later update.';
+
+  @override
+  String detailYourDue(String month) {
+    return '$month · Your due';
+  }
+
+  @override
+  String get detailMonthlyDue => 'Monthly due';
+
+  @override
+  String get detailTotalPaid => 'Paid so far';
+
+  @override
+  String get detailYourPayout => 'Your payout';
+
+  @override
+  String detailPayoutMonth(String month, int index) {
+    return '$month · month $index';
+  }
+
+  @override
+  String detailSharedWith(String names) {
+    return 'Shared with $names';
+  }
+
+  @override
+  String get detailFullSlot => 'Full slot';
+
+  @override
+  String get detailPayoutReceived => 'Received';
+
+  @override
+  String get detailNoPayout => 'No payout month assigned yet';
+
+  @override
+  String get detailThisMonthsPot => 'This month\'s pot';
+
+  @override
+  String detailToRecipients(String names) {
+    return 'To $names';
+  }
+
+  @override
+  String detailPaidOfMembers(int paid, int total) {
+    return '$paid of $total members have paid';
+  }
+
+  @override
+  String get detailYourPayments => 'Your payments';
+
+  @override
+  String get detailNoYourPayments => 'No payments recorded yet';
+
+  @override
+  String get detailNotAMemberTitle => 'You\'re not in this kameti';
+
+  @override
+  String get detailNotAMemberBody => 'Ask the person running it to add you.';
+
+  @override
   String get startKameti => 'Start a kameti';
 
   @override

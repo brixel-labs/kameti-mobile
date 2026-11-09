@@ -136,6 +136,504 @@ abstract class AppLocalizations {
   /// **'Start one for your family, office or friends. Or join one you\'ve been invited to.'**
   String get homeEmptyBody;
 
+  /// No description provided for @homeRunningByMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Running by me'**
+  String get homeRunningByMe;
+
+  /// No description provided for @homeImAMember.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m a member'**
+  String get homeImAMember;
+
+  /// No description provided for @homePast.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get homePast;
+
+  /// No description provided for @homeNewKameti.
+  ///
+  /// In en, this message translates to:
+  /// **'New kameti'**
+  String get homeNewKameti;
+
+  /// No description provided for @homeSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get homeSignOut;
+
+  /// No description provided for @homeRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get homeRoleOwner;
+
+  /// No description provided for @homeRoleViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'View only'**
+  String get homeRoleViewOnly;
+
+  /// No description provided for @homeMonthOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Month {current} of {total}'**
+  String homeMonthOf(int current, int total);
+
+  /// No description provided for @homeNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started yet'**
+  String get homeNotStarted;
+
+  /// No description provided for @homeStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get homeStatusCompleted;
+
+  /// No description provided for @homeStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get homeStatusArchived;
+
+  /// No description provided for @homeStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get homeStatusCancelled;
+
+  /// No description provided for @homeThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month: {names}'**
+  String homeThisMonth(String names);
+
+  /// No description provided for @homeYouOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe {amount}'**
+  String homeYouOwe(String amount);
+
+  /// No description provided for @homeAllPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid up'**
+  String get homeAllPaid;
+
+  /// No description provided for @homeYourTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your turn: {month} · {amount}'**
+  String homeYourTurn(String month, String amount);
+
+  /// No description provided for @homePaidOfMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'{paid} of {total} paid'**
+  String homePaidOfMembers(int paid, int total);
+
+  /// No description provided for @homeDueBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Due by {date}'**
+  String homeDueBy(String date);
+
+  /// No description provided for @detailOfflineBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Showing the last saved data.'**
+  String get detailOfflineBanner;
+
+  /// No description provided for @detailTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get detailTabOverview;
+
+  /// No description provided for @detailTabMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get detailTabMembers;
+
+  /// No description provided for @detailTabSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get detailTabSchedule;
+
+  /// No description provided for @detailTabPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get detailTabPayments;
+
+  /// No description provided for @detailTabNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get detailTabNotes;
+
+  /// No description provided for @detailSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{months} months · {amount} per slot'**
+  String detailSubtitle(int months, String amount);
+
+  /// No description provided for @detailMonthHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · Month {index}'**
+  String detailMonthHeader(String month, int index);
+
+  /// No description provided for @detailToGo.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} still to collect'**
+  String detailToGo(String amount);
+
+  /// No description provided for @detailPaidCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} paid'**
+  String detailPaidCount(int count);
+
+  /// No description provided for @detailPartialCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} partial'**
+  String detailPartialCount(int count);
+
+  /// No description provided for @detailUnpaidCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unpaid'**
+  String detailUnpaidCount(int count);
+
+  /// No description provided for @detailPotPerRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Gets {amount}'**
+  String detailPotPerRecipient(String amount);
+
+  /// No description provided for @detailNoRecipients.
+  ///
+  /// In en, this message translates to:
+  /// **'No one is assigned to this month yet'**
+  String get detailNoRecipients;
+
+  /// No description provided for @detailWhoOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Still owes this month'**
+  String get detailWhoOwes;
+
+  /// No description provided for @detailPaidOfDue.
+  ///
+  /// In en, this message translates to:
+  /// **'{paid} of {due}'**
+  String detailPaidOfDue(String paid, String due);
+
+  /// No description provided for @detailEveryonePaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone has paid this month'**
+  String get detailEveryonePaid;
+
+  /// No description provided for @detailNotStartedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started yet'**
+  String get detailNotStartedTitle;
+
+  /// No description provided for @detailNotStartedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Month-by-month collection shows here once the kameti starts.'**
+  String get detailNotStartedBody;
+
+  /// No description provided for @detailRecordPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get detailRecordPayment;
+
+  /// No description provided for @detailRecordMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Record many'**
+  String get detailRecordMany;
+
+  /// No description provided for @detailPayOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay out'**
+  String get detailPayOut;
+
+  /// No description provided for @detailStatusOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get detailStatusOverdue;
+
+  /// No description provided for @detailStatusAdvance.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance'**
+  String get detailStatusAdvance;
+
+  /// No description provided for @detailStatusUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get detailStatusUpcoming;
+
+  /// No description provided for @detailMemberDue.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} a month'**
+  String detailMemberDue(String amount);
+
+  /// No description provided for @detailNoMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No members yet'**
+  String get detailNoMembersTitle;
+
+  /// No description provided for @detailNoMembersBody.
+  ///
+  /// In en, this message translates to:
+  /// **'People you add to this kameti show up here.'**
+  String get detailNoMembersBody;
+
+  /// No description provided for @detailSelectMonthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a month to see who gets paid.'**
+  String get detailSelectMonthHint;
+
+  /// No description provided for @detailYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get detailYou;
+
+  /// No description provided for @detailReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get detailReceived;
+
+  /// No description provided for @detailPaymentsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 payment} other{{count} payments}}'**
+  String detailPaymentsCount(int count);
+
+  /// No description provided for @detailNoPaymentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments yet'**
+  String get detailNoPaymentsTitle;
+
+  /// No description provided for @detailNoPaymentsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments you record show up here.'**
+  String get detailNoPaymentsBody;
+
+  /// No description provided for @detailVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided · {reason}'**
+  String detailVoided(String reason);
+
+  /// No description provided for @detailVoidedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get detailVoidedLabel;
+
+  /// No description provided for @detailVoidPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Void payment'**
+  String get detailVoidPayment;
+
+  /// No description provided for @detailVoidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Voiding keeps the entry in the history but stops it counting.'**
+  String get detailVoidHint;
+
+  /// No description provided for @detailVoidReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get detailVoidReasonLabel;
+
+  /// No description provided for @detailVoidReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. entered for the wrong member'**
+  String get detailVoidReasonHint;
+
+  /// No description provided for @detailVoidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void this payment?'**
+  String get detailVoidConfirmTitle;
+
+  /// No description provided for @detailVoidConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} from {name} will stop counting toward their dues. This can\'t be undone.'**
+  String detailVoidConfirmBody(String amount, String name);
+
+  /// No description provided for @detailVoidDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment voided'**
+  String get detailVoidDone;
+
+  /// No description provided for @detailMethodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get detailMethodCash;
+
+  /// No description provided for @detailMethodBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank'**
+  String get detailMethodBank;
+
+  /// No description provided for @detailMethodOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get detailMethodOther;
+
+  /// No description provided for @detailPaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'paid by {name}'**
+  String detailPaidBy(String name);
+
+  /// No description provided for @detailNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes are on the way'**
+  String get detailNotesTitle;
+
+  /// No description provided for @detailNotesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll be able to keep notes for this kameti in a later update.'**
+  String get detailNotesBody;
+
+  /// No description provided for @detailYourDue.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · Your due'**
+  String detailYourDue(String month);
+
+  /// No description provided for @detailMonthlyDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly due'**
+  String get detailMonthlyDue;
+
+  /// No description provided for @detailTotalPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid so far'**
+  String get detailTotalPaid;
+
+  /// No description provided for @detailYourPayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payout'**
+  String get detailYourPayout;
+
+  /// No description provided for @detailPayoutMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · month {index}'**
+  String detailPayoutMonth(String month, int index);
+
+  /// No description provided for @detailSharedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with {names}'**
+  String detailSharedWith(String names);
+
+  /// No description provided for @detailFullSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Full slot'**
+  String get detailFullSlot;
+
+  /// No description provided for @detailPayoutReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get detailPayoutReceived;
+
+  /// No description provided for @detailNoPayout.
+  ///
+  /// In en, this message translates to:
+  /// **'No payout month assigned yet'**
+  String get detailNoPayout;
+
+  /// No description provided for @detailThisMonthsPot.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s pot'**
+  String get detailThisMonthsPot;
+
+  /// No description provided for @detailToRecipients.
+  ///
+  /// In en, this message translates to:
+  /// **'To {names}'**
+  String detailToRecipients(String names);
+
+  /// No description provided for @detailPaidOfMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'{paid} of {total} members have paid'**
+  String detailPaidOfMembers(int paid, int total);
+
+  /// No description provided for @detailYourPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payments'**
+  String get detailYourPayments;
+
+  /// No description provided for @detailNoYourPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments recorded yet'**
+  String get detailNoYourPayments;
+
+  /// No description provided for @detailNotAMemberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not in this kameti'**
+  String get detailNotAMemberTitle;
+
+  /// No description provided for @detailNotAMemberBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the person running it to add you.'**
+  String get detailNotAMemberBody;
+
   /// No description provided for @startKameti.
   ///
   /// In en, this message translates to:
