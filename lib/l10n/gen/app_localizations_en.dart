@@ -36,6 +36,452 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startKameti => 'Start a kameti';
 
   @override
+  String get createTitle => 'New kameti';
+
+  @override
+  String get createNextDueDate => 'Next: due date';
+
+  @override
+  String get createNextMembers => 'Next: members';
+
+  @override
+  String get createNextSlots => 'Next: slots';
+
+  @override
+  String get createNextOrder => 'Next: payout order';
+
+  @override
+  String get createNextReview => 'Next: review';
+
+  @override
+  String get createBasicsTitle => 'The basics';
+
+  @override
+  String get createBasicsSubtitle =>
+      'You can change these until you start the kameti.';
+
+  @override
+  String get createNameLabel => 'Kameti name';
+
+  @override
+  String get createNameHelper => 'Members see this name.';
+
+  @override
+  String get createNameError => 'Use 3 to 40 characters.';
+
+  @override
+  String get createSlotAmountLabel => 'Each slot pays per month';
+
+  @override
+  String get createSlotAmountRequired =>
+      'Enter how much each slot pays per month.';
+
+  @override
+  String get createMonthsLabel => 'Months (= slots)';
+
+  @override
+  String get createFewerMonths => 'Fewer months';
+
+  @override
+  String get createMoreMonths => 'More months';
+
+  @override
+  String get createFirstMonthLabel => 'First month';
+
+  @override
+  String get createWhatThisMeans => 'What this means';
+
+  @override
+  String get createPotEachMonth => 'Pot each month';
+
+  @override
+  String get createSlotPaysInTotal => 'One full slot pays in total';
+
+  @override
+  String get createRuns => 'Runs';
+
+  @override
+  String createMonthRange(String from, String to) {
+    return '$from → $to';
+  }
+
+  @override
+  String get createDatesTitle => 'Due date and reminders';
+
+  @override
+  String get createDatesSubtitle =>
+      'We\'ll nudge members who haven\'t paid. Paid members are never reminded.';
+
+  @override
+  String get createPayBy => 'Members pay by';
+
+  @override
+  String createDayOrdinal(String day) {
+    String _temp0 = intl.Intl.selectLogic(day, {
+      '1': '1st',
+      '2': '2nd',
+      '3': '3rd',
+      '21': '21st',
+      '22': '22nd',
+      '23': '23rd',
+      'other': '${day}th',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get createDueOther => 'Other';
+
+  @override
+  String get createPickDueDay => 'Pick the due day';
+
+  @override
+  String get createRemindOn => 'Remind on these days (tap to change)';
+
+  @override
+  String createReminderDay(int day) {
+    return 'Remind on day $day';
+  }
+
+  @override
+  String get createRemindAt => 'At 10:00 AM, Pakistan time';
+
+  @override
+  String get createMaxSlotsTitle => 'Most slots per person';
+
+  @override
+  String createMaxSlotsSubtitle(int max) {
+    return 'Up to $max';
+  }
+
+  @override
+  String get createFewerSlots => 'Fewer slots per person';
+
+  @override
+  String get createMoreSlots => 'More slots per person';
+
+  @override
+  String get createMembersTitle => 'Who\'s in?';
+
+  @override
+  String get createMembersSubtitle =>
+      'Add everyone who pays. Invites go out after you start.';
+
+  @override
+  String get createNewPerson => 'New person';
+
+  @override
+  String get createPersonName => 'Name';
+
+  @override
+  String get createPersonEmail => 'Email for the invite (optional)';
+
+  @override
+  String get createPersonNameError => 'Enter a name.';
+
+  @override
+  String get createEmailInvalid => 'Enter a valid email, or leave it empty.';
+
+  @override
+  String createAddPerson(String name) {
+    return 'Add $name';
+  }
+
+  @override
+  String get createAddPersonEmpty => 'Add person';
+
+  @override
+  String createAddedCount(int count) {
+    return '$count added';
+  }
+
+  @override
+  String get createAlsoMember => 'I\'m also a member';
+
+  @override
+  String get createYou => 'You';
+
+  @override
+  String get createOwner => 'Owner';
+
+  @override
+  String createYouName(String name) {
+    return 'You ($name)';
+  }
+
+  @override
+  String get createNoEmail => 'No email · can\'t get the app invite';
+
+  @override
+  String createRemoveMemberTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get createRemoveMemberBody =>
+      'They\'ll be taken out of this kameti. Slots they were in will need filling again.';
+
+  @override
+  String get createRemove => 'Remove';
+
+  @override
+  String get createMembersEmpty => 'No one added yet';
+
+  @override
+  String get createMembersEmptyBody =>
+      'Add the people who pay into this kameti.';
+
+  @override
+  String createSlotsTitle(int count) {
+    return 'Fill the $count slots';
+  }
+
+  @override
+  String createSlotsSubtitle(String amount) {
+    return 'Each slot is $amount a month. Give it to one person or share it between up to 4.';
+  }
+
+  @override
+  String get createSlotsReady => 'Slots ready';
+
+  @override
+  String createReadyCount(int ready, int total) {
+    return '$ready of $total';
+  }
+
+  @override
+  String createNotInSlot(int count, String names) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$names aren\'t in any slot yet.',
+      one: '$names isn\'t in any slot yet.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String createNamesAnd(String first, String last) {
+    return '$first and $last';
+  }
+
+  @override
+  String createWholeSlot(String amount) {
+    return 'Whole slot · $amount';
+  }
+
+  @override
+  String createStillToAssign(String amount) {
+    return '$amount still to assign';
+  }
+
+  @override
+  String get createEmptySlot => 'Empty';
+
+  @override
+  String get createTapToAdd => 'Tap to add people';
+
+  @override
+  String get createSlotReady => 'Ready';
+
+  @override
+  String createSlotHeader(int number, String month) {
+    return 'Slot $number · $month';
+  }
+
+  @override
+  String get createSplitTitle => 'Who pays what each month?';
+
+  @override
+  String createSplitSubtitle(String amount) {
+    return 'This slot needs $amount a month. Up to 4 people.';
+  }
+
+  @override
+  String createGets(String amount) {
+    return 'Gets $amount';
+  }
+
+  @override
+  String get createAddSharer => 'Add a person';
+
+  @override
+  String get createPickPerson => 'Pick a person';
+
+  @override
+  String createAtSlotLimit(int count) {
+    return 'Already in $count slots, the limit';
+  }
+
+  @override
+  String createInSlots(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'In $count slots',
+      one: 'In 1 slot',
+      zero: 'Not in a slot yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createNoOneToAdd =>
+      'Everyone is already in this slot. Add more people in step 3.';
+
+  @override
+  String get createSaveSlot => 'Save slot';
+
+  @override
+  String get createOrderTitle => 'Who gets the pot when?';
+
+  @override
+  String get createOrderSubtitle =>
+      'Hold and drag to reorder. Members will see this order.';
+
+  @override
+  String get createRandomDraw => 'Random draw';
+
+  @override
+  String get createSameAsSlots => 'Same as slots';
+
+  @override
+  String createDragToMove(String month) {
+    return 'Drag to move $month';
+  }
+
+  @override
+  String get createReviewTitle => 'Ready to start?';
+
+  @override
+  String get createSlotAmountKey => 'Slot amount';
+
+  @override
+  String createPerMonth(String amount) {
+    return '$amount / month';
+  }
+
+  @override
+  String createRunsMonths(String range, int count) {
+    return '$range · $count months';
+  }
+
+  @override
+  String get createMembersKey => 'Members';
+
+  @override
+  String createPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createDueByKey => 'Due by';
+
+  @override
+  String createDueByValue(String day, String days) {
+    return '$day · reminders $days';
+  }
+
+  @override
+  String createNoReminders(String day) {
+    return '$day · no reminders';
+  }
+
+  @override
+  String get createFirstPayoutKey => 'First payout';
+
+  @override
+  String createFirstPayoutValue(String names, String month) {
+    return '$names · $month';
+  }
+
+  @override
+  String get createNotSet => 'Not set yet';
+
+  @override
+  String get createChecks => 'Checks';
+
+  @override
+  String createCheckSlotsFilled(int count) {
+    return 'All $count slots are filled';
+  }
+
+  @override
+  String createCheckSlotsEmpty(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slots are empty',
+      one: '1 slot is empty',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String createCheckSlotsAddUp(String amount) {
+    return 'Every slot adds up to $amount';
+  }
+
+  @override
+  String createCheckSlotsDontAddUp(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slots don\'t add up to $amount',
+      one: '1 slot doesn\'t add up to $amount',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createCheckPayoutMonths => 'Every slot has its own payout month';
+
+  @override
+  String get createCheckPayoutMonthsBad =>
+      'Some slots don\'t have their own payout month';
+
+  @override
+  String createCheckSlotLimit(int limit) {
+    return 'No one is over $limit slots';
+  }
+
+  @override
+  String createCheckOverLimit(String names, int count, int limit) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'are',
+      one: 'is',
+    );
+    return '$names $_temp0 over $limit slots';
+  }
+
+  @override
+  String get createStartNote =>
+      'Once started, the slot amount and number of months can\'t change. You can still edit members, notes and future payout months.';
+
+  @override
+  String get createSaveDraft => 'Save draft';
+
+  @override
+  String get createStart => 'Start kameti';
+
+  @override
+  String get createDraftSaved => 'Draft saved';
+
+  @override
+  String get createStarted => 'Kameti started';
+
+  @override
+  String get createFixChecks => 'Fix the checks above before starting.';
+
+  @override
   String get comingSoon => 'Coming soon';
 
   @override

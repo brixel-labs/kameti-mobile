@@ -142,6 +142,654 @@ abstract class AppLocalizations {
   /// **'Start a kameti'**
   String get startKameti;
 
+  /// No description provided for @createTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New kameti'**
+  String get createTitle;
+
+  /// No description provided for @createNextDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: due date'**
+  String get createNextDueDate;
+
+  /// No description provided for @createNextMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: members'**
+  String get createNextMembers;
+
+  /// No description provided for @createNextSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: slots'**
+  String get createNextSlots;
+
+  /// No description provided for @createNextOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: payout order'**
+  String get createNextOrder;
+
+  /// No description provided for @createNextReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: review'**
+  String get createNextReview;
+
+  /// No description provided for @createBasicsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The basics'**
+  String get createBasicsTitle;
+
+  /// No description provided for @createBasicsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change these until you start the kameti.'**
+  String get createBasicsSubtitle;
+
+  /// No description provided for @createNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Kameti name'**
+  String get createNameLabel;
+
+  /// No description provided for @createNameHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Members see this name.'**
+  String get createNameHelper;
+
+  /// No description provided for @createNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 3 to 40 characters.'**
+  String get createNameError;
+
+  /// No description provided for @createSlotAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Each slot pays per month'**
+  String get createSlotAmountLabel;
+
+  /// No description provided for @createSlotAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter how much each slot pays per month.'**
+  String get createSlotAmountRequired;
+
+  /// No description provided for @createMonthsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Months (= slots)'**
+  String get createMonthsLabel;
+
+  /// No description provided for @createFewerMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer months'**
+  String get createFewerMonths;
+
+  /// No description provided for @createMoreMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'More months'**
+  String get createMoreMonths;
+
+  /// No description provided for @createFirstMonthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'First month'**
+  String get createFirstMonthLabel;
+
+  /// No description provided for @createWhatThisMeans.
+  ///
+  /// In en, this message translates to:
+  /// **'What this means'**
+  String get createWhatThisMeans;
+
+  /// No description provided for @createPotEachMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Pot each month'**
+  String get createPotEachMonth;
+
+  /// No description provided for @createSlotPaysInTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'One full slot pays in total'**
+  String get createSlotPaysInTotal;
+
+  /// No description provided for @createRuns.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs'**
+  String get createRuns;
+
+  /// No description provided for @createMonthRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} → {to}'**
+  String createMonthRange(String from, String to);
+
+  /// No description provided for @createDatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date and reminders'**
+  String get createDatesTitle;
+
+  /// No description provided for @createDatesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll nudge members who haven\'t paid. Paid members are never reminded.'**
+  String get createDatesSubtitle;
+
+  /// No description provided for @createPayBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Members pay by'**
+  String get createPayBy;
+
+  /// No description provided for @createDayOrdinal.
+  ///
+  /// In en, this message translates to:
+  /// **'{day, select, 1{1st} 2{2nd} 3{3rd} 21{21st} 22{22nd} 23{23rd} other{{day}th}}'**
+  String createDayOrdinal(String day);
+
+  /// No description provided for @createDueOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get createDueOther;
+
+  /// No description provided for @createPickDueDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the due day'**
+  String get createPickDueDay;
+
+  /// No description provided for @createRemindOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind on these days (tap to change)'**
+  String get createRemindOn;
+
+  /// No description provided for @createReminderDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind on day {day}'**
+  String createReminderDay(int day);
+
+  /// No description provided for @createRemindAt.
+  ///
+  /// In en, this message translates to:
+  /// **'At 10:00 AM, Pakistan time'**
+  String get createRemindAt;
+
+  /// No description provided for @createMaxSlotsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Most slots per person'**
+  String get createMaxSlotsTitle;
+
+  /// No description provided for @createMaxSlotsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {max}'**
+  String createMaxSlotsSubtitle(int max);
+
+  /// No description provided for @createFewerSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer slots per person'**
+  String get createFewerSlots;
+
+  /// No description provided for @createMoreSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'More slots per person'**
+  String get createMoreSlots;
+
+  /// No description provided for @createMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who\'s in?'**
+  String get createMembersTitle;
+
+  /// No description provided for @createMembersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add everyone who pays. Invites go out after you start.'**
+  String get createMembersSubtitle;
+
+  /// No description provided for @createNewPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'New person'**
+  String get createNewPerson;
+
+  /// No description provided for @createPersonName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get createPersonName;
+
+  /// No description provided for @createPersonEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email for the invite (optional)'**
+  String get createPersonEmail;
+
+  /// No description provided for @createPersonNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name.'**
+  String get createPersonNameError;
+
+  /// No description provided for @createEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email, or leave it empty.'**
+  String get createEmailInvalid;
+
+  /// No description provided for @createAddPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {name}'**
+  String createAddPerson(String name);
+
+  /// No description provided for @createAddPersonEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add person'**
+  String get createAddPersonEmpty;
+
+  /// No description provided for @createAddedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} added'**
+  String createAddedCount(int count);
+
+  /// No description provided for @createAlsoMember.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m also a member'**
+  String get createAlsoMember;
+
+  /// No description provided for @createYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get createYou;
+
+  /// No description provided for @createOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get createOwner;
+
+  /// No description provided for @createYouName.
+  ///
+  /// In en, this message translates to:
+  /// **'You ({name})'**
+  String createYouName(String name);
+
+  /// No description provided for @createNoEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'No email · can\'t get the app invite'**
+  String get createNoEmail;
+
+  /// No description provided for @createRemoveMemberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String createRemoveMemberTitle(String name);
+
+  /// No description provided for @createRemoveMemberBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll be taken out of this kameti. Slots they were in will need filling again.'**
+  String get createRemoveMemberBody;
+
+  /// No description provided for @createRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get createRemove;
+
+  /// No description provided for @createMembersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No one added yet'**
+  String get createMembersEmpty;
+
+  /// No description provided for @createMembersEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the people who pay into this kameti.'**
+  String get createMembersEmptyBody;
+
+  /// No description provided for @createSlotsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill the {count} slots'**
+  String createSlotsTitle(int count);
+
+  /// No description provided for @createSlotsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Each slot is {amount} a month. Give it to one person or share it between up to 4.'**
+  String createSlotsSubtitle(String amount);
+
+  /// No description provided for @createSlotsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Slots ready'**
+  String get createSlotsReady;
+
+  /// No description provided for @createReadyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{ready} of {total}'**
+  String createReadyCount(int ready, int total);
+
+  /// No description provided for @createNotInSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{names} isn\'t in any slot yet.} other{{names} aren\'t in any slot yet.}}'**
+  String createNotInSlot(int count, String names);
+
+  /// No description provided for @createNamesAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'{first} and {last}'**
+  String createNamesAnd(String first, String last);
+
+  /// No description provided for @createWholeSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole slot · {amount}'**
+  String createWholeSlot(String amount);
+
+  /// No description provided for @createStillToAssign.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} still to assign'**
+  String createStillToAssign(String amount);
+
+  /// No description provided for @createEmptySlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty'**
+  String get createEmptySlot;
+
+  /// No description provided for @createTapToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add people'**
+  String get createTapToAdd;
+
+  /// No description provided for @createSlotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get createSlotReady;
+
+  /// No description provided for @createSlotHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Slot {number} · {month}'**
+  String createSlotHeader(int number, String month);
+
+  /// No description provided for @createSplitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who pays what each month?'**
+  String get createSplitTitle;
+
+  /// No description provided for @createSplitSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This slot needs {amount} a month. Up to 4 people.'**
+  String createSplitSubtitle(String amount);
+
+  /// No description provided for @createGets.
+  ///
+  /// In en, this message translates to:
+  /// **'Gets {amount}'**
+  String createGets(String amount);
+
+  /// No description provided for @createAddSharer.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a person'**
+  String get createAddSharer;
+
+  /// No description provided for @createPickPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a person'**
+  String get createPickPerson;
+
+  /// No description provided for @createAtSlotLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in {count} slots, the limit'**
+  String createAtSlotLimit(int count);
+
+  /// No description provided for @createInSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Not in a slot yet} =1{In 1 slot} other{In {count} slots}}'**
+  String createInSlots(int count);
+
+  /// No description provided for @createNoOneToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone is already in this slot. Add more people in step 3.'**
+  String get createNoOneToAdd;
+
+  /// No description provided for @createSaveSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Save slot'**
+  String get createSaveSlot;
+
+  /// No description provided for @createOrderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who gets the pot when?'**
+  String get createOrderTitle;
+
+  /// No description provided for @createOrderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold and drag to reorder. Members will see this order.'**
+  String get createOrderSubtitle;
+
+  /// No description provided for @createRandomDraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Random draw'**
+  String get createRandomDraw;
+
+  /// No description provided for @createSameAsSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as slots'**
+  String get createSameAsSlots;
+
+  /// No description provided for @createDragToMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move {month}'**
+  String createDragToMove(String month);
+
+  /// No description provided for @createReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to start?'**
+  String get createReviewTitle;
+
+  /// No description provided for @createSlotAmountKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Slot amount'**
+  String get createSlotAmountKey;
+
+  /// No description provided for @createPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} / month'**
+  String createPerMonth(String amount);
+
+  /// No description provided for @createRunsMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{range} · {count} months'**
+  String createRunsMonths(String range, int count);
+
+  /// No description provided for @createMembersKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get createMembersKey;
+
+  /// No description provided for @createPeopleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person} other{{count} people}}'**
+  String createPeopleCount(int count);
+
+  /// No description provided for @createDueByKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Due by'**
+  String get createDueByKey;
+
+  /// No description provided for @createDueByValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} · reminders {days}'**
+  String createDueByValue(String day, String days);
+
+  /// No description provided for @createNoReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} · no reminders'**
+  String createNoReminders(String day);
+
+  /// No description provided for @createFirstPayoutKey.
+  ///
+  /// In en, this message translates to:
+  /// **'First payout'**
+  String get createFirstPayoutKey;
+
+  /// No description provided for @createFirstPayoutValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} · {month}'**
+  String createFirstPayoutValue(String names, String month);
+
+  /// No description provided for @createNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set yet'**
+  String get createNotSet;
+
+  /// No description provided for @createChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks'**
+  String get createChecks;
+
+  /// No description provided for @createCheckSlotsFilled.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count} slots are filled'**
+  String createCheckSlotsFilled(int count);
+
+  /// No description provided for @createCheckSlotsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slot is empty} other{{count} slots are empty}}'**
+  String createCheckSlotsEmpty(int count);
+
+  /// No description provided for @createCheckSlotsAddUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Every slot adds up to {amount}'**
+  String createCheckSlotsAddUp(String amount);
+
+  /// No description provided for @createCheckSlotsDontAddUp.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slot doesn\'t add up to {amount}} other{{count} slots don\'t add up to {amount}}}'**
+  String createCheckSlotsDontAddUp(int count, String amount);
+
+  /// No description provided for @createCheckPayoutMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Every slot has its own payout month'**
+  String get createCheckPayoutMonths;
+
+  /// No description provided for @createCheckPayoutMonthsBad.
+  ///
+  /// In en, this message translates to:
+  /// **'Some slots don\'t have their own payout month'**
+  String get createCheckPayoutMonthsBad;
+
+  /// No description provided for @createCheckSlotLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'No one is over {limit} slots'**
+  String createCheckSlotLimit(int limit);
+
+  /// No description provided for @createCheckOverLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} {count, plural, =1{is} other{are}} over {limit} slots'**
+  String createCheckOverLimit(String names, int count, int limit);
+
+  /// No description provided for @createStartNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Once started, the slot amount and number of months can\'t change. You can still edit members, notes and future payout months.'**
+  String get createStartNote;
+
+  /// No description provided for @createSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get createSaveDraft;
+
+  /// No description provided for @createStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start kameti'**
+  String get createStart;
+
+  /// No description provided for @createDraftSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved'**
+  String get createDraftSaved;
+
+  /// No description provided for @createStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Kameti started'**
+  String get createStarted;
+
+  /// No description provided for @createFixChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix the checks above before starting.'**
+  String get createFixChecks;
+
   /// No description provided for @comingSoon.
   ///
   /// In en, this message translates to:
