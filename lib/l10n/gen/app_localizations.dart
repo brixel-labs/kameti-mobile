@@ -160,6 +160,360 @@ abstract class AppLocalizations {
   /// **'Sign in to see your invite.'**
   String get joinBody;
 
+  /// No description provided for @payTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get payTitle;
+
+  /// No description provided for @payMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get payMember;
+
+  /// No description provided for @payChooseMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a member'**
+  String get payChooseMember;
+
+  /// No description provided for @payMemberSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {due} · paid {paid}'**
+  String payMemberSummary(String due, String paid);
+
+  /// No description provided for @payAmountReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount received'**
+  String get payAmountReceived;
+
+  /// No description provided for @payRemainingChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining {amount}'**
+  String payRemainingChip(String amount);
+
+  /// No description provided for @payFullMonthChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Full month {amount}'**
+  String payFullMonthChip(String amount);
+
+  /// No description provided for @payDateReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Date received'**
+  String get payDateReceived;
+
+  /// No description provided for @payMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get payMethod;
+
+  /// No description provided for @payMethodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get payMethodCash;
+
+  /// No description provided for @payMethodBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank'**
+  String get payMethodBank;
+
+  /// No description provided for @payMethodOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get payMethodOther;
+
+  /// No description provided for @payNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get payNote;
+
+  /// No description provided for @payHintFullyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} will be fully paid for {month}.'**
+  String payHintFullyPaid(String name, String month);
+
+  /// No description provided for @payHintOwing.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaves {amount} owing.'**
+  String payHintOwing(String amount);
+
+  /// No description provided for @payHintCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} extra becomes credit.'**
+  String payHintCredit(String amount);
+
+  /// E17 warning
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s more than {name} owes for the whole kameti ({amount}). Check the amount.'**
+  String payHintOverKameti(String name, String amount);
+
+  /// No description provided for @paySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Record {amount}'**
+  String paySave(String amount);
+
+  /// No description provided for @paySaveEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get paySaveEmpty;
+
+  /// No description provided for @payRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment recorded'**
+  String get payRecorded;
+
+  /// No description provided for @payDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record this again?'**
+  String get payDuplicateTitle;
+
+  /// E16 duplicate warning
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} from {name} on this date was recorded a moment ago. Record it a second time?'**
+  String payDuplicateBody(String name, String amount);
+
+  /// No description provided for @payDuplicateConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Record again'**
+  String get payDuplicateConfirm;
+
+  /// No description provided for @payNoMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'No members yet'**
+  String get payNoMembers;
+
+  /// No description provided for @settleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect {month}'**
+  String settleTitle(String month);
+
+  /// No description provided for @settleMarkAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all paid'**
+  String get settleMarkAll;
+
+  /// No description provided for @settleInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to mark the full amount · hold to edit'**
+  String get settleInstructions;
+
+  /// No description provided for @settleLighterBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Lighter bar = marked in this session, not saved yet'**
+  String get settleLighterBar;
+
+  /// No description provided for @settleMethodValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Method: {method}'**
+  String settleMethodValue(String method);
+
+  /// No description provided for @settleSave.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Save 1 payment · {amount}} other{Save {count} payments · {amount}}}'**
+  String settleSave(int count, String amount);
+
+  /// No description provided for @settleSaveEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Save payments'**
+  String get settleSaveEmpty;
+
+  /// No description provided for @settleSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 payment saved} other{{count} payments saved}}'**
+  String settleSaved(int count);
+
+  /// No description provided for @settleEveryonePaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone has paid this month'**
+  String get settleEveryonePaid;
+
+  /// No description provided for @settleNotCollecting.
+  ///
+  /// In en, this message translates to:
+  /// **'No month is collecting right now'**
+  String get settleNotCollecting;
+
+  /// No description provided for @settleEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount from {name}'**
+  String settleEditTitle(String name);
+
+  /// No description provided for @settleEditApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark amount'**
+  String get settleEditApply;
+
+  /// No description provided for @payoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay out {month}'**
+  String payoutTitle(String month);
+
+  /// No description provided for @payoutSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{kameti} · month {index}'**
+  String payoutSubtitle(String kameti, int index);
+
+  /// No description provided for @payoutCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected'**
+  String get payoutCollected;
+
+  /// No description provided for @payoutFullPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Full pot'**
+  String get payoutFullPot;
+
+  /// No description provided for @payoutShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} short. You can pay out now; the members who owe keep their dues on record.'**
+  String payoutShort(String amount);
+
+  /// No description provided for @payoutRecipientShare.
+  ///
+  /// In en, this message translates to:
+  /// **'{share} a month · expected {expected}'**
+  String payoutRecipientShare(String share, String expected);
+
+  /// No description provided for @payoutAlreadyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} already paid out'**
+  String payoutAlreadyPaid(String amount);
+
+  /// No description provided for @payoutAmountFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout to {name}'**
+  String payoutAmountFor(String name);
+
+  /// E23
+  ///
+  /// In en, this message translates to:
+  /// **'{name} owes {amount}. Take it from the payout?'**
+  String payoutDeduct(String name, String amount);
+
+  /// No description provided for @payoutDeductHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Records a {amount} payment from them and pays out that much less.'**
+  String payoutDeductHelper(String amount);
+
+  /// No description provided for @payoutDeductNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken from the month {index} payout'**
+  String payoutDeductNote(int index);
+
+  /// No description provided for @payoutSplitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The shortfall is split by share. Change the amounts if you paid differently.'**
+  String get payoutSplitHint;
+
+  /// No description provided for @payoutPaidOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid on'**
+  String get payoutPaidOn;
+
+  /// No description provided for @payoutNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get payoutNote;
+
+  /// No description provided for @payoutNoteHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed when a payout differs from the expected amount'**
+  String get payoutNoteHelper;
+
+  /// No description provided for @payoutSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark paid out · {amount}'**
+  String payoutSave(String amount);
+
+  /// No description provided for @payoutSaveEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark paid out'**
+  String get payoutSaveEmpty;
+
+  /// No description provided for @payoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay out short?'**
+  String get payoutConfirmTitle;
+
+  /// No description provided for @payoutConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The pot is {short} short. Pay out {amount} now? The members who owe keep their dues.'**
+  String payoutConfirmBody(String short, String amount);
+
+  /// No description provided for @payoutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay out'**
+  String get payoutConfirm;
+
+  /// No description provided for @payoutDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout recorded'**
+  String get payoutDone;
+
+  /// No description provided for @payoutNoRecipients.
+  ///
+  /// In en, this message translates to:
+  /// **'No one holds this month\'s slot yet'**
+  String get payoutNoRecipients;
+
+  /// No description provided for @payoutMonthMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This month isn\'t part of the kameti'**
+  String get payoutMonthMissing;
+
   /// No description provided for @statusPaid.
   ///
   /// In en, this message translates to:
