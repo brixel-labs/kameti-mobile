@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push origin main)",
+      "Bash(git push origin main:*)",
+      "Bash(git push origin develop)",
+      "Bash(git push origin develop:*)",
+      "Bash(git push origin HEAD:main*)",
+      "Bash(git push origin HEAD:develop*)",
+      "Bash(git push * main)",
+      "Bash(git push * develop)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f *)",
+      "Bash(git push * -f)",
+      "Bash(git push --no-verify*)",
+      "Bash(git push * --no-verify*)",
+      "Bash(git push origin --delete main*)",
+      "Bash(git push origin --delete develop*)",
+      "Bash(git push origin :main*)",
+      "Bash(git push origin :develop*)",
+      "Bash(git branch -D main*)",
+      "Bash(git branch -D develop*)",
+      "Bash(git config core.hooksPath*)",
+      "Bash(KAMETI_ALLOW_PROTECTED_PUSH*)",
+      "Bash(* KAMETI_ALLOW_PROTECTED_PUSH*)"
+    ],
+    "ask": [
+      "Bash(gh pr merge*)",
+      "Bash(git tag*)",
+      "Bash(git push origin v*)",
+      "Bash(git push --tags*)",
+      "Bash(git push origin --delete*)",
+      "Bash(gh release create*)"
+    ]
+  }
+}

@@ -12,3 +12,9 @@ iOS and Android app for running a kameti (committee / ROSCA): the owner records 
 - [Requirements](docs/REQUIREMENTS.md): the source of truth for product rules, edge cases, tech stack and plan.
 
 The app has not been scaffolded yet.
+
+## First-time setup
+
+```bash
+git config core.hooksPath .githooks   # blocks direct pushes to main/develop
+```

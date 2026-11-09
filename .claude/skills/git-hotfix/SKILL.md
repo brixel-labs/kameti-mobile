@@ -18,6 +18,6 @@ Follow `.claude/rules/git-workflow.md`.
 7. Run the full local checks and the reference-sheet tests.
 8. When the user asks: commit (`fix(<scope>): …`, then `chore(release): 1.2.1`), push, and open a PR `hotfix/1.2.1 → main` labelled **hotfix**.
 9. **With the user's explicit approval only:** merge with a merge commit, then tag `v1.2.1` on main and push the tag.
-10. Back-merge `hotfix/1.2.1` into `develop`. If a `release/*` branch is open, merge it into that too (otherwise the fix is lost in the next release).
+10. Back-merge `hotfix/1.2.1` into `develop` **through a PR** (`gh pr create --base develop --head hotfix/1.2.1`, then merge with a merge commit). Direct pushes to `develop` are blocked. If a `release/*` branch is open, open a PR into that too (otherwise the fix is lost in the next release).
 11. If the backend changed, deploy the migration or function to production first, then ship the app build. Tell the user which store builds to expedite (iOS: request an expedited review).
 12. Delete the hotfix branch after the user agrees.
