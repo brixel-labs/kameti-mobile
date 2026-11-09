@@ -799,6 +799,248 @@ class AppLocalizationsEn extends AppLocalizations {
   String get joinBody => 'Sign in to see your invite.';
 
   @override
+  String get payTitle => 'Record payment';
+
+  @override
+  String get payMember => 'Member';
+
+  @override
+  String get payChooseMember => 'Choose a member';
+
+  @override
+  String payMemberSummary(String due, String paid) {
+    return 'Due $due · paid $paid';
+  }
+
+  @override
+  String get payAmountReceived => 'Amount received';
+
+  @override
+  String payRemainingChip(String amount) {
+    return 'Remaining $amount';
+  }
+
+  @override
+  String payFullMonthChip(String amount) {
+    return 'Full month $amount';
+  }
+
+  @override
+  String get payDateReceived => 'Date received';
+
+  @override
+  String get payMethod => 'Method';
+
+  @override
+  String get payMethodCash => 'Cash';
+
+  @override
+  String get payMethodBank => 'Bank';
+
+  @override
+  String get payMethodOther => 'Other';
+
+  @override
+  String get payNote => 'Note (optional)';
+
+  @override
+  String payHintFullyPaid(String name, String month) {
+    return '$name will be fully paid for $month.';
+  }
+
+  @override
+  String payHintOwing(String amount) {
+    return 'Leaves $amount owing.';
+  }
+
+  @override
+  String payHintCredit(String amount) {
+    return '$amount extra becomes credit.';
+  }
+
+  @override
+  String payHintOverKameti(String name, String amount) {
+    return 'That\'s more than $name owes for the whole kameti ($amount). Check the amount.';
+  }
+
+  @override
+  String paySave(String amount) {
+    return 'Record $amount';
+  }
+
+  @override
+  String get paySaveEmpty => 'Record payment';
+
+  @override
+  String get payRecorded => 'Payment recorded';
+
+  @override
+  String get payDuplicateTitle => 'Record this again?';
+
+  @override
+  String payDuplicateBody(String name, String amount) {
+    return '$amount from $name on this date was recorded a moment ago. Record it a second time?';
+  }
+
+  @override
+  String get payDuplicateConfirm => 'Record again';
+
+  @override
+  String get payNoMembers => 'No members yet';
+
+  @override
+  String settleTitle(String month) {
+    return 'Collect $month';
+  }
+
+  @override
+  String get settleMarkAll => 'Mark all paid';
+
+  @override
+  String get settleInstructions => 'Tap to mark the full amount · hold to edit';
+
+  @override
+  String get settleLighterBar =>
+      'Lighter bar = marked in this session, not saved yet';
+
+  @override
+  String settleMethodValue(String method) {
+    return 'Method: $method';
+  }
+
+  @override
+  String settleSave(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Save $count payments · $amount',
+      one: 'Save 1 payment · $amount',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settleSaveEmpty => 'Save payments';
+
+  @override
+  String settleSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count payments saved',
+      one: '1 payment saved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settleEveryonePaid => 'Everyone has paid this month';
+
+  @override
+  String get settleNotCollecting => 'No month is collecting right now';
+
+  @override
+  String settleEditTitle(String name) {
+    return 'Amount from $name';
+  }
+
+  @override
+  String get settleEditApply => 'Mark amount';
+
+  @override
+  String payoutTitle(String month) {
+    return 'Pay out $month';
+  }
+
+  @override
+  String payoutSubtitle(String kameti, int index) {
+    return '$kameti · month $index';
+  }
+
+  @override
+  String get payoutCollected => 'Collected';
+
+  @override
+  String get payoutFullPot => 'Full pot';
+
+  @override
+  String payoutShort(String amount) {
+    return '$amount short. You can pay out now; the members who owe keep their dues on record.';
+  }
+
+  @override
+  String payoutRecipientShare(String share, String expected) {
+    return '$share a month · expected $expected';
+  }
+
+  @override
+  String payoutAlreadyPaid(String amount) {
+    return '$amount already paid out';
+  }
+
+  @override
+  String payoutAmountFor(String name) {
+    return 'Payout to $name';
+  }
+
+  @override
+  String payoutDeduct(String name, String amount) {
+    return '$name owes $amount. Take it from the payout?';
+  }
+
+  @override
+  String payoutDeductHelper(String amount) {
+    return 'Records a $amount payment from them and pays out that much less.';
+  }
+
+  @override
+  String payoutDeductNote(int index) {
+    return 'Taken from the month $index payout';
+  }
+
+  @override
+  String get payoutSplitHint =>
+      'The shortfall is split by share. Change the amounts if you paid differently.';
+
+  @override
+  String get payoutPaidOn => 'Paid on';
+
+  @override
+  String get payoutNote => 'Note';
+
+  @override
+  String get payoutNoteHelper =>
+      'Needed when a payout differs from the expected amount';
+
+  @override
+  String payoutSave(String amount) {
+    return 'Mark paid out · $amount';
+  }
+
+  @override
+  String get payoutSaveEmpty => 'Mark paid out';
+
+  @override
+  String get payoutConfirmTitle => 'Pay out short?';
+
+  @override
+  String payoutConfirmBody(String short, String amount) {
+    return 'The pot is $short short. Pay out $amount now? The members who owe keep their dues.';
+  }
+
+  @override
+  String get payoutConfirm => 'Pay out';
+
+  @override
+  String get payoutDone => 'Payout recorded';
+
+  @override
+  String get payoutNoRecipients => 'No one holds this month\'s slot yet';
+
+  @override
+  String get payoutMonthMissing => 'This month isn\'t part of the kameti';
+
+  @override
   String get statusPaid => 'Paid';
 
   @override
