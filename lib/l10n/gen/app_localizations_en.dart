@@ -52,4 +52,210 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusUnpaid => 'Unpaid';
+
+  @override
+  String get dsRetry => 'Try again';
+
+  @override
+  String get dsLoading => 'Loading';
+
+  @override
+  String get dsClose => 'Close';
+
+  @override
+  String get dsBack => 'Back';
+
+  @override
+  String get dsCancel => 'Cancel';
+
+  @override
+  String get dsClearSearch => 'Clear search';
+
+  @override
+  String get dsSearch => 'Search';
+
+  @override
+  String get dsEdit => 'Edit';
+
+  @override
+  String get dsCustom => 'Custom';
+
+  @override
+  String dsGiveTheRest(String amount) {
+    return 'Give the rest: $amount';
+  }
+
+  @override
+  String get dsPickAnAmount => 'Pick an amount';
+
+  @override
+  String get dsAssigned => 'Assigned';
+
+  @override
+  String dsAmountOfTotal(String amount, String total) {
+    return '$amount of $total';
+  }
+
+  @override
+  String dsOverBy(String amount) {
+    return 'Over by $amount';
+  }
+
+  @override
+  String dsLeftToAssign(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String dsRemovePerson(String name) {
+    return 'Remove $name';
+  }
+
+  @override
+  String dsMonthlyAmountFor(String name) {
+    return '$name\'s monthly amount';
+  }
+
+  @override
+  String dsMarkAmount(String amount) {
+    return 'Mark $amount';
+  }
+
+  @override
+  String dsMarkAmountFor(String amount, String name) {
+    return 'Mark $amount paid for $name';
+  }
+
+  @override
+  String dsUndoFor(String name) {
+    return 'Undo $name';
+  }
+
+  @override
+  String dsEditFor(String name) {
+    return 'Edit $name';
+  }
+
+  @override
+  String dsMarkedSettled(String amount) {
+    return '+ $amount · settled';
+  }
+
+  @override
+  String dsMarkedPartial(String amount, String rest) {
+    return '+ $amount · still owes $rest';
+  }
+
+  @override
+  String dsBalanceOwes(String amount) {
+    return 'Owes $amount';
+  }
+
+  @override
+  String get dsBalanceSettled => 'Settled';
+
+  @override
+  String dsBalanceCredit(String amount) {
+    return 'Credit $amount';
+  }
+
+  @override
+  String dsPotOfTarget(String target, int percent) {
+    return 'of $target · $percent%';
+  }
+
+  @override
+  String dsPotSemantics(String collected, String target, int percent) {
+    return '$collected collected of $target, $percent percent';
+  }
+
+  @override
+  String dsPotMarked(String amount) {
+    return '$amount marked, not saved yet';
+  }
+
+  @override
+  String get dsMonthUpcoming => 'Upcoming';
+
+  @override
+  String get dsMonthCollecting => 'Collecting';
+
+  @override
+  String get dsMonthCollected => 'Collected';
+
+  @override
+  String get dsMonthPaidOut => 'Paid out';
+
+  @override
+  String get dsMonthPaidOutShort => 'Paid out short';
+
+  @override
+  String get dsJoinNotInvited => 'Not invited';
+
+  @override
+  String get dsJoinInvited => 'Invited';
+
+  @override
+  String get dsJoinPendingApproval => 'Needs approval';
+
+  @override
+  String get dsJoinJoined => 'Joined';
+
+  @override
+  String get dsJoinDeclined => 'Declined';
+
+  @override
+  String get dsJoinExpired => 'Invite expired';
+
+  @override
+  String get dsJoinBounced => 'Email bounced';
+
+  @override
+  String get dsScheduleNow => 'Now';
+
+  @override
+  String get dsSchedulePaidOut => 'Paid out';
+
+  @override
+  String get dsScheduleYourTurn => 'Your turn';
+
+  @override
+  String dsWizardStep(int step, int total) {
+    return 'Step $step of $total';
+  }
+
+  @override
+  String dsAmountStepError(String step) {
+    return 'Use multiples of $step';
+  }
+
+  @override
+  String dsAmountMinError(String min) {
+    return 'At least $min';
+  }
+
+  @override
+  String dsAmountMaxError(String max) {
+    return 'At most $max';
+  }
+
+  @override
+  String get dsDateInFuture => 'Date can\'t be in the future';
+
+  @override
+  String get dsSelectDate => 'Select date';
+
+  @override
+  String get dsSelectMonth => 'Select month';
+
+  @override
+  String get dsPreviousYear => 'Previous year';
+
+  @override
+  String get dsNextYear => 'Next year';
+
+  @override
+  String dsMoreCount(int count) {
+    return '$count more';
+  }
 }

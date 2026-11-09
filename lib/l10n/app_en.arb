@@ -13,5 +13,117 @@
   "joinBody": "Sign in to see your invite.",
   "statusPaid": "Paid",
   "statusPartial": "Partial",
-  "statusUnpaid": "Unpaid"
+  "statusUnpaid": "Unpaid",
+
+  "dsRetry": "Try again",
+  "@dsRetry": {"description": "KErrorState default retry button"},
+  "dsLoading": "Loading",
+  "@dsLoading": {"description": "Semantics label for skeleton placeholders"},
+  "dsClose": "Close",
+  "dsBack": "Back",
+  "dsCancel": "Cancel",
+  "dsClearSearch": "Clear search",
+  "dsSearch": "Search",
+  "dsEdit": "Edit",
+  "dsCustom": "Custom",
+  "@dsCustom": {"description": "Share editor chip that focuses the amount field"},
+  "dsGiveTheRest": "Give the rest: {amount}",
+  "@dsGiveTheRest": {
+    "description": "Share editor: assign the remaining slot amount to this person",
+    "placeholders": {"amount": {"type": "String", "example": "Rs 1,00,000"}}
+  },
+  "dsPickAnAmount": "Pick an amount",
+  "dsAssigned": "Assigned",
+  "dsAmountOfTotal": "{amount} of {total}",
+  "@dsAmountOfTotal": {
+    "placeholders": {
+      "amount": {"type": "String", "example": "Rs 1,50,000"},
+      "total": {"type": "String", "example": "2,50,000"}
+    }
+  },
+  "dsOverBy": "Over by {amount}",
+  "@dsOverBy": {"placeholders": {"amount": {"type": "String", "example": "Rs 50,000"}}},
+  "dsLeftToAssign": "{amount} left",
+  "@dsLeftToAssign": {"placeholders": {"amount": {"type": "String", "example": "Rs 1,00,000"}}},
+  "dsRemovePerson": "Remove {name}",
+  "@dsRemovePerson": {"placeholders": {"name": {"type": "String", "example": "Sana Malik"}}},
+  "dsMonthlyAmountFor": "{name}'s monthly amount",
+  "@dsMonthlyAmountFor": {"placeholders": {"name": {"type": "String", "example": "Sana Malik"}}},
+  "dsMarkAmount": "Mark {amount}",
+  "@dsMarkAmount": {
+    "description": "Tap-to-settle button, amount in compact form",
+    "placeholders": {"amount": {"type": "String", "example": "1.25 L"}}
+  },
+  "dsMarkAmountFor": "Mark {amount} paid for {name}",
+  "@dsMarkAmountFor": {
+    "placeholders": {
+      "amount": {"type": "String", "example": "Rs 1,25,000"},
+      "name": {"type": "String", "example": "Kamran Ali"}
+    }
+  },
+  "dsUndoFor": "Undo {name}",
+  "@dsUndoFor": {"placeholders": {"name": {"type": "String", "example": "Usman Tariq"}}},
+  "dsEditFor": "Edit {name}",
+  "@dsEditFor": {"placeholders": {"name": {"type": "String", "example": "Ali Raza"}}},
+  "dsMarkedSettled": "+ {amount} · settled",
+  "@dsMarkedSettled": {"placeholders": {"amount": {"type": "String", "example": "Rs 4,50,000"}}},
+  "dsMarkedPartial": "+ {amount} · still owes {rest}",
+  "@dsMarkedPartial": {
+    "placeholders": {
+      "amount": {"type": "String", "example": "Rs 50,000"},
+      "rest": {"type": "String", "example": "50,000"}
+    }
+  },
+  "dsBalanceOwes": "Owes {amount}",
+  "@dsBalanceOwes": {"placeholders": {"amount": {"type": "String", "example": "Rs 4,50,000"}}},
+  "dsBalanceSettled": "Settled",
+  "dsBalanceCredit": "Credit {amount}",
+  "@dsBalanceCredit": {"placeholders": {"amount": {"type": "String", "example": "Rs 1,25,000"}}},
+  "dsPotOfTarget": "of {target} · {percent}%",
+  "@dsPotOfTarget": {
+    "placeholders": {
+      "target": {"type": "String", "example": "50,00,000"},
+      "percent": {"type": "int"}
+    }
+  },
+  "dsPotSemantics": "{collected} collected of {target}, {percent} percent",
+  "@dsPotSemantics": {
+    "placeholders": {
+      "collected": {"type": "String"},
+      "target": {"type": "String"},
+      "percent": {"type": "int"}
+    }
+  },
+  "dsPotMarked": "{amount} marked, not saved yet",
+  "@dsPotMarked": {"placeholders": {"amount": {"type": "String", "example": "Rs 6,25,000"}}},
+  "dsMonthUpcoming": "Upcoming",
+  "dsMonthCollecting": "Collecting",
+  "dsMonthCollected": "Collected",
+  "dsMonthPaidOut": "Paid out",
+  "dsMonthPaidOutShort": "Paid out short",
+  "dsJoinNotInvited": "Not invited",
+  "dsJoinInvited": "Invited",
+  "dsJoinPendingApproval": "Needs approval",
+  "dsJoinJoined": "Joined",
+  "dsJoinDeclined": "Declined",
+  "dsJoinExpired": "Invite expired",
+  "dsJoinBounced": "Email bounced",
+  "dsScheduleNow": "Now",
+  "dsSchedulePaidOut": "Paid out",
+  "dsScheduleYourTurn": "Your turn",
+  "dsWizardStep": "Step {step} of {total}",
+  "@dsWizardStep": {"placeholders": {"step": {"type": "int"}, "total": {"type": "int"}}},
+  "dsAmountStepError": "Use multiples of {step}",
+  "@dsAmountStepError": {"placeholders": {"step": {"type": "String", "example": "Rs 1,000"}}},
+  "dsAmountMinError": "At least {min}",
+  "@dsAmountMinError": {"placeholders": {"min": {"type": "String", "example": "Rs 1,000"}}},
+  "dsAmountMaxError": "At most {max}",
+  "@dsAmountMaxError": {"placeholders": {"max": {"type": "String", "example": "Rs 50,00,000"}}},
+  "dsDateInFuture": "Date can't be in the future",
+  "dsSelectDate": "Select date",
+  "dsSelectMonth": "Select month",
+  "dsPreviousYear": "Previous year",
+  "dsNextYear": "Next year",
+  "dsMoreCount": "{count} more",
+  "@dsMoreCount": {"placeholders": {"count": {"type": "int"}}}
 }
