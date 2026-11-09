@@ -34,14 +34,14 @@ Kameti is a record-keeping and transparency app for rotating savings groups (kam
 
 ## Commands
 ```bash
-fvm flutter pub get
+flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 dart format --set-exit-if-changed .
 flutter analyze
 flutter test
-flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json
+flutter run -t lib/main_dev.dart --dart-define-from-file=env/dev.json
 ```
-(The app hasn't been scaffolded yet. These commands apply once Phase 0 is done.)
+(Flutter 3.47.5 is pinned in `.fvmrc`.)
 
 ## Never
 - Commit, push, open or merge PRs, or tag without the user asking (see `git-workflow.md`).
