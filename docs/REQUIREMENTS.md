@@ -48,11 +48,13 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
 6. Over the whole kameti, **each member receives exactly what they pay in**. There is no interest, fee or bidding.
 7. All amounts are **whole Pakistani rupees** (no paisa), stored as integers.
 
-### 3.1 How a slot can be split (recommendation for Q3)
+### 3.1 How a slot is split (decided)
 
 - Shares can be **any amount in steps of Rs 1,000**. Each share must be at least Rs 1,000, and the shares must add up to exactly C.
-- The UI offers quick presets (**½ + ½**, **⅓ ×3**, **¼ ×4**, **½ + ¼ + ¼**) and a custom option.
-- If an even split doesn't divide cleanly (e.g. C = 1,00,000 ÷ 3), the UI suggests the nearest valid split (34k + 33k + 33k) and the owner confirms.
+- The split is entered **by amount, not by fraction**. Each sharer has quick **amount chips** (e.g. 25K · 50K · 1L · 1.25L, generated from C) plus **Custom**.
+- A **"Give the rest: Rs X"** button fills the last sharer with whatever is left.
+- An "Assigned Rs X of C" bar shows progress. The slot can't be saved until it adds up exactly.
+- Example: C = 2,00,000 split 50K + 50K + 1L.
 - Why: free amounts cover real cases like 50k / 50k / 1L, and because shares are whole rupees, payouts (share × N) are always whole numbers too. No rounding drift.
 
 ### 3.2 Limits
@@ -200,7 +202,7 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
 
 ### 6.4 Slots, shares and payout order (owner)
 - FR-30: The slot list shows month, recipient(s), shares and a note.
-- FR-31: Add or edit shares on a slot using the split presets or custom amounts (§3.1), with live validation ("Rs 50,000 left to assign").
+- FR-31: Add or edit shares on a slot using amount chips, custom amounts or "Give the rest" (§3.1), with live validation ("Rs 50,000 left to assign").
 - FR-32: **Payout order:**
   - Drag to reorder, or swap two slots.
   - Months already paid out are **locked**.
@@ -218,7 +220,13 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
   - **Partial payment:** the month is marked *Partial*, and what's left carries forward as dues.
   - **Overpayment or advance:** the extra becomes **credit** that pays future months automatically. This covers Naveed's 250k in October and Osama's 180k for December.
 - FR-42: **Quick "Mark paid in full".** One tap records exactly this month's outstanding amount, dated today.
-- FR-43: **Bulk entry.** A month grid where the owner ticks many members at once, as in the spreadsheet.
+- FR-43: **Record many at once ("tap to settle").** A list of everyone who still owes this month:
+  - one tap marks a member's full outstanding amount; holding (or **Edit**) enters a different amount for a partial payment;
+  - **Mark all paid** marks everyone;
+  - the pot bar shows marked-but-unsaved money in a lighter shade;
+  - one date and one method apply to the whole batch;
+  - nothing is written until **Save N payments · Rs X**, which records each payment separately (each one audited and notified) in a single transaction;
+  - tapping a marked member again undoes it before saving.
 - FR-44: Edit or **void** a payment. Payments are never hard-deleted. Voided entries stay in the audit trail, and balances recalculate.
 - FR-45: **Paid by someone else.** A payment can carry an optional "paid by" name (e.g. Hassan paying Ata's share). It still counts towards Ata's balance.
 - FR-46: Backdated payments are allowed. Future-dated payments are not.
@@ -280,7 +288,7 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
 
 ### Structure
 - E1: Shares don't add up to C → the slot is invalid and the kameti can't start.
-- E2: C doesn't divide evenly for a preset split → suggest the nearest valid split (§3.1).
+- E2: A typed share isn't a multiple of Rs 1,000, or the shares go over C → inline error on that field; "Give the rest" is hidden when nothing is left or the remainder is under Rs 1,000.
 - E3: A member would exceed the slot limit (4) or a slot would exceed 4 sharers → blocked with a clear message.
 - E4: The same member holds two shares of the **same** slot → merge them into one share.
 - E5: A slot has no payout month, or two slots claim the same month → can't start.
@@ -503,7 +511,9 @@ The web side lives in the existing **fhb-website** repo (Next.js 16 App Router, 
 | D6 | Allow changing C or N mid-kameti? | No. Close it and start a new one |
 | D7 | Monetisation | Free for v1 |
 | D8 | Urdu | v1.1 |
-| D9 | How a slot is split | Any amount in **Rs 1,000 steps**, adding up exactly to C, with presets |
+| D9 | How a slot is split | Any amount in **Rs 1,000 steps**, adding up exactly to C, entered with amount chips + Custom + "Give the rest" (no fraction presets) |
+| D14 | Visual design | Direction **A "Ledger"** (light, emerald, Inter) with a dark mode; the payout schedule uses the 4-column month grid. Board: https://claude.ai/artifact/CU8Y4xmfhCPFHoMyavyf6e |
+| D15 | Recording many payments | **Tap to settle** (FR-43) |
 | D10 | Group privacy | Each kameti is a closed group; groups never see each other (§5.2) |
 | D11 | Joining | Personal email invite link + code; owner approval when the email doesn't match (§5.4) |
 

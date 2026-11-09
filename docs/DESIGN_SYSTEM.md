@@ -2,7 +2,7 @@
 
 Every screen in the app is built from these components. A screen never styles raw Flutter widgets itself.
 
-> **Status:** structure and component APIs are defined. **Token values (colours, fonts, radii) are filled in after a design direction is chosen** in the design phase. Until then, components read from `KTheme` placeholders.
+> **Status:** direction **A "Ledger"** chosen (2026-11-09), with a dark mode. Token values below come from the design board: https://claude.ai/artifact/CU8Y4xmfhCPFHoMyavyf6e (row A).
 
 ## 1. Where things live
 
@@ -48,6 +48,33 @@ All tokens are **semantic**: named for their job, not their look. Write `colors.
 
 Every colour pair used for text must pass **WCAG AA** in both light and dark.
 
+### 2.1 Token values (direction A, "Ledger")
+
+| Token | Light | Dark |
+|---|---|---|
+| `background` | `#F6F7F5` | `#0E1513` |
+| `surface` | `#FFFFFF` | `#16201D` |
+| `surfaceSunken` | `#EEF0ED` | `#1E2A26` |
+| `border` | `#E4E7E3` (inputs `#D5DAD6`) | `#26332E` |
+| `divider` | `#EEF0ED` | `#1E2A26` |
+| `overlay` | `rgba(18,32,27,0.45)` | `rgba(0,0,0,0.6)` |
+| `textPrimary` | `#12201B` | `#E8EFEC` |
+| `textSecondary` | `#4E5D57` | `#A3B1AC` |
+| `textTertiary` | `#8A958F` | `#7D8B86` |
+| `brand` | `#0E6B52` | `#3FBF94` |
+| `textOnBrand` | `#FFFFFF` | `#06231A` |
+| `brandSubtle` (bg / text) | `#E3F1EC` / `#0E6B52` | `#173A2F` / `#7FDDB8` |
+| `positive` (bg / text) | `#E2F4EA` / `#13804F` | `#163527` / `#4CC98A` |
+| `warning` (bg / text) | `#FFF1DC` / `#8A4B00` | `#3A2A12` / `#F2B25C` |
+| `negative` (bg / text) | `#FDE8E6` / `#B42318` | `#3D1D1B` / `#FF8A80` |
+| `info` (bg / text) | `#E5EEFB` / `#1D5FBF` | `#1A2A45` / `#7FB0FF` |
+| "Your turn" highlight (bg / border / text) | `#FFF1DC` / `#C27A00` / `#6B3A00` | `#3A2A12` / `#8A6420` / `#FFE2B8` |
+
+- **Font:** Inter (400/500/600/700) via `google_fonts` or bundled. All amounts use **tabular figures** (`FontFeature.tabularFigures()`).
+- **Type sizes:** `displayLg` 34/700 · `display` 30/700 · `titleLg` 24/700 · `title` 17/600 · `body` 15/400 · `bodyStrong` 15/600 · `bodySm` 13/400 · `label` 13/600 uppercase +0.6 tracking · `caption` 12/400.
+- **Shapes:** cards radius 16, inputs and buttons 12–14, chips pill. Cards are flat with a 1 px border; no shadows, except the FAB and a dragged row.
+- **Primary button:** 52–54 high, radius 14. **Inputs:** 44–48 high; the focused or main amount field has a 2 px brand border.
+
 ## 3. Components
 
 Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k_button.dart`).
@@ -80,7 +107,8 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 | `KMoneyText` | `amount: Money`, `style: display/title/body/mono`, `compact: bool`, `signed: bool`, `tone: auto/neutral/positive/negative` | **The only way to show an amount.** Formats `Rs 24,00,000`; compact `24 L` / `2.4 Cr`. `signed` shows `+` / `−` for credit and dues |
 | `KBalancePill` | `balance: Money` | Positive balance = "Owes Rs X" (negative tone); zero = "Settled"; negative balance = "Credit Rs X" (info tone) |
 | `KPotProgress` | `collected`, `target`, `showLabels` | "Rs 23,50,000 of 50,00,000 · 47%"; flags overpayment |
-| `KShareSplitEditor` | `slotAmount`, `shares`, `members`, `maxSharers` (4), `step`, `onChanged` | Presets ½+½, ⅓×3, ¼×4, ½+¼+¼, custom; live "Rs X left to assign"; blocks invalid sums |
+| `KShareSplitEditor` | `slotAmount`, `shares`, `members`, `maxSharers` (4), `step`, `onChanged` | Amount chips per sharer (generated from the slot amount) + Custom; "Give the rest: Rs X" on the last sharer; "Assigned X of C" bar; blocks invalid sums. **No fraction presets** |
+| `KSettleRow` | `member`, `owed: Money`, `marked: Money?`, `onMarkFull`, `onEdit`, `onUndo` | Tap-to-settle row (FR-43): "Mark 1.25 L" → "✓ Paid" (undo); a partial shows "still owes X" in warning tone |
 | `KAmountSummaryRow` | `label`, `amount`, `emphasis` | Label/value rows in summaries and receipts |
 
 ### 3.4 Display
@@ -108,7 +136,7 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 | `KPaymentRow` | Date, amount, method, "paid by" note, void state (struck through + "Voided") |
 | `KPayoutRow` | Recipient, amount, date, expected vs actual |
 | `KMonthGridCell` / `KMonthGrid` | Spreadsheet-like members × months grid, status per cell, horizontal scroll, pinned first column |
-| `KScheduleTimeline` | Vertical payout schedule with "You" highlighted and today's month marked |
+| `KScheduleGrid` / `KMonthTile` | Payout schedule as a 4-column grid of month tiles (chosen design): paid out = filled brand, now = outlined info, your turn = amber highlight; tapping a tile shows that month's recipients below |
 | `KNoteTile` | Note text, author, time, Private/Shared tag |
 | `KAuditTile` | Who did what, when, before → after |
 | `KReminderCard` | Next reminder date, "Remind unpaid members" with sent-today state |
