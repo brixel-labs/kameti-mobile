@@ -1,0 +1,39 @@
+{
+  "_about": "Reference kameti Oct 2026 – May 2028 (REQUIREMENTS §3.3). Names only: no emails or phones. The backend pgTAP test supabase/tests/reference_sheet_oct26.test.sql uses the same data.",
+  "months": 20,
+  "slotAmount": 250000,
+  "startMonth": "2026-10",
+  "maxSlotsPerMember": 6,
+  "slots": [
+    {"month": 1, "shares": {"Zeeshan": 250000}},
+    {"month": 2, "shares": {"Ata": 125000, "Sameer": 125000}},
+    {"month": 3, "shares": {"Behzad": 125000, "Faryad": 125000}},
+    {"month": 4, "shares": {"Sameer": 250000}},
+    {"month": 5, "shares": {"Qurat": 125000, "Dilawar": 125000}},
+    {"month": 6, "shares": {"Hania": 125000, "Hassan": 125000}},
+    {"month": 7, "shares": {"Muzammil": 125000, "Ata": 125000}},
+    {"month": 8, "shares": {"Ata": 125000, "Osama": 125000}},
+    {"month": 9, "shares": {"Arslan": 250000}},
+    {"month": 10, "shares": {"Sameer": 250000}},
+    {"month": 11, "shares": {"Salman": 250000}},
+    {"month": 12, "shares": {"Naveed": 125000, "Hassan": 125000}},
+    {"month": 13, "shares": {"Osama": 250000}},
+    {"month": 14, "shares": {"Zeeshan": 250000}},
+    {"month": 15, "shares": {"Zeeshan": 250000}},
+    {"month": 16, "shares": {"Zamran": 125000, "Dilawar": 125000}},
+    {"month": 17, "shares": {"Hassan": 250000}},
+    {"month": 18, "shares": {"Sameer": 250000}},
+    {"month": 19, "shares": {"Behzad": 125000, "Sameer": 125000}},
+    {"month": 20, "shares": {"Qurat": 125000, "Faryad": 125000}}
+  ],
+  "payments": {
+    "1": {"Ata": 275000, "Faryad": 250000, "Zeeshan": 750000, "Hania": 125000, "Salman": 250000, "Qurat": 250000, "Dilawar": 250000, "Behzad": 220000, "Hassan": 475000, "Osama": 375000, "Naveed": 250000, "Muzammil": 125000, "Arslan": 250000, "Zamran": 125000, "Sameer": 1000000},
+    "2": {"Ata": 275000, "Faryad": 250000, "Salman": 250000, "Dilawar": 250000, "Hassan": 225000, "Osama": 375000, "Naveed": 50000, "Muzammil": 125000, "Sameer": 550000},
+    "3": {"Osama": 180000}
+  },
+  "expectedMonthlyDues": {
+    "Zeeshan": 750000, "Sameer": 1000000, "Hassan": 500000, "Ata": 375000, "Osama": 375000,
+    "Faryad": 250000, "Qurat": 250000, "Dilawar": 250000, "Salman": 250000, "Arslan": 250000, "Behzad": 250000,
+    "Hania": 125000, "Muzammil": 125000, "Zamran": 125000, "Naveed": 125000
+  }
+}
