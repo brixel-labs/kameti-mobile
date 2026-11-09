@@ -1,10 +1,10 @@
 name: CI
 
+# Runs only for the develop and main branches (after a merge), plus manual runs.
 on:
-  pull_request:
-    branches: [develop, main, "release/**"]
   push:
     branches: [develop, main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

@@ -40,7 +40,7 @@ flutter analyze
 flutter test
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same checks on every PR to `develop`, `main` and `release/*`.
+CI (`.github/workflows/ci.yml`) runs the same checks on pushes to `develop` and `main` only (i.e. after a PR merges), so run them locally before opening a PR. It can also be started by hand from the Actions tab.
 
 ## Project layout
 
