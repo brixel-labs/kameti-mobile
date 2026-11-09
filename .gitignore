@@ -1,15 +1,49 @@
-node_modules/
-.expo/
-dist/
-web-build/
-ios/
-android/
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+coverage/
+.fvm/flutter_sdk
+*.iml
+.idea/
+.vscode/*
+!.vscode/settings.json
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.*
+**/xcuserdata/
+
+# Android
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/google-services.json
+**/*.keystore
 *.jks
+
+# Firebase (iOS config per flavor)
+ios/Runner/GoogleService-Info.plist
+ios/config/**/GoogleService-Info.plist
+
+# Secrets and environments
+env/*.json
+!env/example.json
+.env
+.env*.local
 *.p8
 *.p12
 *.key
 *.mobileprovision
-.env
-.env*.local
-.DS_Store
+
+# Private data
 *.pdf
+
+.DS_Store

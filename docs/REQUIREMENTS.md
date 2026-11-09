@@ -352,23 +352,34 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
 
 ## 9. Tech stack recommendation
 
-### 9.1 Mobile: **React Native with Expo (TypeScript)**, cross-platform
+### 9.1 Mobile: **Flutter (Dart)**, cross-platform (decided 2026-11-09)
 
 | Option | Verdict |
 |---|---|
-| **Expo / React Native (TS)** ✅ | One codebase for iOS and Android. TypeScript is shared with the backend functions. EAS Build/Submit handles store releases. OTA updates fix bugs without a store review. Mature Google/Apple sign-in and push support. |
-| Flutter | Equally capable. Choose it if you prefer Dart. It doesn't share a language with the backend. |
-| Native (Swift + Kotlin) | Two codebases, twice the effort, and no benefit for a forms-and-lists app. Not recommended. |
+| **Flutter** ✅ | One codebase for iOS and Android with pixel-identical UI on both, which suits a custom design system. Strong typing, fast rendering of long lists and grids, first-party Supabase SDK. You already ship VoiceQuote with Flutter. |
+| React Native (Expo) | Equally capable; not chosen. |
+| Native (Swift + Kotlin) | Two codebases, twice the effort, and no benefit for a forms-and-lists app. |
 
-**Libraries:**
-- Navigation: Expo Router.
-- Server state and offline cache: TanStack Query with a persisted cache.
-- Forms and validation: React Hook Form + Zod, with the Zod schemas shared with the backend.
-- Push: Expo Notifications (FCM and APNs).
-- Sign-in: expo-apple-authentication and Google Sign-In.
-- i18n: i18next.
-- Styling: NativeWind or Tamagui, decided at the design stage.
-- Builds and releases: EAS Build, Submit and Update.
+**Packages:**
+
+| Concern | Choice |
+|---|---|
+| SDK | Flutter stable channel, Dart 3 (null safety, records, sealed classes); versions pinned with FVM |
+| State management | `flutter_riverpod` + `riverpod_generator` |
+| Navigation and deep links | `go_router` + `app_links` (Universal Links / App Links for `/kameti/join/*`) |
+| Models | `freezed` + `json_serializable` |
+| Backend SDK | `supabase_flutter` |
+| Sign-in | `google_sign_in` + `sign_in_with_apple`, exchanged with Supabase `signInWithIdToken` |
+| Push | `firebase_messaging` (FCM, which also delivers to APNs) + `flutter_local_notifications` for foreground display |
+| Offline cache | `drift` (SQLite) for read-only cached data (E50) |
+| Localisation | Flutter `gen-l10n` with ARB files (English v1, Urdu RTL v1.1); `intl` for dates |
+| Money formatting | A small in-house `Money` type with lakh/crore grouping (§3, E52), unit-tested |
+| Forms | Flutter `Form` + design-system fields with shared validators |
+| Crash reporting and analytics | `sentry_flutter`; `posthog_flutter` (optional) |
+| Lints | `very_good_analysis` |
+| Tests | `flutter_test`, `mocktail`, golden tests for the design system (`alchemist`), `integration_test` |
+| Environments | Flavors `dev` / `staging` / `prod` with `--dart-define-from-file` |
+| Builds and releases | GitHub Actions for CI (analyze, test); Codemagic or Fastlane for signed builds and store upload; optional Shorebird code push for urgent fixes |
 
 ### 9.2 Backend: **Supabase** (Postgres) recommended over Firebase
 
@@ -377,17 +388,17 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
 | Data shape | Relational: kameti → slots → shares → members → payments. Joins and SUMs are natural. | NoSQL documents. Balances need manual denormalisation or Cloud Functions. |
 | Money integrity | Foreign keys, CHECK constraints (shares add up to C), transactions, Postgres functions | Rules can't enforce cross-document sums. Transactions are limited. |
 | Read-only members | Row-level security policies in SQL | Security Rules (fine, but harder for derived permissions) |
-| Reminders | `pg_cron` + Edge Function → Expo Push | Scheduled Cloud Function → FCM |
+| Reminders | `pg_cron` + Edge Function → FCM | Scheduled Cloud Function → FCM |
 | Auth | Google + Apple built in | Google + Apple built in |
 | Cost at scale | Flat tiers, no per-read billing | Per-document reads: month grids viewed by many members add up |
 | Lock-in | Plain Postgres, easy to move | High |
 
-Firebase is a valid choice, and we still use **FCM/APNs** for push through Expo. But this app is a **ledger**, and a relational database with constraints is the safer foundation.
+Firebase is a valid choice, and we still use **Firebase Cloud Messaging** (only) for push. But this app is a **ledger**, and a relational database with constraints is the safer foundation.
 
 ### 9.3 Proposed architecture
 
 ```
-Expo app (iOS/Android)
+Flutter app (iOS/Android)
   ├─ Supabase Auth (Google, Apple)
   ├─ PostgREST reads (RLS-protected views)
   └─ RPC calls for all writes (record_payment, record_payout, reorder_slots, …)
@@ -398,7 +409,7 @@ Supabase Postgres
 Edge Functions (Deno/TS): reminders, broadcast, send-invites, accept-invite, account deletion
 Transactional email: Resend, sending from a subdomain of fhbtechservices.com (§9.5)
 Web: pages under www.fhbtechservices.com/kameti/* in the existing fhb-website repo (§9.5)
-Expo Push Service → FCM / APNs
+Edge Functions → FCM HTTP v1 API → Android / APNs (iOS)
 Sentry (crashes), PostHog (analytics, optional)
 ```
 
@@ -468,7 +479,7 @@ The web side lives in the existing **fhb-website** repo (Next.js 16 App Router, 
 
 | Phase | Scope | Est. |
 |---|---|---|
-| **0. Foundations** | Repo, Expo app, Supabase project, CI, environments (dev/staging/prod), design system tokens, Claude agents/rules/skills | 1 wk |
+| **0. Foundations** | Repos, Flutter app (flavors, FVM), Firebase project (FCM only), Supabase project, CI, environments (dev/staging/prod), design system tokens, Claude agents/rules/skills | 1 wk |
 | **1. Design** | Screens with 2–3 visual directions → choose one → hi-fi screens for every flow | 1–2 wks |
 | **2. MVP core** | Auth (Google/Apple), create-kameti wizard, members, slots/shares, payout order, record payments/payouts, ledger maths, member read-only views, home | 4–5 wks |
 | **3. Engagement** | Reminders (auto + broadcast), event notifications, inbox, notes, email invites (Resend) + owner approval, audit log; in fhb-website: `/kameti/join`, `.well-known` files | 2–3 wks |
