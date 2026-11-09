@@ -177,6 +177,330 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unpaid'**
   String get statusUnpaid;
+
+  /// KErrorState default retry button
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get dsRetry;
+
+  /// Semantics label for skeleton placeholders
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get dsLoading;
+
+  /// No description provided for @dsClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get dsClose;
+
+  /// No description provided for @dsBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get dsBack;
+
+  /// No description provided for @dsCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get dsCancel;
+
+  /// No description provided for @dsClearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get dsClearSearch;
+
+  /// No description provided for @dsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get dsSearch;
+
+  /// No description provided for @dsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get dsEdit;
+
+  /// Share editor chip that focuses the amount field
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get dsCustom;
+
+  /// Share editor: assign the remaining slot amount to this person
+  ///
+  /// In en, this message translates to:
+  /// **'Give the rest: {amount}'**
+  String dsGiveTheRest(String amount);
+
+  /// No description provided for @dsPickAnAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an amount'**
+  String get dsPickAnAmount;
+
+  /// No description provided for @dsAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get dsAssigned;
+
+  /// No description provided for @dsAmountOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} of {total}'**
+  String dsAmountOfTotal(String amount, String total);
+
+  /// No description provided for @dsOverBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String dsOverBy(String amount);
+
+  /// No description provided for @dsLeftToAssign.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String dsLeftToAssign(String amount);
+
+  /// No description provided for @dsRemovePerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String dsRemovePerson(String name);
+
+  /// No description provided for @dsMonthlyAmountFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s monthly amount'**
+  String dsMonthlyAmountFor(String name);
+
+  /// Tap-to-settle button, amount in compact form
+  ///
+  /// In en, this message translates to:
+  /// **'Mark {amount}'**
+  String dsMarkAmount(String amount);
+
+  /// No description provided for @dsMarkAmountFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark {amount} paid for {name}'**
+  String dsMarkAmountFor(String amount, String name);
+
+  /// No description provided for @dsUndoFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {name}'**
+  String dsUndoFor(String name);
+
+  /// No description provided for @dsEditFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {name}'**
+  String dsEditFor(String name);
+
+  /// No description provided for @dsMarkedSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {amount} · settled'**
+  String dsMarkedSettled(String amount);
+
+  /// No description provided for @dsMarkedPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {amount} · still owes {rest}'**
+  String dsMarkedPartial(String amount, String rest);
+
+  /// No description provided for @dsBalanceOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes {amount}'**
+  String dsBalanceOwes(String amount);
+
+  /// No description provided for @dsBalanceSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled'**
+  String get dsBalanceSettled;
+
+  /// No description provided for @dsBalanceCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit {amount}'**
+  String dsBalanceCredit(String amount);
+
+  /// No description provided for @dsPotOfTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'of {target} · {percent}%'**
+  String dsPotOfTarget(String target, int percent);
+
+  /// No description provided for @dsPotSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{collected} collected of {target}, {percent} percent'**
+  String dsPotSemantics(String collected, String target, int percent);
+
+  /// No description provided for @dsPotMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} marked, not saved yet'**
+  String dsPotMarked(String amount);
+
+  /// No description provided for @dsMonthUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get dsMonthUpcoming;
+
+  /// No description provided for @dsMonthCollecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Collecting'**
+  String get dsMonthCollecting;
+
+  /// No description provided for @dsMonthCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected'**
+  String get dsMonthCollected;
+
+  /// No description provided for @dsMonthPaidOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid out'**
+  String get dsMonthPaidOut;
+
+  /// No description provided for @dsMonthPaidOutShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid out short'**
+  String get dsMonthPaidOutShort;
+
+  /// No description provided for @dsJoinNotInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Not invited'**
+  String get dsJoinNotInvited;
+
+  /// No description provided for @dsJoinInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get dsJoinInvited;
+
+  /// No description provided for @dsJoinPendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs approval'**
+  String get dsJoinPendingApproval;
+
+  /// No description provided for @dsJoinJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined'**
+  String get dsJoinJoined;
+
+  /// No description provided for @dsJoinDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get dsJoinDeclined;
+
+  /// No description provided for @dsJoinExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite expired'**
+  String get dsJoinExpired;
+
+  /// No description provided for @dsJoinBounced.
+  ///
+  /// In en, this message translates to:
+  /// **'Email bounced'**
+  String get dsJoinBounced;
+
+  /// No description provided for @dsScheduleNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get dsScheduleNow;
+
+  /// No description provided for @dsSchedulePaidOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid out'**
+  String get dsSchedulePaidOut;
+
+  /// No description provided for @dsScheduleYourTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your turn'**
+  String get dsScheduleYourTurn;
+
+  /// No description provided for @dsWizardStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {step} of {total}'**
+  String dsWizardStep(int step, int total);
+
+  /// No description provided for @dsAmountStepError.
+  ///
+  /// In en, this message translates to:
+  /// **'Use multiples of {step}'**
+  String dsAmountStepError(String step);
+
+  /// No description provided for @dsAmountMinError.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {min}'**
+  String dsAmountMinError(String min);
+
+  /// No description provided for @dsAmountMaxError.
+  ///
+  /// In en, this message translates to:
+  /// **'At most {max}'**
+  String dsAmountMaxError(String max);
+
+  /// No description provided for @dsDateInFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'Date can\'t be in the future'**
+  String get dsDateInFuture;
+
+  /// No description provided for @dsSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get dsSelectDate;
+
+  /// No description provided for @dsSelectMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Select month'**
+  String get dsSelectMonth;
+
+  /// No description provided for @dsPreviousYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous year'**
+  String get dsPreviousYear;
+
+  /// No description provided for @dsNextYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Next year'**
+  String get dsNextYear;
+
+  /// No description provided for @dsMoreCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more'**
+  String dsMoreCount(int count);
 }
 
 class _AppLocalizationsDelegate

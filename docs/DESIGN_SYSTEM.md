@@ -38,7 +38,7 @@ All tokens are **semantic**: named for their job, not their look. Write `colors.
 | **Colour: content** | `textPrimary`, `textSecondary`, `textTertiary`, `textOnBrand`, `textDisabled`, `icon` |
 | **Colour: brand** | `brand`, `brandPressed`, `brandSubtle`, `accent` |
 | **Colour: status** | `positive` (paid), `positiveSubtle`, `warning` (partial / due soon), `warningSubtle`, `negative` (unpaid / overdue / shortfall), `negativeSubtle`, `info` (advance / credit), `infoSubtle`, `neutral` (upcoming) |
-| **Colour: member palette** | `avatar1` … `avatar8`: distinct, AA-contrast colours for member avatars |
+| **Colour: member palette** | `avatars` (8 × `KAvatarColors{background, foreground}`), read with `colors.avatar(index)` which wraps the index |
 | **Typography** | `displayLg` (big money figures), `display`, `titleLg`, `title`, `titleSm`, `body`, `bodyStrong`, `bodySm`, `label`, `caption`, `mono` (amounts in tables, tabular figures) |
 | **Spacing** | `xxs 2`, `xs 4`, `sm 8`, `md 12`, `lg 16`, `xl 24`, `xxl 32`, `xxxl 48` |
 | **Radius** | `sm 6`, `md 10`, `lg 16`, `xl 24`, `pill 999` |
@@ -83,7 +83,7 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 | Component | Variants / API | Notes |
 |---|---|---|
 | `KButton` | `.primary`, `.secondary`, `.tertiary`, `.destructive`; `label`, `onPressed`, `icon?`, `isLoading`, `size: sm/md/lg`, `expand` | `onPressed: null` = disabled. Loading shows a spinner and ignores taps (prevents double payments) |
-| `KIconButton` | `icon`, `onPressed`, `semanticLabel` (required), `variant` | |
+| `KIconButton` | `icon`, `semanticLabel` (required), `onPressed`, `variant: plain/brand/outlined`, `size` (glyph) | Always a 44×44 hit area |
 | `KFab` | `icon`, `label?`, `onPressed` | Owner's main action, e.g. "Record payment" |
 | `KTextLink` | `label`, `onTap` | Inline link |
 
@@ -91,41 +91,42 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 | Component | API | Notes |
 |---|---|---|
 | `KTextField` | `label`, `hint?`, `helper?`, `error?`, `controller`, `validator`, `keyboardType`, `prefix?`, `suffix?`, `maxLength?` | Base for all inputs |
-| `KAmountField` | `label`, `value: Money?`, `onChanged`, `step` (default Rs 1,000), `min?`, `max?` | Shows `Rs` prefix, lakh grouping as you type, digits only, never decimals |
-| `KSearchField` | `onChanged`, `hint` | Debounced 250 ms |
-| `KMonthPicker` | `value`, `firstMonth`, `lastMonth`, `onChanged` | Month + year only |
-| `KDatePicker` | `value`, `lastDate` (default today), `onChanged` | Payment dates can't be in the future (FR-46) |
+| `KAmountField` | `value: Money?`, `onChanged(Money?)`, `label?`, `helper?`, `error?`, `step` (Rs 1,000), `min?`, `max?`, `suggestions: [KAmountSuggestion(amount, label?)]`, `emphasized` (56 px, 2 px brand border; default true) | `Rs` prefix, lakh grouping as you type (`KLakhInputFormatter`), digits only. Built-in step/min/max errors; `KAmountField.issueFor(...)` gives the same check for submit buttons. Chips are `KAmountChip` |
+| `KSearchField` | `onChanged`, `hint?`, `debounce` (250 ms) | Clear button (labelled) fires `onChanged('')` at once |
+| `KMonthPicker` | `value`, `firstMonth`, `lastMonth`, `onChanged`, `label?`, `hint?`, `error?` | Opens a `showKSheet` with year switcher + 3×4 month grid. Months in/out are `DateTime.utc(y, m)` like `KametiClock.currentMonth()` |
+| `KDatePicker` | `value`, `lastDate` (**required**), `onChanged`, `firstDate?` (lastDate − 10 y), `label?`, `hint?`, `error?` | Payment dates can't be in the future (FR-46). `lastDate` is required because KDS never reads the device clock: pass `clock.now()`. A value after `lastDate` shows a built-in error |
 | `KDropdown<T>` / `KSelectSheet<T>` | `items`, `value`, `itemLabel`, `onChanged` | Opens a bottom sheet on mobile |
 | `KMemberPicker` | `members`, `selected`, `multi: bool`, `onChanged` | Search, avatars, "select all not invited" |
-| `KSegmentedControl<T>` | `segments`, `value`, `onChanged` | e.g. Cash / Bank / Other |
-| `KSwitchTile`, `KCheckboxTile`, `KRadioTile<T>` | `title`, `subtitle?`, `value`, `onChanged` | |
-| `KStepper` | `steps`, `currentIndex` | Create-kameti wizard header |
+| `KSegmentedControl<T>` | `segments: [KSegment(value, label, icon?)]`, `value`, `onChanged?` | e.g. Cash / Bank / Other. `onChanged: null` disables |
+| `KSwitchTile`, `KCheckboxTile`, `KRadioTile<T>` | `title`, `subtitle?`, `value`, `onChanged?` | Whole row toggles; merged semantics. `KRadioTile` not built yet |
+| `KWizardProgress` | `step` (1-based), `total` (6), `showLabel` | Create-kameti wizard bars; announced "Step 4 of 6". (Replaces `KStepper`) |
 
 ### 3.3 Money (core to this app)
 | Component | API | Notes |
 |---|---|---|
 | `KMoneyText` | `amount: Money`, `style: display/title/body/mono`, `compact: bool`, `signed: bool`, `tone: auto/neutral/positive/negative` | **The only way to show an amount.** Formats `Rs 24,00,000`; compact `24 L` / `2.4 Cr`. `signed` shows `+` / `−` for credit and dues |
-| `KBalancePill` | `balance: Money` | Positive balance = "Owes Rs X" (negative tone); zero = "Settled"; negative balance = "Credit Rs X" (info tone) |
-| `KPotProgress` | `collected`, `target`, `showLabels` | "Rs 23,50,000 of 50,00,000 · 47%"; flags overpayment |
-| `KShareSplitEditor` | `slotAmount`, `shares`, `members`, `maxSharers` (4), `step`, `onChanged` | Amount chips per sharer (generated from the slot amount) + Custom; "Give the rest: Rs X" on the last sharer; "Assigned X of C" bar; blocks invalid sums. **No fraction presets** |
-| `KSettleRow` | `member`, `owed: Money`, `marked: Money?`, `onMarkFull`, `onEdit`, `onUndo` | Tap-to-settle row (FR-43): "Mark 1.25 L" → "✓ Paid" (undo); a partial shows "still owes X" in warning tone |
+| `KBalancePill` | `balance: Money` | Positive balance = "Owes Rs X" (negative tone); zero = "Settled"; negative balance = "Credit Rs X" (info tone). Built-in l10n text + icon |
+| `KPotProgress` | `collected`, `target`, `marked` (Money.zero), `showLabels`, `caption?` | "Rs 23,50,000 of 50,00,000 · 47%"; `marked` (tap-to-settle, unsaved) is added to the headline and drawn as a lighter segment; "Over by Rs X" on overpayment. `percentOf(amount, target)` helper |
+| `KShareSplitEditor` | `slotAmount`, `sharers: [KSharer(id, name, colorIndex, amount?, subtitle?)]`, `onChanged(index, Money?)`, `maxSharers` (4), `step`, `onAddSharer?` + `addSharerLabel`, `onRemoveSharer?` | Amount chips per sharer from `suggestedAmounts(slot)` (round amounts ≤ half the slot, e.g. 25K/50K/1L/1.25L) + Custom (focuses the inline box); "Give the rest: Rs X" on the last sharer; "Assigned X of C" bar, which turns negative with "Over by" when the total passes C. Chips that would overshoot are disabled. `issueFor(slot, amounts)` → `KShareSplitIssue?` for the Next button. **No fraction presets** |
+| `KSettleRow` | `name`, `colorIndex`, `imageUrl?`, `owed: Money`, `marked: Money?`, `onMarkFull`, `onEdit`, `onUndo` | Tap-to-settle row (FR-43): "Mark 1.25 L" → "✓ Paid" (undo); a partial shows "still owes X" in warning tone with Edit; long-press = edit. Button moves under the text from text scale 1.5 |
 | `KAmountSummaryRow` | `label`, `amount`, `emphasis` | Label/value rows in summaries and receipts |
 
 ### 3.4 Display
 | Component | API | Notes |
 |---|---|---|
 | `KCard` | `child`, `onTap?`, `padding`, `variant: flat/raised/outlined` | |
-| `KListTile` | `leading?`, `title`, `subtitle?`, `trailing?`, `onTap?` | Base row |
-| `KAvatar` | `name`, `imageUrl?`, `colorIndex`, `size: sm/md/lg` | Initials fallback; colour stays the same per member |
-| `KAvatarStack` | `members`, `max` (3) | Shared slot recipients, "+2" overflow |
+| `KListTile` | `leading?`, `title`, `subtitle?`, `trailing?`, `onTap?`, `onLongPress?`, `showDivider` | Base row. From text scale 1.5 the trailing widget moves under the title (never truncated) |
+| `KAvatar` | `name`, `colorIndex`, `size: sm 30/md 36/lg 48`, `imageUrl?`, `ringColor?`, `semanticLabel?` | Initials fallback (`initialsOf`); decorative unless `semanticLabel` is given |
+| `KAvatarStack` | `members: [KAvatarData(name, colorIndex, imageUrl?)]`, `max` (3), `size`, `ringColor?` | Shared slot recipients, "+2" overflow; reads names to screen readers |
 | `KStatusChip` | `KPaymentStatus` {paid, partial, unpaid, overdue, advance, upcoming} | Icon + text, **never colour alone** |
-| `KMonthStatusChip` | `KMonthStatus` {upcoming, collecting, collected, paidOut, paidOutShort} | |
-| `KInviteStatusChip` | `KJoinStatus` {notInvited, invited, pendingApproval, joined, declined, expired, bounced} | |
+| `KMonthStatusChip` | `status: KMonthStatus` {upcoming, collecting, collected, paidOut, paidOutShort}, `label?` | Built-in l10n label + icon |
+| `KInviteStatusChip` | `status: KJoinStatus` {notInvited, invited, pendingApproval, joined, declined, expired, bounced}, `label?` | Built-in label; pass e.g. "Invited 2d ago" |
 | `KBadge` | `count` or `dot` | Inbox, approvals |
-| `KSectionHeader` | `title`, `action?` | |
+| `KSectionHeader` | `title`, `actionLabel?`, `onAction?` | Upper-cased label, header semantics |
 | `KDivider` | — | |
-| `KInfoBanner` | `tone: info/warning/negative/positive`, `message`, `action?` | e.g. offline "Last updated 10:42", "3 members haven't paid" |
-| `KKeyValueList` | `items` | Detail screens |
+| `KInfoBanner` | `tone: KBannerTone` {info, warning, negative, positive, **neutral**}, `message`, `icon?`, `actionLabel?`, `onAction?` | `neutral` is the offline notice. Icon per tone |
+| `KKeyValueList` | `items: [KKeyValue(label, value: String? \| amount: Money?, emphasis)]`, `title?` | Detail and summary cards; amounts via `KMoneyText`; wraps at large text |
+| `KPill` | `label`, `foreground`, `background`, `icon?` | Shape behind the chips; KDS-internal building block |
 
 ### 3.5 Kameti-specific (built only from the components above)
 | Component | Shows |
@@ -136,7 +137,7 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 | `KPaymentRow` | Date, amount, method, "paid by" note, void state (struck through + "Voided") |
 | `KPayoutRow` | Recipient, amount, date, expected vs actual |
 | `KMonthGridCell` / `KMonthGrid` | Spreadsheet-like members × months grid, status per cell, horizontal scroll, pinned first column |
-| `KScheduleGrid` / `KMonthTile` | Payout schedule as a 4-column grid of month tiles (chosen design): paid out = filled brand, now = outlined info, your turn = amber highlight; tapping a tile shows that month's recipients below |
+| `KScheduleGrid` / `KMonthTile` | Payout schedule as a 4-column grid of month tiles (chosen design): paid out = filled brand, now = outlined info, your turn = amber highlight; tapping a tile shows that month's recipients below. API: `KScheduleGrid(months: [KScheduleMonth(month, recipients, state: KMonthTileState{upcoming, now, paidOut}, isYourTurn)], selectedIndex?, onSelect?, showLegend, columns: 4)`; `KMonthTile(month, recipients, state, isYourTurn, selected, onTap?)` |
 | `KNoteTile` | Note text, author, time, Private/Shared tag |
 | `KAuditTile` | Who did what, when, before → after |
 | `KReminderCard` | Next reminder date, "Remind unpaid members" with sent-today state |
@@ -144,21 +145,21 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 ### 3.6 Feedback
 | Component | API | Notes |
 |---|---|---|
-| `KEmptyState` | `illustration?`, `title`, `message`, `action?` | Every list has one |
-| `KErrorState` | `message`, `onRetry` | |
-| `KSkeleton` / `KSkeletonList` | shape presets | Loading: no full-screen spinners for content |
+| `KEmptyState` | `title`, `message?`, `icon?`, `actionLabel?`, `onAction?` | Every list has one |
+| `KErrorState` | `message`, `onRetry?`, `title?`, `retryLabel?` ("Try again"), `isRetrying` | |
+| `KSkeleton` / `KSkeletonList` | `KSkeleton(width?, height, radius)`, `.circle(size)`; `KSkeletonList(rows: 3)` | Loading: no full-screen spinners for content. Static (no shimmer) so `pumpAndSettle` never hangs; the list is announced once as "Loading" |
 | `KLoadingOverlay` | `isLoading` | Blocking writes only |
-| `KToast` (`context.showToast`) | `message`, `tone`, `action?` | Snackbar replacement, e.g. "Payment recorded · Undo" |
-| `KConfirmDialog` | `title`, `message`, `confirmLabel`, `destructive` | Required before void, unlink, reorder after start, payout with shortfall |
-| `KBottomSheet` (`showKSheet`) | `title`, `child`, `actions` | |
+| `KToast` (`context.showToast`) | `message`, `tone: KToastTone{neutral, positive, negative}`, `actionLabel?`, `onAction?`, `duration` | Snackbar replacement, e.g. "Payment recorded · Undo"; replaces any toast already showing |
+| `KConfirmDialog` / `showKConfirm` | `title`, `message`, `confirmLabel`, `cancelLabel?`, `destructive` → `Future<bool>` | Required before void, unlink, reorder after start, payout with shortfall. Dismiss = false |
+| `showKSheet<T>` | `builder`, `title?`, `actions`, `isDismissible` → `Future<T?>` | Drag handle, titled header with labelled close, scrolls, keyboard-safe. Layout is `KSheetBody` |
 
 ### 3.7 Navigation and layout
 | Component | Notes |
 |---|---|
-| `KScaffold` | Safe areas, gutter, background, offline banner slot, FAB slot |
-| `KAppBar` | `title`, `subtitle?`, `actions`, back behaviour, large-title variant |
-| `KBottomNav` | Home · Inbox · Profile |
-| `KTabBar` | Kameti detail tabs: Overview · Members · Schedule · Payments · Notes |
+| `KScaffold` | `body`, `appBar?`, `banner?` (offline slot), `fab?`, `bottomBar?`, `padded` (gutter) |
+| `KAppBar` | `title`, `subtitle?`, `actions`, `leading: KAppBarLeading{auto, back, close, none}`, `onLeading?`, `large`, `bottom?` |
+| `KBottomNav` | Home · Inbox · Profile. `items: [KNavItem(icon, label, selectedIcon?, showDot)]`, `currentIndex`, `onTap` |
+| `KTabBar` | Kameti detail tabs: Overview · Members · Schedule · Payments · Notes. `tabs: [String]`, `controller?` (else `DefaultTabController`), `onTap?`; use as `KAppBar.bottom` |
 | `KSliverList` | Virtualised list with pull-to-refresh (E51) |
 | `KPageHeader` | Big number + caption (e.g. "You owe Rs 2,50,000 this month") |
 

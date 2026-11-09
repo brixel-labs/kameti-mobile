@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 /// Semantic colour tokens for direction A "Ledger" (docs/DESIGN_SYSTEM.md
@@ -29,6 +30,7 @@ class KColors {
     required this.yourTurn,
     required this.yourTurnBorder,
     required this.onYourTurn,
+    required this.avatars,
   });
 
   factory lerp(KColors a, KColors b, double t) {
@@ -59,6 +61,13 @@ class KColors {
       yourTurn: l(a.yourTurn, b.yourTurn),
       yourTurnBorder: l(a.yourTurnBorder, b.yourTurnBorder),
       onYourTurn: l(a.onYourTurn, b.onYourTurn),
+      avatars: [
+        for (var i = 0; i < a.avatars.length; i++)
+          KAvatarColors(
+            background: l(a.avatars[i].background, b.avatars[i].background),
+            foreground: l(a.avatars[i].foreground, b.avatars[i].foreground),
+          ),
+      ],
     );
   }
 
@@ -88,6 +97,13 @@ class KColors {
   final Color yourTurnBorder;
   final Color onYourTurn;
 
+  /// Member palette (`avatar1` … `avatar8`). Read it with [avatar], which
+  /// wraps any index, so a member's colour index never goes out of range.
+  final List<KAvatarColors> avatars;
+
+  /// The palette entry for a member's colour index (wraps around).
+  KAvatarColors avatar(int index) => avatars[index % avatars.length];
+
   static const light = KColors(
     background: Color(0xFFF6F7F5),
     surface: Color(0xFFFFFFFF),
@@ -114,6 +130,40 @@ class KColors {
     yourTurn: Color(0xFFFFF1DC),
     yourTurnBorder: Color(0xFFC27A00),
     onYourTurn: Color(0xFF6B3A00),
+    avatars: [
+      KAvatarColors(
+        background: Color(0xFFD7E8FF),
+        foreground: Color(0xFF1D4F99),
+      ),
+      KAvatarColors(
+        background: Color(0xFFD9F2E4),
+        foreground: Color(0xFF135C38),
+      ),
+      KAvatarColors(
+        background: Color(0xFFFFE3D3),
+        foreground: Color(0xFF8A3B12),
+      ),
+      KAvatarColors(
+        background: Color(0xFFE6DEFF),
+        foreground: Color(0xFF4B2F99),
+      ),
+      KAvatarColors(
+        background: Color(0xFFFFF0C2),
+        foreground: Color(0xFF7A5300),
+      ),
+      KAvatarColors(
+        background: Color(0xFFFFDDEB),
+        foreground: Color(0xFF8A1F4F),
+      ),
+      KAvatarColors(
+        background: Color(0xFFD5F0F4),
+        foreground: Color(0xFF0F5A66),
+      ),
+      KAvatarColors(
+        background: Color(0xFFEEF0ED),
+        foreground: Color(0xFF4E5D57),
+      ),
+    ],
   );
 
   static const dark = KColors(
@@ -142,5 +192,48 @@ class KColors {
     yourTurn: Color(0xFF3A2A12),
     yourTurnBorder: Color(0xFF8A6420),
     onYourTurn: Color(0xFFFFE2B8),
+    avatars: [
+      KAvatarColors(
+        background: Color(0xFF1A2A45),
+        foreground: Color(0xFF9DC2FF),
+      ),
+      KAvatarColors(
+        background: Color(0xFF163527),
+        foreground: Color(0xFF7FDDB8),
+      ),
+      KAvatarColors(
+        background: Color(0xFF3D261A),
+        foreground: Color(0xFFFFB892),
+      ),
+      KAvatarColors(
+        background: Color(0xFF2A2245),
+        foreground: Color(0xFFC3B2FF),
+      ),
+      KAvatarColors(
+        background: Color(0xFF3A3012),
+        foreground: Color(0xFFF2D27A),
+      ),
+      KAvatarColors(
+        background: Color(0xFF3D1D2C),
+        foreground: Color(0xFFFF9FC8),
+      ),
+      KAvatarColors(
+        background: Color(0xFF12333A),
+        foreground: Color(0xFF7FD6E6),
+      ),
+      KAvatarColors(
+        background: Color(0xFF1E2A26),
+        foreground: Color(0xFFA3B1AC),
+      ),
+    ],
   );
+}
+
+/// One member-palette entry: avatar fill and the initials drawn on it.
+@immutable
+class KAvatarColors {
+  const new({required this.background, required this.foreground});
+
+  final Color background;
+  final Color foreground;
 }

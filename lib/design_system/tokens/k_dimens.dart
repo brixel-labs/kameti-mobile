@@ -31,6 +31,12 @@ abstract final class KSize {
   static const double minTouch = 44;
   static const double buttonHeight = 52;
   static const double inputHeight = 48;
+
+  /// Minimum height of a schedule-grid month tile (grows with text size).
+  static const double monthTile = 74;
+
+  /// Width of the inline amount box in the share split editor.
+  static const double inlineAmountWidth = 112;
 }
 
 /// Vertical or horizontal gap from the spacing scale.
