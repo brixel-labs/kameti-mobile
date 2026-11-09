@@ -55,11 +55,11 @@ A release covers **both repos** when the backend changed. Cut, tag and ship them
 1. Confirm with the user: "Merge release X.Y.Z to main and tag vX.Y.Z?" Wait for a yes.
 2. Merge the PR into `main` **with a merge commit** (`gh pr merge <n> --merge`).
 3. Tag: `git switch main && git pull --ff-only && git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin vX.Y.Z`.
-4. Back-merge into develop:
+4. Back-merge into develop **through a PR**. Direct pushes to `develop` are blocked by the pre-push hook.
    ```bash
-   git switch develop && git pull --ff-only && git merge --no-ff release/X.Y.Z && git push
+   gh pr create --base develop --head release/X.Y.Z --title "chore(release): back-merge X.Y.Z into develop"
    ```
-   If that conflicts, open a PR `release/X.Y.Z → develop` instead.
+   Merge it with a merge commit (`gh pr merge <n> --merge`) once the user approves. Resolve any conflicts on the release branch first.
 5. Delete the release branch locally and on the remote, after the user agrees.
 6. Create a GitHub release from the tag with the changelog: `gh release create vX.Y.Z --notes-file <notes>`.
 7. Remind the user of the store steps: submit the iOS build for review, promote the Android build from internal → production, and check Sentry for the new release.

@@ -51,6 +51,17 @@ These rules apply to **kameti-mobile** and **kameti-backend**. Both use the same
 - Tags: `vX.Y.Z` on `main`, annotated (`git tag -a`), in both repos for a joint release.
 - `CHANGELOG.md` in "Keep a Changelog" format, generated from the Conventional Commits since the previous tag.
 
+## Branch guards
+
+GitHub branch protection isn't available for private repos on the org's current (free) plan, so `main` and `develop` are guarded locally:
+
+- **`.githooks/pre-push`** refuses any direct push to, or deletion of, `main` or `develop`. Enable it once per clone with `git config core.hooksPath .githooks`. People can override it in an emergency with `KAMETI_ALLOW_PROTECTED_PUSH=1`.
+- **`.claude/settings.json`**:
+  - **denies** Claude direct pushes to `main` or `develop`, force-pushes, `--no-verify`, deleting those branches, changing `core.hooksPath`, and using the override variable;
+  - **asks** before `gh pr merge`, tagging, pushing tags, deleting remote branches and creating GitHub releases.
+
+Because of this, **every** change reaches `main` and `develop` through a PR, back-merges included. If the org moves to GitHub Team, switch on server-side protection with the same rules.
+
 ## Hard rules for Claude
 
 1. **Never commit, push, open a PR, merge, tag or delete a branch unless the user asked for it in this conversation.** Approval for one doesn't carry over to the next.
@@ -60,3 +71,4 @@ These rules apply to **kameti-mobile** and **kameti-backend**. Both use the same
 5. **Never commit secrets or private data:** `.env*`, keystores, `*.p8`, `*.p12`, `google-services.json` / `GoogleService-Info.plist` for prod, the Supabase service-role key, the Resend key, or the reference spreadsheet PDF.
 6. Before starting work, check `git status`. Never discard someone's uncommitted changes. Stash or ask.
 7. If the work is on the wrong branch, stop and say so before committing.
+8. **Never bypass the guards:** no `--no-verify`, no `KAMETI_ALLOW_PROTECTED_PUSH`, no changing `core.hooksPath`, no editing `.githooks/` or the deny rules in `.claude/settings.json` unless the user asks for that specific change.

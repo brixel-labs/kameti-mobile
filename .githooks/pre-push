@@ -1,0 +1,37 @@
+#!/bin/sh
+# Kameti pre-push guard (see .claude/rules/git-workflow.md).
+#
+# Blocks, for main and develop:
+#   - direct pushes (changes must arrive through a pull request)
+#   - deleting the branch on the remote
+# Tags (vX.Y.Z) and every other branch are unaffected.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# Human-only emergency override (never used by Claude):
+#   KAMETI_ALLOW_PROTECTED_PUSH=1 git push ...
+
+protected="refs/heads/main refs/heads/develop"
+zero="0000000000000000000000000000000000000000"
+
+if [ "${KAMETI_ALLOW_PROTECTED_PUSH:-0}" = "1" ]; then
+  echo "pre-push: KAMETI_ALLOW_PROTECTED_PUSH=1 set, skipping branch guard." >&2
+  exit 0
+fi
+
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  for p in $protected; do
+    if [ "$remote_ref" = "$p" ]; then
+      branch=${p#refs/heads/}
+      if [ "$local_sha" = "$zero" ]; then
+        echo "pre-push: refusing to delete protected branch '$branch'." >&2
+      else
+        echo "pre-push: refusing direct push to protected branch '$branch'." >&2
+        echo "          Push a feature/, bugfix/, release/ or hotfix/ branch and open a PR instead." >&2
+      fi
+      status=1
+    fi
+  done
+done
+
+exit $status
