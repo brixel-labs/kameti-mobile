@@ -1,0 +1,17 @@
+{
+  "@@locale": "en",
+  "appTitle": "Kameti",
+  "signInTagline": "Run your kameti.\nTrack every turn.",
+  "signInBody": "Record who paid, see whose turn is next, and remind members, all in one place.",
+  "continueWithApple": "Continue with Apple",
+  "continueWithGoogle": "Continue with Google",
+  "homeEmptyTitle": "No kametis yet",
+  "homeEmptyBody": "Start one for your family, office or friends. Or join one you've been invited to.",
+  "startKameti": "Start a kameti",
+  "comingSoon": "Coming soon",
+  "joinTitle": "Joining a kameti",
+  "joinBody": "Sign in to see your invite.",
+  "statusPaid": "Paid",
+  "statusPartial": "Partial",
+  "statusUnpaid": "Unpaid"
+}
