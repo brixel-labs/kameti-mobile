@@ -367,3 +367,35 @@ public struct KSelectField<Value: Hashable>: View {
         }
     }
 }
+
+/// The design's switch: a green capsule track with a white knob that slides.
+/// Use it as `Toggle(isOn:) { label }.toggleStyle(KToggleStyle())`.
+public struct KToggleStyle: ToggleStyle {
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
+        Button { configuration.isOn.toggle() } label: {
+            HStack(spacing: KSpace.md) {
+                configuration.label
+                Spacer(minLength: KSpace.sm)
+                track(isOn: configuration.isOn)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityRepresentation { Toggle(isOn: configuration.$isOn) { configuration.label } }
+    }
+
+    private func track(isOn: Bool) -> some View {
+        Capsule()
+            .fill(isOn ? KColors.brand : KColors.borderStrong)
+            .frame(width: 52, height: 32)
+            .overlay(alignment: isOn ? .trailing : .leading) {
+                Circle()
+                    .fill(Color.white)
+                    .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
+                    .padding(3)
+            }
+            .animation(.spring(duration: 0.25, bounce: 0.25), value: isOn)
+    }
+}

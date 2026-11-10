@@ -35,7 +35,7 @@ struct MembersStep: View {
                     )) {
                         Text("I'm also a member", bundle: .module).kText(KTextToken.bodyStrong)
                     }
-                    .tint(KColors.brand)
+                    .toggleStyle(KToggleStyle())
                     .disabled(model.isBusy)
 
                     KCard {
@@ -138,11 +138,17 @@ struct SlotsStep: View {
     @Bindable var model: CreateWizardModel
 
     var body: some View {
-        if let slotId = model.editingSlotId, let slot = model.slots.first(where: { $0.id == slotId }) {
-            SlotSplitView(model: model, slot: slot)
-        } else {
-            list
+        ZStack {
+            if let slotId = model.editingSlotId, let slot = model.slots.first(where: { $0.id == slotId }) {
+                SlotSplitView(model: model, slot: slot)
+                    .transition(.move(edge: .trailing))
+            } else {
+                list
+                    .transition(.move(edge: .leading))
+            }
         }
+        .animation(.smooth(duration: 0.35), value: model.editingSlotId)
+        .clipped()
     }
 
     private var list: some View {

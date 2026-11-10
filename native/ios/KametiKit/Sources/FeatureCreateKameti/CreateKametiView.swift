@@ -22,17 +22,17 @@ public struct CreateKametiView: View {
             WizardProgress(step: model.step)
                 .padding(.horizontal, KSpace.xl)
                 .padding(.top, KSpace.xs)
-            Group {
-                switch model.step {
-                case .basics: BasicsStep(model: model)
-                case .dates: DatesStep(model: model)
-                case .members: MembersStep(model: model)
-                case .slots: SlotsStep(model: model)
-                case .order: OrderStep(model: model)
-                case .review: ReviewStep(model: model, onStart: onStarted, onSaveDraft: onClose)
-                }
+            ZStack {
+                stepView
+                    .id(model.step)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: model.isMovingForward ? .trailing : .leading),
+                        removal: .move(edge: model.isMovingForward ? .leading : .trailing)
+                    ))
             }
+            .animation(.smooth(duration: 0.35), value: model.step)
             .frame(maxHeight: .infinity)
+            .clipped()
         }
         .background(KColors.background)
         .kDismissesKeyboard()
@@ -40,11 +40,14 @@ public struct CreateKametiView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
         .toolbar {
+            // Plain text: no glass capsule behind it, so it doesn't read as a button.
             ToolbarItem(placement: .topBarTrailing) {
                 Text("Step \(model.step.rawValue + 1) of \(WizardStep.allCases.count)", bundle: .module)
                     .kText(KTextToken.bodySm, color: KColors.textSecondary)
-                    .padding(.horizontal, KSpace.sm)
+                    .contentTransition(.numericText())
+                    .animation(.smooth, value: model.step)
             }
+            .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .topBarLeading) {
                 if model.isAtStart {
                     Button(String(localized: "Close", bundle: .module), systemImage: "xmark", action: onClose)
@@ -59,6 +62,19 @@ public struct CreateKametiView: View {
             isPresented: Binding(get: { model.failure != nil }, set: { if !$0 { model.clearFailure() } })
         ) {
             Button(String(localized: "OK", bundle: .module), role: .cancel) {}
+        }
+    }
+}
+
+private extension CreateKametiView {
+    @ViewBuilder var stepView: some View {
+        switch model.step {
+        case .basics: BasicsStep(model: model)
+        case .dates: DatesStep(model: model)
+        case .members: MembersStep(model: model)
+        case .slots: SlotsStep(model: model)
+        case .order: OrderStep(model: model)
+        case .review: ReviewStep(model: model, onStart: onStarted, onSaveDraft: onClose)
         }
     }
 }

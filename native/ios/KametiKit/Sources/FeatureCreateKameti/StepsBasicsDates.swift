@@ -120,7 +120,7 @@ struct DatesStep: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(Array(WizardLimits.dueDays), id: \.self) { day in
-                        Button { model.setDueDay(day); otherOpen = false } label: {
+                        Button { withAnimation(.smooth(duration: 0.3)) { model.setDueDay(day) }; otherOpen = false } label: {
                             HStack {
                                 Text(ordinal(day)).kText(KTextToken.body)
                                 Spacer()
@@ -143,7 +143,7 @@ struct DatesStep: View {
             WizardLabel(String(localized: "Members pay by", bundle: .module))
             KFlowLayout {
                 ForEach(Self.quickDays, id: \.self) { day in
-                    KChip(ordinal(day), isOn: model.dueDay == day, style: .outlined) { model.setDueDay(day) }
+                    KChip(ordinal(day), isOn: model.dueDay == day, style: .outlined) { withAnimation(.smooth(duration: 0.3)) { model.setDueDay(day) } }
                 }
                 let custom = !Self.quickDays.contains(model.dueDay)
                 KChip(custom ? ordinal(model.dueDay) : String(localized: "Other", bundle: .module), isOn: custom, style: .outlined) {
@@ -160,8 +160,11 @@ struct DatesStep: View {
                 ForEach(1...model.dueDay, id: \.self) { day in
                     KDayTile("\(day)", isOn: model.reminderDays.contains(day)) { model.toggleReminder(day) }
                         .accessibilityLabel(Text("Remind on day \(day)", bundle: .module))
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
             }
+            .animation(.smooth(duration: 0.3), value: model.dueDay)
+            .animation(.smooth(duration: 0.2), value: model.reminderDays)
             HStack {
                 Text("At", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
                 Spacer()
@@ -212,7 +215,7 @@ struct DatesStep: View {
                 Text(subtitle).kText(KTextToken.bodySm, color: KColors.textSecondary)
             }
         }
-        .tint(KColors.brand)
+        .toggleStyle(KToggleStyle())
     }
 
     /// What a member's reminder will look like.
@@ -234,6 +237,7 @@ struct DatesStep: View {
         .padding(KSpace.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.card))
+        .animation(.smooth, value: model.dueDay)
     }
 }
 
