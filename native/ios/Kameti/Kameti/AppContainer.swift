@@ -3,6 +3,7 @@ import FeatureShell
 import KametiData
 import KametiDomain
 import KametiNavigation
+import KametiTestSupport
 
 /// The composition root: the one place that turns the config into the real
 /// (Supabase) dependencies and hands them to the features.
@@ -17,12 +18,17 @@ struct AppContainer {
         let google = config.googleIOSClientID.flatMap { iosID in
             config.googleWebClientID.map { GoogleCredentialSource(clientID: iosID, serverClientID: $0) }
         }
-        dependencies = KametiBackend.makeDependencies(
-            url: config.supabaseURL,
-            publishableKey: config.supabasePublishableKey,
-            google: google,
-            apple: AppleCredentialSource()
-        )
+        if config.isDemo {
+            // Sample kametis, no backend: see every screen without data.
+            dependencies = SampleData.dependencies()
+        } else {
+            dependencies = KametiBackend.makeDependencies(
+                url: config.supabaseURL,
+                publishableKey: config.supabasePublishableKey,
+                google: google,
+                apple: AppleCredentialSource()
+            )
+        }
         session = SessionStore(auth: dependencies.auth)
         router = AppRouter()
         signIn = SignInViewModel(auth: dependencies.auth, showsDevSignIn: config.isDev)

@@ -18,6 +18,9 @@ struct AppConfig: Decodable {
         case googleIOSClientID = "GOOGLE_IOS_CLIENT_ID"
     }
 
+    /// The demo build runs on sample data and is always signed in.
+    var isDemo: Bool { flavor == "demo" }
+
     /// The dev build shows the seeded test-account buttons (local Supabase only).
     var isDev: Bool { (flavor ?? "dev") == "dev" }
 

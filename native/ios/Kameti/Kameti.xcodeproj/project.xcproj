@@ -75,6 +75,11 @@
           "product-name": "KametiUI",
           "build-phase": { "build-phase": "frameworks" },
         },
+        {
+          "package": "KametiKit",
+          "product-name": "KametiTestSupport",
+          "build-phase": { "build-phase": "frameworks" },
+        },
       ],
       "build-settings": {
         "CODE_SIGN_ENTITLEMENTS": "Kameti.entitlements",
