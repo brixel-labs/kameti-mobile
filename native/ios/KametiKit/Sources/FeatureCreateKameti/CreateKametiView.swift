@@ -21,7 +21,7 @@ public struct CreateKametiView: View {
         VStack(spacing: 0) {
             WizardProgress(step: model.step)
                 .padding(.horizontal, KSpace.xl)
-                .padding(.top, KSpace.sm)
+                .padding(.top, KSpace.xs)
             Group {
                 switch model.step {
                 case .basics: BasicsStep(model: model)
@@ -40,6 +40,11 @@ public struct CreateKametiView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Text("Step \(model.step.rawValue + 1) of \(WizardStep.allCases.count)", bundle: .module)
+                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    .padding(.horizontal, KSpace.sm)
+            }
             ToolbarItem(placement: .topBarLeading) {
                 if model.isAtStart {
                     Button(String(localized: "Close", bundle: .module), systemImage: "xmark", action: onClose)
@@ -48,6 +53,7 @@ public struct CreateKametiView: View {
                 }
             }
         }
+        .task { await model.loadOwner() }
         .alert(
             model.failure?.userMessage ?? "",
             isPresented: Binding(get: { model.failure != nil }, set: { if !$0 { model.clearFailure() } })

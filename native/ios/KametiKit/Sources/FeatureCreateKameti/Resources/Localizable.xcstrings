@@ -1,6 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "10:00 AM, Pakistan time" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10:00 AM, Pakistan time"
+          }
+        }
+      }
+    },
     "Add a person" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -56,13 +67,13 @@
         }
       }
     },
-    "At 10:00 AM, Pakistan time" : {
+    "At" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "At 10:00 AM, Pakistan time"
+            "value" : "At"
           }
         }
       }
@@ -107,6 +118,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close"
+          }
+        }
+      }
+    },
+    "Day after the due date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day after the due date"
           }
         }
       }
@@ -305,6 +327,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "I'm also a member"
+          }
+        }
+      }
+    },
+    "K" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "K"
           }
         }
       }
@@ -562,6 +595,17 @@
         }
       }
     },
+    "Overdue reminder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overdue reminder"
+          }
+        }
+      }
+    },
     "Owner" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -771,6 +815,17 @@
         }
       }
     },
+    "Tell me who hasn't paid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tell me who hasn't paid"
+          }
+        }
+      }
+    },
     "The basics" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -855,6 +910,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You can change these until you start the kameti."
+          }
+        }
+      }
+    },
+    "Your kameti" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your kameti"
+          }
+        }
+      }
+    },
+    "your kameti owner" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your kameti owner"
           }
         }
       }

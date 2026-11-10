@@ -82,7 +82,7 @@ struct MembersStep: View {
                 }
                 .padding(KSpace.xl)
             }
-            WizardFooter(primaryTitle: String(localized: "Next: slots", bundle: .module), isEnabled: !model.members.isEmpty) {
+            WizardFooter(primaryTitle: String(localized: "Next: slots", bundle: .module), isEnabled: !model.members.isEmpty, onBack: { model.back() }) {
                 model.goTo(.slots)
             }
         }
@@ -181,7 +181,7 @@ struct SlotsStep: View {
                 }
                 .padding(KSpace.xl)
             }
-            WizardFooter(primaryTitle: String(localized: "Next: payout order", bundle: .module), isEnabled: checks.slotsFilled && checks.slotsAddUp) {
+            WizardFooter(primaryTitle: String(localized: "Next: payout order", bundle: .module), isEnabled: checks.slotsFilled && checks.slotsAddUp, onBack: { model.back() }) {
                 model.goTo(.order)
             }
         }

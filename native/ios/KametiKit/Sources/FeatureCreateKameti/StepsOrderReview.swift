@@ -44,7 +44,7 @@ struct OrderStep: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .environment(\.editMode, .constant(.active))
-            WizardFooter(primaryTitle: String(localized: "Next: review", bundle: .module), isLoading: model.isBusy) {
+            WizardFooter(primaryTitle: String(localized: "Next: review", bundle: .module), isLoading: model.isBusy, onBack: { model.back() }) {
                 Task { await model.saveOrder(order) }
             }
         }

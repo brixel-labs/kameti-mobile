@@ -44,6 +44,9 @@ public final class CreateWizardModel {
     /// Emails typed for members added here (display only).
     public private(set) var emails: [String: String] = [:]
 
+    /// The owner's first name, for the reminder preview.
+    public private(set) var ownerName: String?
+
     public private(set) var isBusy = false
     public private(set) var failure: Failure?
 
@@ -70,6 +73,13 @@ public final class CreateWizardModel {
             slotAmount: slotAmount ?? .zero, maxSlotsPerMember: maxSlotsPerMember,
             members: members, slots: slots, shares: shares
         )
+    }
+
+    public func loadOwner() async {
+        guard ownerName == nil else { return }
+        if let profile = try? await dependencies.profiles.myProfile(userId: userId) {
+            ownerName = profile.displayName.split(separator: " ").first.map(String.init)
+        }
     }
 
     // MARK: Local edits

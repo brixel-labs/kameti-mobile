@@ -88,8 +88,13 @@ struct BasicsStep: View {
 /// Step 2 (AC-2): due day, reminder days and the most slots per person.
 struct DatesStep: View {
     @Bindable var model: CreateWizardModel
+    @State private var otherOpen = false
+    // The overdue nudge and the owner summary are shown as in the design; the
+    // backend has no fields for them yet, so they are not saved.
+    @State private var overdueReminder = true
+    @State private var ownerSummary = true
 
-    private static let quickDays = [1, 5, 10, 15, 20, 25]
+    private static let quickDays = [5, 10, 15]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -99,50 +104,136 @@ struct DatesStep: View {
                         title: String(localized: "Due date and reminders", bundle: .module),
                         subtitle: String(localized: "We'll nudge members who haven't paid. Paid members are never reminded.", bundle: .module)
                     )
-                    VStack(alignment: .leading, spacing: KSpace.sm) {
-                        WizardLabel(String(localized: "Members pay by", bundle: .module))
-                        KFlowChips {
-                            ForEach(Self.quickDays, id: \.self) { day in
-                                KChip(ordinal(day), isOn: model.dueDay == day) { model.setDueDay(day) }
-                            }
-                            Menu {
-                                Picker(String(localized: "Pick the due day", bundle: .module), selection: Binding(get: { model.dueDay }, set: model.setDueDay)) {
-                                    ForEach(Array(WizardLimits.dueDays), id: \.self) { Text(ordinal($0)).tag($0) }
-                                }
-                            } label: {
-                                KChip(Self.quickDays.contains(model.dueDay) ? String(localized: "Other", bundle: .module) : ordinal(model.dueDay),
-                                     isOn: !Self.quickDays.contains(model.dueDay)) {}
-                                    .allowsHitTesting(false)
-                            }
-                        }
-                    }
-                    VStack(alignment: .leading, spacing: KSpace.sm) {
-                        WizardLabel(String(localized: "Remind on these days (tap to change)", bundle: .module))
-                        KFlowChips {
-                            ForEach(1...model.dueDay, id: \.self) { day in
-                                KChip("\(day)", isOn: model.reminderDays.contains(day)) { model.toggleReminder(day) }
-                                    .accessibilityLabel(Text("Remind on day \(day)", bundle: .module))
-                            }
-                        }
-                        Text("At 10:00 AM, Pakistan time", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
-                    }
-                    VStack(alignment: .leading, spacing: KSpace.xs) {
-                        WizardLabel(String(localized: "Most slots per person", bundle: .module))
-                        KStepper(
-                            value: model.maxSlotsPerMember, range: 1...WizardLimits.maxSlotsPerMember,
-                            decreaseLabel: String(localized: "Fewer slots per person", bundle: .module),
-                            increaseLabel: String(localized: "More slots per person", bundle: .module),
-                            onChange: { model.setMaxSlots($0) }
-                        )
-                        Text("Up to \(WizardLimits.maxSlotsPerMember)", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
-                    }
+                    dueDay
+                    reminders
+                    settingsCard
+                    preview
                 }
                 .padding(KSpace.xl)
             }
-            WizardFooter(primaryTitle: String(localized: "Next: members", bundle: .module), isLoading: model.isBusy) {
-                Task { await model.saveDates() }
+            WizardFooter(
+                primaryTitle: String(localized: "Next: members", bundle: .module), isLoading: model.isBusy,
+                onBack: { model.back() }
+            ) { Task { await model.saveDates() } }
+        }
+        .kBottomSheet(isPresented: $otherOpen, title: String(localized: "Pick the due day", bundle: .module), detents: [.medium, .large]) {
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(WizardLimits.dueDays), id: \.self) { day in
+                        Button { model.setDueDay(day); otherOpen = false } label: {
+                            HStack {
+                                Text(ordinal(day)).kText(KTextToken.body)
+                                Spacer()
+                                if model.dueDay == day { Image(systemName: "checkmark").foregroundStyle(KColors.brand) }
+                            }
+                            .padding(.horizontal, KSpace.xl)
+                            .padding(.vertical, KSpace.md)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        Divider().padding(.leading, KSpace.xl)
+                    }
+                }
             }
         }
+    }
+
+    private var dueDay: some View {
+        VStack(alignment: .leading, spacing: KSpace.sm) {
+            WizardLabel(String(localized: "Members pay by", bundle: .module))
+            KFlowLayout {
+                ForEach(Self.quickDays, id: \.self) { day in
+                    KChip(ordinal(day), isOn: model.dueDay == day, style: .outlined) { model.setDueDay(day) }
+                }
+                let custom = !Self.quickDays.contains(model.dueDay)
+                KChip(custom ? ordinal(model.dueDay) : String(localized: "Other", bundle: .module), isOn: custom, style: .outlined) {
+                    otherOpen = true
+                }
+            }
+        }
+    }
+
+    private var reminders: some View {
+        VStack(alignment: .leading, spacing: KSpace.sm) {
+            WizardLabel(String(localized: "Remind on these days (tap to change)", bundle: .module))
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: KSpace.sm), count: 5), spacing: KSpace.sm) {
+                ForEach(1...model.dueDay, id: \.self) { day in
+                    KDayTile("\(day)", isOn: model.reminderDays.contains(day)) { model.toggleReminder(day) }
+                        .accessibilityLabel(Text("Remind on day \(day)", bundle: .module))
+                }
+            }
+            HStack {
+                Text("At", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
+                Spacer()
+                Text("10:00 AM, Pakistan time", bundle: .module).kText(KTextToken.bodyStrong)
+            }
+            .padding(.horizontal, KSpace.md)
+            .frame(minHeight: KSize.fieldHeight)
+            .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+            .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
+        }
+    }
+
+    private var settingsCard: some View {
+        KCard {
+            VStack(spacing: 0) {
+                toggleRow(
+                    String(localized: "Overdue reminder", bundle: .module), String(localized: "Day after the due date", bundle: .module),
+                    isOn: $overdueReminder
+                )
+                Divider().padding(.vertical, KSpace.md)
+                toggleRow(
+                    String(localized: "Tell me who hasn't paid", bundle: .module),
+                    String(localized: "A summary for you on the \(ordinal(min(model.dueDay + 1, 28)))", bundle: .module),
+                    isOn: $ownerSummary
+                )
+                Divider().padding(.vertical, KSpace.md)
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Most slots per person", bundle: .module).kText(KTextToken.bodyStrong)
+                        Text("Up to \(WizardLimits.maxSlotsPerMember)", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    }
+                    Spacer()
+                    KCompactStepper(
+                        value: model.maxSlotsPerMember, range: 1...WizardLimits.maxSlotsPerMember,
+                        decreaseLabel: String(localized: "Fewer slots per person", bundle: .module),
+                        increaseLabel: String(localized: "More slots per person", bundle: .module),
+                        onChange: { model.setMaxSlots($0) }
+                    )
+                }
+            }
+        }
+    }
+
+    private func toggleRow(_ title: String, _ subtitle: String, isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).kText(KTextToken.bodyStrong)
+                Text(subtitle).kText(KTextToken.bodySm, color: KColors.textSecondary)
+            }
+        }
+        .tint(KColors.brand)
+    }
+
+    /// What a member's reminder will look like.
+    private var preview: some View {
+        let amount = (model.slotAmount ?? .zero).format()
+        let month = monthLabel(model.startMonth).split(separator: " ").first.map(String.init) ?? ""
+        let owner = model.ownerName ?? String(localized: "your kameti owner", bundle: .module)
+        return HStack(alignment: .top, spacing: KSpace.md) {
+            Text("K").kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                .frame(width: 36, height: 36)
+                .background(KColors.brand, in: RoundedRectangle(cornerRadius: 10))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(model.name.isEmpty ? String(localized: "Your kameti", bundle: .module) : model.name).kText(KTextToken.bodyStrong)
+                Text("Reminder: \(amount) for \(month) is due by the \(ordinal(model.dueDay)). Pay \(owner).", bundle: .module)
+                    .kText(KTextToken.body)
+            }
+        }
+        .padding(KSpace.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.card))
     }
 }
 

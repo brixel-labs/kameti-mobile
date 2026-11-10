@@ -95,8 +95,42 @@ public struct KAmountInput: View {
     }
 }
 
-/// A pill that can be selected: filled brand colour when on.
+/// A pill that can be selected. `.filled` turns solid brand colour when on;
+/// `.outlined` keeps a light fill with a brand border (the due-day chips).
 public struct KChip: View {
+    public enum Style: Sendable { case filled, outlined }
+
+    private let title: String
+    private let isOn: Bool
+    private let style: Style
+    private let action: () -> Void
+
+    public init(_ title: String, isOn: Bool, style: Style = .filled, action: @escaping () -> Void) {
+        self.title = title; self.isOn = isOn; self.style = style; self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            Text(title)
+                .kText(KTextToken.bodyStrong, color: foreground)
+                .padding(.horizontal, KSpace.lg)
+                .padding(.vertical, KSpace.sm + 2)
+                .background(background, in: Capsule())
+                .overlay(Capsule().stroke(isOn ? KColors.brand : KColors.border, lineWidth: isOn && style == .outlined ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    private var foreground: Color { isOn && style == .filled ? KColors.textOnBrand : KColors.textPrimary }
+    private var background: Color {
+        guard isOn else { return KColors.surface }
+        return style == .filled ? KColors.brand : KColors.brandSubtle
+    }
+}
+
+/// A rounded-square day tile for a 5-column grid; solid brand colour when on.
+public struct KDayTile: View {
     private let title: String
     private let isOn: Bool
     private let action: () -> Void
@@ -109,13 +143,52 @@ public struct KChip: View {
         Button(action: action) {
             Text(title)
                 .kText(KTextToken.bodyStrong, color: isOn ? KColors.textOnBrand : KColors.textPrimary)
-                .padding(.horizontal, KSpace.md)
-                .padding(.vertical, KSpace.sm)
-                .background(isOn ? KColors.brand : KColors.surface, in: Capsule())
-                .overlay(Capsule().stroke(isOn ? KColors.brand : KColors.border))
+                .monospacedDigit()
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .background(isOn ? KColors.brand : KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(isOn ? KColors.brand : KColors.border))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}
+
+/// A small − value + control for use inside a settings row.
+public struct KCompactStepper: View {
+    private let value: Int
+    private let range: ClosedRange<Int>
+    private let decreaseLabel: String
+    private let increaseLabel: String
+    private let onChange: (Int) -> Void
+
+    public init(
+        value: Int, range: ClosedRange<Int>, decreaseLabel: String, increaseLabel: String,
+        onChange: @escaping (Int) -> Void
+    ) {
+        self.value = value; self.range = range
+        self.decreaseLabel = decreaseLabel; self.increaseLabel = increaseLabel; self.onChange = onChange
+    }
+
+    public var body: some View {
+        HStack(spacing: KSpace.md) {
+            square("minus", label: decreaseLabel, enabled: value > range.lowerBound) { onChange(value - 1) }
+            Text("\(value)").kText(KTextToken.title).monospacedDigit().frame(minWidth: 20)
+            square("plus", label: increaseLabel, enabled: value < range.upperBound) { onChange(value + 1) }
+        }
+    }
+
+    private func square(_ symbol: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(enabled ? KColors.textPrimary : KColors.textTertiary)
+                .frame(width: 40, height: 40)
+                .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(label)
     }
 }
 

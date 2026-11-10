@@ -27,49 +27,59 @@ struct WizardLabel: View {
     }
 }
 
-/// "Step 2 of 6" with a segmented bar.
+/// A segmented progress bar; the "Step 2 of 6" label sits in the navigation bar.
 struct WizardProgress: View {
     let step: WizardStep
 
     var body: some View {
-        VStack(alignment: .leading, spacing: KSpace.xs) {
-            HStack(spacing: KSpace.xs) {
-                ForEach(WizardStep.allCases, id: \.self) { item in
-                    Capsule()
-                        .fill(item.rawValue <= step.rawValue ? KColors.brand : KColors.border)
-                        .frame(height: 4)
-                }
+        HStack(spacing: KSpace.xs) {
+            ForEach(WizardStep.allCases, id: \.self) { item in
+                Capsule()
+                    .fill(item.rawValue <= step.rawValue ? KColors.brand : KColors.border)
+                    .frame(height: 4)
             }
-            Text("Step \(step.rawValue + 1) of \(WizardStep.allCases.count)", bundle: .module)
-                .kText(KTextToken.caption, color: KColors.textSecondary)
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Step \(step.rawValue + 1) of \(WizardStep.allCases.count)", bundle: .module))
     }
 }
 
-/// The primary action pinned to the bottom of a step.
+/// The actions pinned to the bottom of a step: a Back capsule beside the
+/// primary capsule, or the primary alone on the first step.
 struct WizardFooter<Secondary: View>: View {
     let primaryTitle: String
     var isEnabled = true
     var isLoading = false
+    var onBack: (() -> Void)?
     let action: () -> Void
     @ViewBuilder var secondary: Secondary
 
     var body: some View {
         VStack(spacing: KSpace.sm) {
-            Button(action: action) {
-                ZStack {
-                    Text(primaryTitle).opacity(isLoading ? 0 : 1)
-                    if isLoading { ProgressView().controlSize(.small).tint(KColors.textOnBrand) }
+            HStack(spacing: KSpace.md) {
+                if let onBack {
+                    Button(action: onBack) {
+                        Text("Back", bundle: .module)
+                            .kText(KTextToken.bodyStrong)
+                            .padding(.horizontal, KSpace.lg)
+                    }
+                    .buttonStyle(.glass)
+                    .controlSize(.large)
                 }
-                .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
-                .frame(maxWidth: .infinity)
+                Button(action: action) {
+                    ZStack {
+                        Text(primaryTitle).opacity(isLoading ? 0 : 1)
+                        if isLoading { ProgressView().controlSize(.small).tint(KColors.textOnBrand) }
+                    }
+                    .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(KColors.brand)
+                .controlSize(.large)
+                .disabled(!isEnabled)
+                .allowsHitTesting(!isLoading)
             }
-            .buttonStyle(.glassProminent)
-            .tint(KColors.brand)
-            .controlSize(.large)
-            .disabled(!isEnabled)
-            .allowsHitTesting(!isLoading)
             secondary
         }
         .padding(.horizontal, KSpace.xl)
@@ -79,8 +89,8 @@ struct WizardFooter<Secondary: View>: View {
 }
 
 extension WizardFooter where Secondary == EmptyView {
-    init(primaryTitle: String, isEnabled: Bool = true, isLoading: Bool = false, action: @escaping () -> Void) {
-        self.init(primaryTitle: primaryTitle, isEnabled: isEnabled, isLoading: isLoading, action: action, secondary: { EmptyView() })
+    init(primaryTitle: String, isEnabled: Bool = true, isLoading: Bool = false, onBack: (() -> Void)? = nil, action: @escaping () -> Void) {
+        self.init(primaryTitle: primaryTitle, isEnabled: isEnabled, isLoading: isLoading, onBack: onBack, action: action, secondary: { EmptyView() })
     }
 }
 
