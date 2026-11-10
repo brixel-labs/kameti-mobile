@@ -84,33 +84,6 @@ extension WizardFooter where Secondary == EmptyView {
     }
 }
 
-/// A − value + control.
-struct WizardStepper: View {
-    let value: Int
-    let range: ClosedRange<Int>
-    let decreaseLabel: String
-    let increaseLabel: String
-    let onChange: (Int) -> Void
-
-    var body: some View {
-        HStack {
-            Button { onChange(value - 1) } label: { Image(systemName: "minus") }
-                .disabled(value <= range.lowerBound)
-                .accessibilityLabel(decreaseLabel)
-            Spacer()
-            Text("\(value)").kText(KTextToken.title).monospacedDigit()
-            Spacer()
-            Button { onChange(value + 1) } label: { Image(systemName: "plus") }
-                .disabled(value >= range.upperBound)
-                .accessibilityLabel(increaseLabel)
-        }
-        .buttonStyle(.glass)
-        .padding(KSpace.sm)
-        .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
-        .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
-    }
-}
-
 /// A text field with the wizard's look.
 struct WizardField: View {
     let title: String

@@ -27,43 +27,30 @@ struct BasicsStep: View {
                         capitalization: .words
                     )
                     VStack(alignment: .leading, spacing: KSpace.sm) {
-                        WizardField(
-                            title: String(localized: "Each slot pays per month", bundle: .module), text: $model.amountText,
-                            prompt: "Rs",
-                            error: submitted && !model.slotAmountValid ? String(localized: "Enter an amount in steps of Rs 1,000.", bundle: .module) : nil,
-                            keyboard: .numberPad
+                        KAmountField(
+                            String(localized: "Each slot pays per month", bundle: .module), digits: $model.amountText,
+                            error: submitted && !model.slotAmountValid ? String(localized: "Enter an amount in steps of Rs 1,000.", bundle: .module) : nil
                         )
-                        HStack {
+                        KFlowLayout {
                             ForEach(Self.suggestions, id: \.self) { value in
-                                Button(Money(value).formatCompact()) { model.amountText = String(value) }
-                                    .buttonStyle(.glass)
-                                    .controlSize(.small)
+                                KChip(Money(value).formatCompact(), isOn: model.amountText == String(value)) { model.amountText = String(value) }
                             }
                         }
                     }
                     HStack(alignment: .top, spacing: KSpace.md) {
                         VStack(alignment: .leading, spacing: KSpace.xs) {
                             WizardLabel(String(localized: "Months (= slots)", bundle: .module))
-                            WizardStepper(
+                            KStepper(
                                 value: model.months, range: WizardLimits.minMonths...WizardLimits.maxMonths,
                                 decreaseLabel: String(localized: "Fewer months", bundle: .module),
                                 increaseLabel: String(localized: "More months", bundle: .module),
-                                onChange: model.setMonths
+                                onChange: { model.setMonths($0) }
                             )
                         }
-                        VStack(alignment: .leading, spacing: KSpace.xs) {
-                            WizardLabel(String(localized: "First month", bundle: .module))
-                            Picker("", selection: $model.startMonth) {
-                                ForEach(startOptions, id: \.self) { Text(shortMonthLabel($0)).tag($0) }
-                            }
-                            .pickerStyle(.menu)
-                            .labelsHidden()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, KSpace.xs)
-                            .padding(.horizontal, KSpace.sm)
-                            .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
-                            .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
-                        }
+                        KSelectField(
+                            String(localized: "First month", bundle: .module), selection: $model.startMonth,
+                            options: startOptions.map { (value: $0, label: monthLabel($0)) }
+                        )
                     }
                     KCard {
                         VStack(alignment: .leading, spacing: KSpace.sm) {
@@ -114,16 +101,16 @@ struct DatesStep: View {
                     )
                     VStack(alignment: .leading, spacing: KSpace.sm) {
                         WizardLabel(String(localized: "Members pay by", bundle: .module))
-                        FlowChips {
+                        KFlowChips {
                             ForEach(Self.quickDays, id: \.self) { day in
-                                Chip(title: ordinal(day), isOn: model.dueDay == day) { model.setDueDay(day) }
+                                KChip(ordinal(day), isOn: model.dueDay == day) { model.setDueDay(day) }
                             }
                             Menu {
                                 Picker(String(localized: "Pick the due day", bundle: .module), selection: Binding(get: { model.dueDay }, set: model.setDueDay)) {
                                     ForEach(Array(WizardLimits.dueDays), id: \.self) { Text(ordinal($0)).tag($0) }
                                 }
                             } label: {
-                                Chip(title: Self.quickDays.contains(model.dueDay) ? String(localized: "Other", bundle: .module) : ordinal(model.dueDay),
+                                KChip(Self.quickDays.contains(model.dueDay) ? String(localized: "Other", bundle: .module) : ordinal(model.dueDay),
                                      isOn: !Self.quickDays.contains(model.dueDay)) {}
                                     .allowsHitTesting(false)
                             }
@@ -131,9 +118,9 @@ struct DatesStep: View {
                     }
                     VStack(alignment: .leading, spacing: KSpace.sm) {
                         WizardLabel(String(localized: "Remind on these days (tap to change)", bundle: .module))
-                        FlowChips {
+                        KFlowChips {
                             ForEach(1...model.dueDay, id: \.self) { day in
-                                Chip(title: "\(day)", isOn: model.reminderDays.contains(day)) { model.toggleReminder(day) }
+                                KChip("\(day)", isOn: model.reminderDays.contains(day)) { model.toggleReminder(day) }
                                     .accessibilityLabel(Text("Remind on day \(day)", bundle: .module))
                             }
                         }
@@ -141,11 +128,11 @@ struct DatesStep: View {
                     }
                     VStack(alignment: .leading, spacing: KSpace.xs) {
                         WizardLabel(String(localized: "Most slots per person", bundle: .module))
-                        WizardStepper(
+                        KStepper(
                             value: model.maxSlotsPerMember, range: 1...WizardLimits.maxSlotsPerMember,
                             decreaseLabel: String(localized: "Fewer slots per person", bundle: .module),
                             increaseLabel: String(localized: "More slots per person", bundle: .module),
-                            onChange: model.setMaxSlots
+                            onChange: { model.setMaxSlots($0) }
                         )
                         Text("Up to \(WizardLimits.maxSlotsPerMember)", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
                     }
@@ -159,60 +146,8 @@ struct DatesStep: View {
     }
 }
 
-/// A pill that can be on or off.
-struct Chip: View {
-    let title: String
-    let isOn: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .kText(KTextToken.bodyStrong, color: isOn ? KColors.textOnBrand : KColors.textPrimary)
-                .padding(.horizontal, KSpace.md)
-                .padding(.vertical, KSpace.sm)
-                .background(isOn ? KColors.brand : KColors.surface, in: Capsule())
-                .overlay(Capsule().stroke(isOn ? KColors.brand : KColors.border))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
-    }
-}
-
-/// Wraps its children onto several lines.
-struct FlowChips<Content: View>: View {
+/// Chips laid out in wrapping rows.
+struct KFlowChips<Content: View>: View {
     @ViewBuilder let content: Content
-
-    var body: some View {
-        FlowLayout(spacing: KSpace.sm) { content }
-    }
-}
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        arrange(width: proposal.width ?? .infinity, subviews: subviews).size
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = arrange(width: bounds.width, subviews: subviews)
-        for (index, origin) in result.origins.enumerated() {
-            subviews[index].place(at: CGPoint(x: bounds.minX + origin.x, y: bounds.minY + origin.y), proposal: .unspecified)
-        }
-    }
-
-    private func arrange(width: CGFloat, subviews: Subviews) -> (size: CGSize, origins: [CGPoint]) {
-        var origins: [CGPoint] = []
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0, maxX: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x > 0, x + size.width > width { x = 0; y += rowHeight + spacing; rowHeight = 0 }
-            origins.append(CGPoint(x: x, y: y))
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-            maxX = max(maxX, x - spacing)
-        }
-        return (CGSize(width: maxX, height: y + rowHeight), origins)
-    }
+    var body: some View { KFlowLayout { content } }
 }

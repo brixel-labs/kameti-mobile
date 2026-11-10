@@ -61,6 +61,17 @@
         }
       }
     },
+    "Close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
     "Credit %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -68,6 +79,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Credit %@"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
           }
         }
       }
@@ -123,17 +145,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Name must be 3 to 40 characters."
-          }
-        }
-      }
-    },
-    "of %@ · %lld%%" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "of %1$@ · %2$lld%%"
           }
         }
       }
@@ -552,6 +563,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your session has ended. Please sign in again."
+          }
+        }
+      }
+    },
+    "of %@ · %lld%%" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "of %1$@ · %2$lld%%"
           }
         }
       }

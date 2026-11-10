@@ -35,6 +35,7 @@ public struct CreateKametiView: View {
             .frame(maxHeight: .infinity)
         }
         .background(KColors.background)
+        .kDismissesKeyboard()
         .navigationTitle(String(localized: "New kameti", bundle: .module))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
