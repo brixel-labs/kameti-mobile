@@ -12,35 +12,68 @@ struct OwnerTabs: View {
     let data: KametiDetailData
     @State private var tab = Tab.overview
 
+    private var titles: [(tab: Tab, title: String)] {
+        [
+            (.overview, String(localized: "Overview", bundle: .module)),
+            (.members, String(localized: "Members", bundle: .module)),
+            (.schedule, String(localized: "Schedule", bundle: .module)),
+            (.payments, String(localized: "Payments", bundle: .module)),
+        ]
+    }
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: KSpace.lg) {
-                switch tab {
-                case .overview: OverviewTab(data: data)
-                case .members: MembersTab(data: data)
-                case .schedule: ScheduleSection(data: data)
-                case .payments: PaymentsTab(data: data)
+        VStack(spacing: 0) {
+            KUnderlineTabs(titles, selection: $tab, inset: KSpace.xl)
+                .background(KColors.background)
+            // The system paging view: swipe left or right between the tabs, or
+            // tap a tab; the page moves the way you'd expect.
+            TabView(selection: $tab) {
+                ForEach(Tab.allCases, id: \.self) { page in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: KSpace.lg) {
+                            content(for: page)
+                        }
+                        .padding(.horizontal, KSpace.xl)
+                        .padding(.top, KSpace.lg)
+                        .padding(.bottom, KSpace.xl)
+                    }
+                    .tag(page)
                 }
             }
-            .padding(.horizontal, KSpace.xl)
-            .padding(.bottom, KSpace.xl)
-        }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            Picker("", selection: $tab) {
-                Text("Overview", bundle: .module).tag(Tab.overview)
-                Text("Members", bundle: .module).tag(Tab.members)
-                Text("Schedule", bundle: .module).tag(Tab.schedule)
-                Text("Payments", bundle: .module).tag(Tab.payments)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.smooth(duration: 0.28), value: tab)
+            .overlay(alignment: .bottomTrailing) {
+                if tab == .overview, data.current != nil {
+                    Button {} label: {
+                        Label(String(localized: "Record payment", bundle: .module), systemImage: "plus")
+                            .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                            .padding(.horizontal, KSpace.lg)
+                            .frame(minHeight: 52)
+                            .background(KColors.brand, in: RoundedRectangle(cornerRadius: KRadius.card))
+                            .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(KSpace.xl)
+                    .transition(.opacity)
+                }
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, KSpace.xl)
-            .padding(.vertical, KSpace.sm)
-            .background(KColors.background)
+        }
+        .animation(.smooth(duration: 0.2), value: tab)
+    }
+
+    @ViewBuilder
+    private func content(for tab: Tab) -> some View {
+        switch tab {
+        case .overview: OverviewTab(data: data)
+        case .members: MembersTab(data: data)
+        case .schedule: ScheduleSection(data: data)
+        case .payments: PaymentsTab(data: data)
         }
     }
 }
 
-/// This month's pot, who has paid, the recipients and who still owes.
+/// This month's pot, who has paid, the recipients and every member's status
+/// (board A · Kameti overview).
 struct OverviewTab: View {
     let data: KametiDetailData
 
@@ -50,6 +83,7 @@ struct OverviewTab: View {
                 kameti: data.kameti, monthIndex: current.monthIndex, slots: data.slots, shares: data.shares, members: data.members
             )
             let counts = DetailLogic.statusCounts(data.months, monthIndex: current.monthIndex)
+            let rows = data.months.filter { $0.monthIndex == current.monthIndex }
             let owing = DetailLogic.owing(data.months, monthIndex: current.monthIndex)
             let byId = Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let toGo = current.target - current.received
@@ -66,57 +100,99 @@ struct OverviewTab: View {
                     // drives member statuses.
                     KPotProgress(
                         collected: current.received, target: current.target,
-                        caption: toGo.isPositive ? String(localized: "\(toGo.format()) to go", bundle: .module) : nil
+                        caption: toGo.isPositive
+                            ? String(localized: "collected of \(current.target.format()) · \(toGo.format()) to go", bundle: .module)
+                            : String(localized: "collected of \(current.target.format())", bundle: .module),
+                        headline: .none, captionAboveBar: true
                     )
-                    HStack(spacing: KSpace.sm) {
+                    KFlowLayout {
                         KStatusChip(.paid, label: String(localized: "\(counts.paid) paid", bundle: .module))
                         KStatusChip(.partial, label: String(localized: "\(counts.partial) partial", bundle: .module))
                         KStatusChip(.unpaid, label: String(localized: "\(counts.unpaid) unpaid", bundle: .module))
                     }
-                    Divider()
-                    if recipients.isEmpty {
-                        Text("No one is paid out this month yet.", bundle: .module)
-                            .kText(KTextToken.bodySm, color: KColors.textSecondary)
-                    } else {
-                        ForEach(recipients) { recipient in
-                            HStack {
-                                KAvatar(name: recipient.member.name, colorIndex: DetailRow<KAvatar, EmptyView>.colorIndex(of: recipient.member, in: data.members), size: .medium)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(recipient.member.id == data.me?.id ? String(localized: "You", bundle: .module) : recipient.member.name)
-                                        .kText(KTextToken.bodyStrong)
-                                    Text("Receives \(recipient.payout.format())", bundle: .module)
-                                        .kText(KTextToken.caption, color: KColors.textSecondary)
-                                }
-                            }
-                        }
-                    }
+                    if !recipients.isEmpty { recipientsBox(recipients) }
                 }
             }
 
-            KSectionHeader(String(localized: "Who still owes", bundle: .module))
-            if owing.isEmpty {
-                Label(String(localized: "Everyone has paid", bundle: .module), systemImage: "checkmark.circle")
-                    .kText(KTextToken.body, color: KColors.positive)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(owing.enumerated()), id: \.element.memberId) { index, row in
-                        if let member = byId[row.memberId] {
-                            DetailRow(
-                                member: member, in: data.members,
-                                subtitle: String(localized: "\(row.allocated.format()) of \(row.due.format())", bundle: .module),
-                                showsDivider: index < owing.count - 1
-                            ) {
-                                KStatusChip(row.status.chip.status, label: row.status.chip.label)
-                            }
+            if !owing.isEmpty {
+                Button {} label: {
+                    Label(String(localized: "Remind \(owing.count) members who owe", bundle: .module), systemImage: "bell")
+                        .kText(KTextToken.bodyStrong, color: KColors.brand)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .overlay(Capsule().stroke(KColors.brand, lineWidth: 1.5))
+                }
+                .buttonStyle(.plain)
+            }
+
+            KSectionHeader(String(localized: "This month", bundle: .module))
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.memberId) { index, row in
+                    if let member = byId[row.memberId] {
+                        DetailRow(
+                            member: member, in: data.members,
+                            subtitle: row.status == .advance
+                                ? String(localized: "Covered by credit", bundle: .module)
+                                : String(localized: "\(row.allocated.format()) of \(row.due.format(symbol: false))", bundle: .module),
+                            showsDivider: index < rows.count - 1
+                        ) {
+                            StatusTextPill(status: row.status)
                         }
                     }
                 }
             }
+            // Room for the floating action.
+            Color.clear.frame(height: 56)
         } else {
             ContentUnavailableView(
                 String(localized: "Not started yet", bundle: .module), systemImage: "hourglass",
                 description: Text("Collections begin when the kameti starts.", bundle: .module)
             )
+        }
+    }
+
+    private func recipientsBox(_ recipients: [DetailLogic.Recipient]) -> some View {
+        let same = Set(recipients.map(\.payout)).count == 1
+        return HStack(spacing: KSpace.md) {
+            KAvatarStack(recipients.map { recipient in
+                (recipient.member.name, Int(recipient.member.color ?? "") ?? max(data.members.firstIndex(of: recipient.member) ?? 0, 0))
+            })
+            VStack(alignment: .leading, spacing: 2) {
+                Text(recipients.map { $0.member.id == data.me?.id ? String(localized: "You", bundle: .module) : $0.member.name }.joined(separator: " + "))
+                    .kText(KTextToken.bodyStrong)
+                if recipients.count > 1 {
+                    Text(same
+                         ? String(localized: "\(recipients[0].payout.format()) each · shared slot", bundle: .module)
+                         : String(localized: "Shared slot", bundle: .module))
+                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                } else {
+                    Text("Receives \(recipients[0].payout.format())", bundle: .module)
+                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(KSpace.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.input))
+    }
+}
+
+/// A month status as a plain coloured pill (no icon), as on the overview rows.
+struct StatusTextPill: View {
+    let status: MonthStatusCode
+
+    var body: some View {
+        let style = Self.style(for: status)
+        KPill(status.chip.label, foreground: style.foreground, background: style.background)
+    }
+
+    nonisolated static func style(for status: MonthStatusCode) -> (foreground: Color, background: Color) {
+        switch status {
+        case .paid: (KColors.positive, KColors.positiveSubtle)
+        case .partial: (KColors.warning, KColors.warningSubtle)
+        case .unpaid, .overdue: (KColors.negative, KColors.negativeSubtle)
+        case .advance: (KColors.info, KColors.infoSubtle)
+        case .upcoming: (KColors.textSecondary, KColors.surfaceSunken)
         }
     }
 }

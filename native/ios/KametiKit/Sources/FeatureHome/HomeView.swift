@@ -1,3 +1,4 @@
+import FeatureKametiDetail
 import KametiCore
 import KametiDomain
 import KametiUI
@@ -38,7 +39,7 @@ public struct HomeView: View {
             }
         }
         .background(KColors.background)
-        .navigationTitle(String(localized: "Kameti", bundle: .module))
+        .navigationTitle(model.firstName ?? String(localized: "Kameti", bundle: .module))
         .task { await model.load() }
         .refreshable { await model.load() }
     }
@@ -89,7 +90,7 @@ public struct HomeView: View {
         if !items.isEmpty {
             KSectionHeader(
                 title,
-                actionTitle: showsNew ? String(localized: "New kameti", bundle: .module) : nil,
+                actionTitle: showsNew ? String(localized: "+ New kameti", bundle: .module) : nil,
                 action: showsNew ? onCreate : nil
             )
             ForEach(items) { item in
@@ -100,51 +101,113 @@ public struct HomeView: View {
     }
 }
 
-/// A kameti on Home (FR-2): name, role, "Month 2 of 20", this month's pot
-/// and, for a kameti I'm a member of, what I owe.
+/// A kameti on Home (FR-2, board A · Home): name, role, month, this month's
+/// pot and recipients, or for a kameti I'm a member of, what I owe and my turn.
 struct HomeKametiCard: View {
     let item: HomeKametiSummary
 
+    private var isPast: Bool { [.completed, .archived, .cancelled].contains(item.kameti.status) }
+
     var body: some View {
         KCard {
-            VStack(alignment: .leading, spacing: KSpace.md) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: KSpace.xs) {
-                        Text(item.kameti.name).kText(KTextToken.title)
-                        Text(subtitle).kText(KTextToken.bodySm, color: KColors.textSecondary)
+            if isPast {
+                pastBody
+            } else {
+                VStack(alignment: .leading, spacing: KSpace.md) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: KSpace.xs) {
+                            Text(item.kameti.name).kText(KTextToken.titleLg)
+                            Text(subtitle).kText(KTextToken.body, color: KColors.textSecondary)
+                        }
+                        Spacer(minLength: KSpace.sm)
+                        rolePill
                     }
-                    Spacer(minLength: KSpace.sm)
-                    rolePill
-                }
-                if let month = item.currentMonth {
-                    KPotProgress(
-                        collected: month.received, target: month.target,
-                        caption: String(localized: "\(month.paidCount) of \(month.memberCount) paid", bundle: .module)
-                    )
-                }
-                if !item.isOwner, let owes = item.owes {
-                    if owes.isPositive {
-                        Label(String(localized: "You owe \(owes.format())", bundle: .module), systemImage: "clock")
-                            .kText(KTextToken.bodySm, color: KColors.warning)
-                    } else {
-                        KStatusChip(.paid, label: String(localized: "Paid up", bundle: .module))
-                    }
+                    if item.isOwner { ownerBody } else { memberBody }
                 }
             }
         }
     }
 
-    private var subtitle: String {
+    // MARK: Owner
+
+    @ViewBuilder private var ownerBody: some View {
+        if let month = item.currentMonth {
+            KPotProgress(
+                collected: month.received, target: month.target,
+                caption: String(localized: "\(month.paidCount) of \(month.memberCount) paid", bundle: .module),
+                trailingCaption: item.dueDate.map { String(localized: "Due by \(DetailLogic.dayMonth($0))", bundle: .module) },
+                headline: .ofTarget
+            )
+        }
+        if !item.recipients.isEmpty {
+            Divider()
+            HStack(spacing: KSpace.md) {
+                KAvatarStack(item.recipients.map { ($0.name, $0.colorIndex) })
+                (Text("This month: ", bundle: .module).foregroundStyle(KColors.textSecondary)
+                    + Text(item.recipients.map(\.name).joined(separator: " + ")).fontWeight(.semibold))
+                    .kText(KTextToken.body)
+            }
+        }
+    }
+
+    // MARK: Member
+
+    @ViewBuilder private var memberBody: some View {
+        if let owes = item.owes {
+            if owes.isPositive {
+                HStack {
+                    Label(String(localized: "You owe \(owes.format())", bundle: .module), systemImage: "clock")
+                        .kText(KTextToken.bodyStrong, color: KColors.warning)
+                    Spacer()
+                    if let due = item.dueDate {
+                        Text("Due \(DetailLogic.dayMonth(due))", bundle: .module).kText(KTextToken.body, color: KColors.warning)
+                    }
+                }
+                .padding(KSpace.md)
+                .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
+            } else {
+                KStatusChip(.paid, label: String(localized: "Paid up", bundle: .module))
+            }
+        }
+        if let turn = item.nextTurn {
+            (Text("Your turn: ", bundle: .module).foregroundStyle(KColors.textSecondary)
+                + Text(DetailLogic.monthTitle(turn.month)).fontWeight(.semibold)
+                + Text(" · \(turn.payout.format())").foregroundStyle(KColors.textSecondary))
+                .kText(KTextToken.body)
+        }
+    }
+
+    // MARK: Past
+
+    private var pastBody: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: KSpace.xs) {
+                Text(item.kameti.name).kText(KTextToken.titleLg)
+                Text("\(statusLabel) · \(DetailLogic.monthTitle(DetailLogic.monthStart(of: item.kameti, monthIndex: item.kameti.monthsN)))")
+                    .kText(KTextToken.body, color: KColors.textSecondary)
+            }
+            Spacer()
+            if item.kameti.status == .completed {
+                Label(String(localized: "Settled", bundle: .module), systemImage: "checkmark")
+                    .kText(KTextToken.bodyStrong, color: KColors.positive)
+            }
+        }
+    }
+
+    private var statusLabel: String {
         switch item.kameti.status {
         case .completed: String(localized: "Completed", bundle: .module)
         case .archived: String(localized: "Archived", bundle: .module)
         case .cancelled: String(localized: "Cancelled", bundle: .module)
-        case .draft, .active:
-            if let month = item.currentMonth {
-                String(localized: "Month \(month.monthIndex) of \(item.kameti.monthsN)", bundle: .module)
-            } else {
-                String(localized: "Not started yet", bundle: .module)
-            }
+        case .draft, .active: ""
+        }
+    }
+
+    private var subtitle: String {
+        if let month = item.currentMonth {
+            String(localized: "Month \(month.monthIndex) of \(item.kameti.monthsN) · \(DetailLogic.monthTitle(month.monthStart).split(separator: " ").first.map(String.init) ?? "")", bundle: .module)
+        } else {
+            String(localized: "Not started yet", bundle: .module)
         }
     }
 
@@ -152,7 +215,7 @@ struct HomeKametiCard: View {
         if item.isOwner {
             KPill(String(localized: "Owner", bundle: .module), foreground: KColors.onBrandSubtle, background: KColors.brandSubtle)
         } else {
-            KPill(String(localized: "View only", bundle: .module), symbol: "eye", foreground: KColors.textSecondary, background: KColors.surfaceSunken)
+            KPill(String(localized: "View only", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)
         }
     }
 }

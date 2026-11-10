@@ -60,7 +60,7 @@ let package = Package(
         ),
         .target(
             name: "FeatureHome",
-            dependencies: ["KametiCore", "KametiDomain", "KametiUI"],
+            dependencies: ["KametiCore", "KametiDomain", "KametiUI", "FeatureKametiDetail"],
             resources: [.process("Resources")]
         ),
         .target(

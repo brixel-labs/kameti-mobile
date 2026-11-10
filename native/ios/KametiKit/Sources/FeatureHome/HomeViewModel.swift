@@ -1,4 +1,6 @@
 import KametiCore
+import FeatureKametiDetail
+import Foundation
 import KametiDomain
 import Observation
 
@@ -11,6 +13,22 @@ public struct HomeKametiSummary: Identifiable, Equatable, Sendable {
     public var currentMonth: MonthCollectionRow?
     /// What I owe so far (member view only).
     public var owes: Money?
+    /// When this month's payment is due.
+    public var dueDate: Date?
+    /// Who receives the pot this month.
+    public var recipients: [Person] = []
+    /// My next payout (member view).
+    public var nextTurn: NextTurn?
+
+    public struct Person: Equatable, Sendable {
+        public let name: String
+        public let colorIndex: Int
+    }
+
+    public struct NextTurn: Equatable, Sendable {
+        public let month: Date
+        public let payout: Money
+    }
 
     public var id: String { kameti.id }
 }
@@ -31,6 +49,8 @@ public final class HomeViewModel {
     public private(set) var failure: Failure?
     public private(set) var isLoading = false
     public private(set) var hasLoaded = false
+    /// The signed-in user's first name, for the title.
+    public private(set) var firstName: String?
 
     private let userId: String
     private let dependencies: KametiDependencies
@@ -68,6 +88,9 @@ public final class HomeViewModel {
         isLoading = true
         failure = nil
         defer { isLoading = false; hasLoaded = true }
+        if firstName == nil, let profile = try? await dependencies.profiles.myProfile(userId: userId) {
+            firstName = profile.displayName.split(separator: " ").first.map(String.init)
+        }
         do throws(Failure) {
             let all = try await dependencies.kametis.listKametis()
             var summaries = all.map {
@@ -86,15 +109,30 @@ public final class HomeViewModel {
 
     private func detail(for item: HomeKametiSummary) async -> HomeKametiSummary {
         var item = item
-        let id = item.kameti.id
+        let kameti = item.kameti
+        let id = kameti.id
         if let months = try? await dependencies.ledger.monthCollections(kametiId: id) {
             item.currentMonth = months.first(where: \.isCurrent)
         }
-        if !item.isOwner,
-           let members = try? await dependencies.kametis.members(kametiId: id),
-           let me = members.first(where: { $0.profileId == userId }),
-           let balances = try? await dependencies.ledger.memberBalances(kametiId: id) {
-            item.owes = balances.first(where: { $0.memberId == me.id })?.owes
+        let members = (try? await dependencies.kametis.members(kametiId: id)) ?? []
+        let slots = (try? await dependencies.kametis.slots(kametiId: id)) ?? []
+        let shares = (try? await dependencies.kametis.shares(kametiId: id)) ?? []
+        let me = DetailLogic.myMember(in: members, userId: userId)
+        if let month = item.currentMonth {
+            item.dueDate = DetailLogic.dueDate(of: kameti, monthIndex: month.monthIndex)
+            item.recipients = DetailLogic.recipients(kameti: kameti, monthIndex: month.monthIndex, slots: slots, shares: shares, members: members)
+                .map { recipient in
+                    let index = Int(recipient.member.color ?? "") ?? max(members.firstIndex(of: recipient.member) ?? 0, 0)
+                    return HomeKametiSummary.Person(name: recipient.member.id == me?.id ? "You" : recipient.member.name, colorIndex: index)
+                }
+        }
+        if !item.isOwner, let me {
+            if let balances = try? await dependencies.ledger.memberBalances(kametiId: id) {
+                item.owes = balances.first(where: { $0.memberId == me.id })?.owes
+            }
+            if let turn = DetailLogic.nextTurn(for: me, kameti: kameti, from: item.currentMonth?.monthIndex ?? 1, slots: slots, shares: shares) {
+                item.nextTurn = HomeKametiSummary.NextTurn(month: DetailLogic.monthStart(of: kameti, monthIndex: turn.monthIndex), payout: turn.payout)
+            }
         }
         return item
     }

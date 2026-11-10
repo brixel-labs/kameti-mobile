@@ -1,13 +1,13 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%lld of %lld paid" : {
+    "+ New kameti" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld of %2$lld paid"
+            "value" : "+ New kameti"
           }
         }
       }
@@ -111,28 +111,6 @@
         }
       }
     },
-    "Month %lld of %lld" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Month %1$lld of %2$lld"
-          }
-        }
-      }
-    },
-    "New kameti" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New kameti"
-          }
-        }
-      }
-    },
     "No kametis yet" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -199,6 +177,17 @@
         }
       }
     },
+    "Settled" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settled"
+          }
+        }
+      }
+    },
     "Start a kameti" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -217,6 +206,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Start one for your family, office or friends. Or join one you've been invited to."
+          }
+        }
+      }
+    },
+    "This month: " : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This month: "
           }
         }
       }
@@ -243,13 +243,13 @@
         }
       }
     },
-    "You owe %@" : {
+    "Your turn: " : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You owe %@"
+            "value" : "Your turn: "
           }
         }
       }

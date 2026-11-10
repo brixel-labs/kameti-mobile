@@ -25,6 +25,17 @@ public enum DetailLogic {
         utc.date(byAdding: .month, value: monthIndex - 1, to: kameti.startMonth) ?? kameti.startMonth
     }
 
+    /// The due date of `monthIndex`: the kameti's due day in that month.
+    public static func dueDate(of kameti: Kameti, monthIndex: Int) -> Date {
+        utc.date(byAdding: .day, value: kameti.dueDay - 1, to: monthStart(of: kameti, monthIndex: monthIndex))
+            ?? monthStart(of: kameti, monthIndex: monthIndex)
+    }
+
+    /// "10 Nov", from a date-only (UTC) value.
+    public static func dayMonth(_ date: Date) -> String {
+        date.formatted(Date.FormatStyle(timeZone: utc.timeZone).day().month(.abbreviated))
+    }
+
     /// "October 2026", from a date-only (UTC) value.
     public static func monthTitle(_ date: Date) -> String {
         date.formatted(Date.FormatStyle(timeZone: utc.timeZone).month(.wide).year())

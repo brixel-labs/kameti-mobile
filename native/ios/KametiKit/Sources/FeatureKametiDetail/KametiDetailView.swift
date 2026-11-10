@@ -30,9 +30,15 @@ public struct KametiDetailView: View {
         }
         .background(KColors.background)
         .navigationTitle(title)
+        .navigationSubtitle(subtitle)
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.load() }
         .refreshable { await model.load() }
+    }
+
+    private var subtitle: String {
+        guard case .loaded(let data) = model.state else { return "" }
+        return String(localized: "\(data.kameti.monthsN) months · \(data.kameti.slotAmountC.format()) per slot", bundle: .module)
     }
 
     private var title: String {
