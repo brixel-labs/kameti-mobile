@@ -10,7 +10,7 @@ struct BasicsStep: View {
     /// Errors show only after the first Next tap.
     @State private var submitted = false
 
-    private static let suggestions = [50_000, 100_000, 250_000, 500_000]
+    private static let suggestions = [50_000, 100_000, 200_000, 250_000, 500_000]
 
     var body: some View {
         VStack(spacing: 0) {
