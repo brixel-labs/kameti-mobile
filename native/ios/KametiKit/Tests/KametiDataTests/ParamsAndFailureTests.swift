@@ -119,3 +119,19 @@ struct FailureMappingTests {
         #expect(SupabaseAuthRepository.signInFailure(URLError(.notConnectedToInternet)) == .network)
     }
 }
+
+@Suite("Apple nonce")
+struct AppleNonceTests {
+    @Test func hashIsTheSHA256OfTheRawValue() {
+        // SHA-256("abc"), the standard test vector.
+        #expect(AppleNonce(raw: "abc").hashed == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+    }
+
+    @Test func eachNonceIsFreshAndUrlSafe() {
+        let a = AppleNonce.make(), b = AppleNonce.make()
+        #expect(a != b)
+        #expect(a.raw.count >= 40)
+        #expect(a.raw.allSatisfy { $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" })
+        #expect(a.hashed == AppleNonce(raw: a.raw).hashed)
+    }
+}

@@ -1,11 +1,545 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "Credit %@" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Credit %@" } } } },
-    "Owes %@" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Owes %@" } } } },
-    "Over by %@" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Over by %@" } } } },
-    "Settled" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settled" } } } },
-    "of %@ · %lld%%" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "of %1$@ · %2$lld%%" } } } }
+  "sourceLanguage": "en",
+  "strings": {
+    "Credit %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Credit %@"
+          }
+        }
+      }
+    },
+    "Owes %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Owes %@"
+          }
+        }
+      }
+    },
+    "Over by %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over by %@"
+          }
+        }
+      }
+    },
+    "Settled": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settled"
+          }
+        }
+      }
+    },
+    "of %@ · %lld%%": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "of %1$@ · %2$lld%%"
+          }
+        }
+      }
+    },
+    "Your account is already linked to this kameti.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your account is already linked to this kameti."
+          }
+        }
+      }
+    },
+    "We couldn't find that invite. Check the link or code.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn't find that invite. Check the link or code."
+          }
+        }
+      }
+    },
+    "You can't unlink the person running the kameti.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can't unlink the person running the kameti."
+          }
+        }
+      }
+    },
+    "We couldn't sign you in. Please try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn't sign you in. Please try again."
+          }
+        }
+      }
+    },
+    "You just sent one. Wait about 10 minutes before resending.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You just sent one. Wait about 10 minutes before resending."
+          }
+        }
+      }
+    },
+    "This kameti isn't open for joining.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This kameti isn't open for joining."
+          }
+        }
+      }
+    },
+    "Sign-in isn't available on this device right now.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in isn't available on this device right now."
+          }
+        }
+      }
+    },
+    "This request was already handled.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This request was already handled."
+          }
+        }
+      }
+    },
+    "Add a reason for voiding.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a reason for voiding."
+          }
+        }
+      }
+    },
+    "This person is already in the kameti.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This person is already in the kameti."
+          }
+        }
+      }
+    },
+    "Shares must be whole Rs 1,000 steps.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shares must be whole Rs 1,000 steps."
+          }
+        }
+      }
+    },
+    "The date can't be in the future.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The date can't be in the future."
+          }
+        }
+      }
+    },
+    "This kameti hasn't started yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This kameti hasn't started yet."
+          }
+        }
+      }
+    },
+    "Too many invites sent. Try again in an hour.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many invites sent. Try again in an hour."
+          }
+        }
+      }
+    },
+    "Enter an amount above zero.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an amount above zero."
+          }
+        }
+      }
+    },
+    "This build isn't connected to the Kameti service.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This build isn't connected to the Kameti service."
+          }
+        }
+      }
+    },
+    "Sign-in was interrupted. Please try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in was interrupted. Please try again."
+          }
+        }
+      }
+    },
+    "Fill every slot and payout month before starting.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill every slot and payout month before starting."
+          }
+        }
+      }
+    },
+    "This can only be changed before the kameti starts.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This can only be changed before the kameti starts."
+          }
+        }
+      }
+    },
+    "Months that have been paid out can't be moved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Months that have been paid out can't be moved."
+          }
+        }
+      }
+    },
+    "There's no invite to resend yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no invite to resend yet."
+          }
+        }
+      }
+    },
+    "This person is waiting for your approval.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This person is waiting for your approval."
+          }
+        }
+      }
+    },
+    "Name must be 3 to 40 characters.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name must be 3 to 40 characters."
+          }
+        }
+      }
+    },
+    "Sign-in isn't set up correctly for this build.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in isn't set up correctly for this build."
+          }
+        }
+      }
+    },
+    "This entry was already voided.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This entry was already voided."
+          }
+        }
+      }
+    },
+    "The shares must add up exactly to the slot amount.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shares must add up exactly to the slot amount."
+          }
+        }
+      }
+    },
+    "A slot can be shared by at most 4 people.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A slot can be shared by at most 4 people."
+          }
+        }
+      }
+    },
+    "There's no open invite to revoke.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no open invite to revoke."
+          }
+        }
+      }
+    },
+    "This person has already joined.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This person has already joined."
+          }
+        }
+      }
+    },
+    "They already have an open invite.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "They already have an open invite."
+          }
+        }
+      }
+    },
+    "Add an email address for this person first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add an email address for this person first."
+          }
+        }
+      }
+    },
+    "You're offline. Connect and try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're offline. Connect and try again."
+          }
+        }
+      }
+    },
+    "This invite is no longer active.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This invite is no longer active."
+          }
+        }
+      }
+    },
+    "Add a note: the payout differs from the expected amount.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a note: the payout differs from the expected amount."
+          }
+        }
+      }
+    },
+    "This person isn't linked to an account.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This person isn't linked to an account."
+          }
+        }
+      }
+    },
+    "Your session has ended. Please sign in again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session has ended. Please sign in again."
+          }
+        }
+      }
+    },
+    "Mark at least one payment.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark at least one payment."
+          }
+        }
+      }
+    },
+    "This person has reached the slot limit for this kameti.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This person has reached the slot limit for this kameti."
+          }
+        }
+      }
+    },
+    "Something went wrong. Please try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong. Please try again."
+          }
+        }
+      }
+    },
+    "You run this kameti, so you can't join it as a member.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You run this kameti, so you can't join it as a member."
+          }
+        }
+      }
+    },
+    "This person has payments, so they can't be removed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This person has payments, so they can't be removed."
+          }
+        }
+      }
+    },
+    "Only the person running this kameti can do that.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the person running this kameti can do that."
+          }
+        }
+      }
+    },
+    "This invite has expired.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This invite has expired."
+          }
+        }
+      }
+    },
+    "You already have a kameti with this name.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You already have a kameti with this name."
+          }
+        }
+      }
+    }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

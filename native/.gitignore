@@ -6,3 +6,6 @@ DerivedData/
 xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
+
+# The native app's backend settings (copied from env/*.json by scripts/use-env.sh)
+ios/Kameti/Kameti/KametiConfig.json

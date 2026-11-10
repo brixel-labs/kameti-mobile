@@ -18,6 +18,10 @@ let package = Package(
         .library(name: "KametiDomain", targets: ["KametiDomain"]),
         .library(name: "KametiUI", targets: ["KametiUI"]),
         .library(name: "KametiData", targets: ["KametiData"]),
+        .library(name: "KametiNavigation", targets: ["KametiNavigation"]),
+        .library(name: "KametiTestSupport", targets: ["KametiTestSupport"]),
+        .library(name: "FeatureAuth", targets: ["FeatureAuth"]),
+        .library(name: "FeatureShell", targets: ["FeatureShell"]),
     ],
     dependencies: [
         // Official Supabase SDK: auth, PostgREST, RPC and edge functions.
@@ -41,7 +45,31 @@ let package = Package(
                 .product(name: "Supabase", package: "supabase-swift"),
             ]
         ),
+        // Typed routes, tabs and deep links. No UI, no other layers.
+        .target(name: "KametiNavigation"),
+        // Fake repositories for unit tests (and previews).
+        .target(name: "KametiTestSupport", dependencies: ["KametiCore", "KametiDomain"]),
+        // Features depend on KametiDomain and KametiUI, never on KametiData.
+        .target(
+            name: "FeatureAuth",
+            dependencies: ["KametiCore", "KametiDomain", "KametiUI"],
+            resources: [.process("Resources")]
+        ),
+        .target(
+            name: "FeatureShell",
+            dependencies: ["KametiCore", "KametiDomain", "KametiUI", "KametiNavigation", "FeatureAuth"],
+            resources: [.process("Resources")]
+        ),
         .testTarget(name: "KametiCoreTests", dependencies: ["KametiCore"]),
+        .testTarget(name: "KametiNavigationTests", dependencies: ["KametiNavigation"]),
+        .testTarget(
+            name: "FeatureAuthTests",
+            dependencies: ["FeatureAuth", "KametiTestSupport", "KametiDomain", "KametiCore"]
+        ),
+        .testTarget(
+            name: "FeatureShellTests",
+            dependencies: ["FeatureShell", "KametiTestSupport", "KametiDomain", "KametiCore", "FeatureAuth"]
+        ),
         .testTarget(
             name: "KametiDataTests",
             dependencies: [
