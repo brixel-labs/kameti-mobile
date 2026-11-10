@@ -49,17 +49,22 @@ public struct UnusedRepositories: LedgerRepository, PaymentsRepository, InvitesR
 /// call fails as "not stubbed".
 public struct StubKametiRepository: KametiRepository {
     private let kametis: [Kameti]
+    private let memberRows: [Member]
+    private let slotRows: [Slot]
+    private let shareRows: [Share]
 
-    public init(_ kametis: [Kameti] = []) { self.kametis = kametis }
+    public init(_ kametis: [Kameti] = [], members: [Member] = [], slots: [Slot] = [], shares: [Share] = []) {
+        self.kametis = kametis; self.memberRows = members; self.slotRows = slots; self.shareRows = shares
+    }
 
     public func listKametis() async throws(Failure) -> [Kameti] { kametis }
     public func kameti(id: String) async throws(Failure) -> Kameti {
         guard let found = kametis.first(where: { $0.id == id }) else { throw Failure.server(code: "not_found", detail: nil) }
         return found
     }
-    public func members(kametiId: String) async throws(Failure) -> [Member] { throw notStubbed }
-    public func slots(kametiId: String) async throws(Failure) -> [Slot] { throw notStubbed }
-    public func shares(kametiId: String) async throws(Failure) -> [Share] { throw notStubbed }
+    public func members(kametiId: String) async throws(Failure) -> [Member] { memberRows }
+    public func slots(kametiId: String) async throws(Failure) -> [Slot] { slotRows }
+    public func shares(kametiId: String) async throws(Failure) -> [Share] { shareRows }
     public func createKameti(_ new: NewKameti) async throws(Failure) -> Kameti { throw notStubbed }
     public func updateKameti(id: String, changes: KametiChanges) async throws(Failure) -> Kameti { throw notStubbed }
     public func startKameti(id: String) async throws(Failure) -> Kameti { throw notStubbed }
@@ -68,4 +73,45 @@ public struct StubKametiRepository: KametiRepository {
     public func removeMember(id: String) async throws(Failure) { throw notStubbed }
     public func setSlotShares(slotId: String, shares: [ShareInput]) async throws(Failure) -> [Share] { throw notStubbed }
     public func reorderSlots(kametiId: String, slotIdsInOrder: [String]) async throws(Failure) -> [Slot] { throw notStubbed }
+}
+
+/// Ledger and payments repositories that return fixed rows.
+public struct StubLedgerRepository: LedgerRepository {
+    private let balances: [MemberBalanceRow]
+    private let months: [MemberMonthRow]
+    private let collections: [MonthCollectionRow]
+    private let failure: Failure?
+
+    public init(
+        balances: [MemberBalanceRow] = [], months: [MemberMonthRow] = [],
+        collections: [MonthCollectionRow] = [], failure: Failure? = nil
+    ) {
+        self.balances = balances; self.months = months; self.collections = collections; self.failure = failure
+    }
+
+    public func memberBalances(kametiId: String) async throws(Failure) -> [MemberBalanceRow] {
+        if let failure { throw failure }
+        return balances
+    }
+    public func memberMonths(kametiId: String, memberId: String?) async throws(Failure) -> [MemberMonthRow] {
+        if let failure { throw failure }
+        return months
+    }
+    public func monthCollections(kametiId: String) async throws(Failure) -> [MonthCollectionRow] {
+        if let failure { throw failure }
+        return collections
+    }
+}
+
+public struct StubPaymentsRepository: PaymentsRepository {
+    private let rows: [Payment]
+    public init(_ rows: [Payment] = []) { self.rows = rows }
+
+    public func payments(kametiId: String) async throws(Failure) -> [Payment] { rows }
+    public func payouts(kametiId: String) async throws(Failure) -> [Payout] { throw notStubbed }
+    public func recordPayment(_ new: NewPayment) async throws(Failure) -> Payment { throw notStubbed }
+    public func recordPayments(kametiId: String, receivedOn: Date, items: [BatchPaymentItem], method: PaymentMethod) async throws(Failure) -> [Payment] { throw notStubbed }
+    public func voidPayment(id: String, reason: String) async throws(Failure) -> Payment { throw notStubbed }
+    public func recordPayout(_ new: NewPayout) async throws(Failure) -> Payout { throw notStubbed }
+    public func voidPayout(id: String, reason: String) async throws(Failure) -> Payout { throw notStubbed }
 }
