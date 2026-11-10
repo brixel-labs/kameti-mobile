@@ -147,3 +147,20 @@ struct CreateWizardContactsTests {
         #expect(model.availableContacts.count == SampleData.contacts.count - 1)
     }
 }
+
+@MainActor
+@Suite("CreateWizardModel select all")
+struct CreateWizardSelectAllTests {
+    @Test func selectAllAddsEverySavedPersonAtOnce() async {
+        let model = makeModel()
+        model.name = "Test kameti"
+        model.amountText = "100000"
+        model.setMonths(2)
+        await model.saveBasics()
+        await model.loadContacts()
+        await model.addMembers(from: model.availableContacts)
+        #expect(model.failure == nil)
+        #expect(model.members.count == SampleData.contacts.count)
+        #expect(model.availableContacts.isEmpty)
+    }
+}

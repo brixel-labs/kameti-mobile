@@ -195,6 +195,18 @@ public final class CreateWizardModel {
         }
     }
 
+    /// Adds several saved people at once ("Select all").
+    public func addMembers(from contacts: [Contact]) async {
+        guard let id = kametiId, !contacts.isEmpty else { return }
+        await write { () async throws(Failure) in
+            for contact in contacts {
+                let member = try await self.dependencies.kametis.addMember(kametiId: id, NewMember(contactId: contact.id))
+                if let email = contact.email { self.emails[member.id] = email }
+            }
+            try await self.reload()
+        }
+    }
+
     /// "I'm also a member": adds or removes the owner's own member row.
     public func setSelfMember(included: Bool) async {
         guard let id = kametiId else { return }

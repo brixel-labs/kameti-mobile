@@ -749,6 +749,17 @@
         }
       }
     },
+    "Pick an amount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick an amount"
+          }
+        }
+      }
+    },
     "Pick the due day" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -778,17 +789,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Previous"
-          }
-        }
-      }
-    },
-    "Random draw" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Random draw"
           }
         }
       }
@@ -837,6 +837,17 @@
         }
       }
     },
+    "Reset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        }
+      }
+    },
     "Runs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -844,17 +855,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Runs"
-          }
-        }
-      }
-    },
-    "Same as slots" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Same as slots"
           }
         }
       }
@@ -881,13 +881,13 @@
         }
       }
     },
-    "Search" : {
+    "Select all" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Search"
+            "value" : "Select all"
           }
         }
       }
@@ -910,6 +910,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Set an amount for everyone"
+          }
+        }
+      }
+    },
+    "Shuffle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle"
           }
         }
       }
@@ -1064,17 +1075,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Who's in?"
-          }
-        }
-      }
-    },
-    "Whole slot" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Whole slot"
           }
         }
       }

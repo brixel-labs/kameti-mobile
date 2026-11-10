@@ -71,3 +71,20 @@ public struct KAvatar: View {
             .accessibilityHidden(true)
     }
 }
+
+/// Overlapping avatars, for "who receives this month".
+public struct KAvatarStack: View {
+    private let people: [(name: String, colorIndex: Int)]
+
+    public init(_ people: [(name: String, colorIndex: Int)]) { self.people = people }
+
+    public var body: some View {
+        HStack(spacing: -10) {
+            ForEach(Array(people.prefix(3).enumerated()), id: \.offset) { index, person in
+                KAvatar(name: person.name, colorIndex: person.colorIndex, size: .medium)
+                    .overlay(Circle().stroke(KColors.surface, lineWidth: 2))
+                    .zIndex(Double(-index))
+            }
+        }
+    }
+}

@@ -87,6 +87,9 @@ struct WizardFooter<Secondary: View>: View {
         .padding(.horizontal, KSpace.xl)
         .padding(.vertical, KSpace.md)
         .background(KColors.background)
+        // The glass buttons spring when their frame changes (the keyboard
+        // hiding, say); keep the footer still.
+        .transaction { $0.animation = nil }
     }
 }
 

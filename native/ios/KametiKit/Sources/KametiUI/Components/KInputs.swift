@@ -433,3 +433,105 @@ public struct KCheckboxStyle: ToggleStyle {
         .accessibilityRepresentation { Toggle(isOn: configuration.$isOn) { configuration.label } }
     }
 }
+
+/// A compact action capsule. `.tonal` is the secondary action (light green
+/// with green text); `.neutral` is white with a grey border. Primary is the
+/// filled green capsule.
+public struct KTonalButton: View {
+    public enum Style: Sendable { case tonal, neutral }
+
+    private let title: String
+    private let symbol: String?
+    private let style: Style
+    private let action: () -> Void
+
+    public init(_ title: String, symbol: String? = nil, style: Style = .tonal, action: @escaping () -> Void) {
+        self.title = title; self.symbol = symbol; self.style = style; self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let symbol { Image(systemName: symbol).font(.system(size: 13, weight: .semibold)).accessibilityHidden(true) }
+                Text(title)
+            }
+            .kText(KTextStyle(size: 13, weight: .semibold), color: style == .tonal ? KColors.onBrandSubtle : KColors.textPrimary)
+            .padding(.horizontal, 14)
+            .frame(height: 36)
+            .background(style == .tonal ? KColors.brandSubtle : KColors.surface, in: Capsule())
+            .overlay(Capsule().stroke(KColors.border).opacity(style == .neutral ? 1 : 0))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// The six-dot drag handle (two columns of three) in a light rounded square.
+public struct KGripHandle: View {
+    private let boxed: Bool
+
+    public init(boxed: Bool = true) { self.boxed = boxed }
+
+    public var body: some View {
+        VStack(spacing: 4) {
+            ForEach(0..<3, id: \.self) { _ in
+                HStack(spacing: 4) {
+                    Circle().frame(width: 3.5, height: 3.5)
+                    Circle().frame(width: 3.5, height: 3.5)
+                }
+            }
+        }
+        .foregroundStyle(KColors.textTertiary)
+        .frame(width: 36, height: 36)
+        .background(boxed ? KColors.surfaceSunken : .clear, in: RoundedRectangle(cornerRadius: 10))
+        .accessibilityHidden(true)
+    }
+}
+
+/// Tabs with an underline that slides under the selected one. Pair it with
+/// content that slides the same way (see `OwnerTabs`).
+public struct KUnderlineTabs<Tab: Hashable>: View {
+    private let tabs: [(tab: Tab, title: String)]
+    private let inset: CGFloat
+    @Binding private var selection: Tab
+    @Namespace private var underline
+
+    /// `inset` pads the tabs from the screen edges while the divider under
+    /// them still runs the full width.
+    public init(_ tabs: [(tab: Tab, title: String)], selection: Binding<Tab>, inset: CGFloat = 0) {
+        self.tabs = tabs; _selection = selection; self.inset = inset
+    }
+
+    public var body: some View {
+        HStack(spacing: KSpace.xl) {
+            ForEach(tabs.indices, id: \.self) { index in
+                let item = tabs[index]
+                let isOn = item.tab == selection
+                Button {
+                    withAnimation(.smooth(duration: 0.28)) { selection = item.tab }
+                } label: {
+                    VStack(spacing: 10) {
+                        Text(item.title)
+                            .kText(KTextToken.bodyStrong, color: isOn ? KColors.brand : KColors.textSecondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        ZStack {
+                            Rectangle().fill(.clear).frame(height: 2.5)
+                            if isOn {
+                                Capsule().fill(KColors.brand).frame(height: 2.5)
+                                    .matchedGeometryEffect(id: "underline", in: underline)
+                            }
+                        }
+                    }
+                    .padding(.top, KSpace.sm)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isOn ? .isSelected : [])
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, inset)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(alignment: .bottom) { Rectangle().fill(KColors.border).frame(height: 1) }
+    }
+}

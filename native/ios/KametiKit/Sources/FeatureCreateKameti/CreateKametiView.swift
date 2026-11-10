@@ -56,6 +56,7 @@ public struct CreateKametiView: View {
         .navigationTitle(String(localized: "New kameti", bundle: .module))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 if model.isAtStart {

@@ -11,10 +11,26 @@ public struct KPotProgress: View {
     private let target: Money
     private let marked: Money
     private let caption: String?
+    private let trailingCaption: String?
+    private let headline: Headline
+    private let captionAboveBar: Bool
 
-    public init(collected: Money, target: Money, marked: Money = .zero, caption: String? = nil) {
+    /// What sits beside the big amount.
+    public enum Headline: Sendable {
+        /// "of 50,00,000 · 47%"
+        case percent
+        /// "of Rs 50,00,000"
+        case ofTarget
+        case none
+    }
+
+    public init(
+        collected: Money, target: Money, marked: Money = .zero, caption: String? = nil,
+        trailingCaption: String? = nil, headline: Headline = .percent, captionAboveBar: Bool = false
+    ) {
         self.collected = collected; self.target = target
         self.marked = marked; self.caption = caption
+        self.trailingCaption = trailingCaption; self.headline = headline; self.captionAboveBar = captionAboveBar
     }
 
     /// Whole percent of `target` covered by `amount` (may pass 100).
@@ -50,6 +66,7 @@ public struct KPotProgress: View {
                     ofTarget(percent)
                 }
             }
+            if captionAboveBar { captionRow }
             GeometryReader { geometry in
                 HStack(spacing: 0) {
                     segment(KColors.brand, bar.collected, geometry.size.width)
@@ -64,18 +81,35 @@ public struct KPotProgress: View {
                 Label(String(localized: "Over by \(over.format())", bundle: .module), systemImage: "info.circle")
                     .kText(KTextToken.caption, color: KColors.info)
             }
-            if let caption {
-                Text(caption).kText(KTextToken.caption, color: KColors.textSecondary)
-            }
+            if !captionAboveBar { captionRow }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("\(total.format()) collected of \(target.format()), \(percent) percent"))
     }
 
-    private func ofTarget(_ percent: Int) -> some View {
-        Text("of \(target.format(symbol: false)) · \(percent)%", bundle: .module)
-            .kText(KTextToken.bodySm, color: KColors.textSecondary)
-            .monospacedDigit()
+    @ViewBuilder private func ofTarget(_ percent: Int) -> some View {
+        switch headline {
+        case .percent:
+            Text("of \(target.format(symbol: false)) · \(percent)%", bundle: .module)
+                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .monospacedDigit()
+        case .ofTarget:
+            Text("of \(target.format())", bundle: .module)
+                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .monospacedDigit()
+        case .none:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder private var captionRow: some View {
+        if caption != nil || trailingCaption != nil {
+            HStack {
+                if let caption { Text(caption).kText(KTextToken.caption, color: KColors.textSecondary) }
+                Spacer(minLength: KSpace.sm)
+                if let trailingCaption { Text(trailingCaption).kText(KTextToken.caption, color: KColors.textSecondary) }
+            }
+        }
     }
 
     private func segment(_ color: Color, _ permille: Int, _ width: CGFloat) -> some View {

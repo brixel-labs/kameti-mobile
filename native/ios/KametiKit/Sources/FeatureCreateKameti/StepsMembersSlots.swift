@@ -18,7 +18,6 @@ struct MembersStep: View {
     @State private var chosenMode = false
     @State private var newName = ""
     @State private var newEmail = ""
-    @State private var search = ""
     @State private var submitted = false
     @State private var removing: Member?
 
@@ -136,11 +135,19 @@ struct MembersStep: View {
     // MARK: From my people
 
     private var peopleCard: some View {
-        let list = model.availableContacts.filter {
-            search.isEmpty || $0.name.localizedCaseInsensitiveContains(search)
-        }
+        let list = model.availableContacts
         return VStack(alignment: .leading, spacing: KSpace.md) {
-            Text("My people", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.textSecondary)
+            HStack {
+                Text("My people", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.textSecondary)
+                Spacer()
+                if !list.isEmpty {
+                    Button(String(localized: "Select all", bundle: .module)) {
+                        Task { await model.addMembers(from: list) }
+                    }
+                    .kText(KTextToken.bodyStrong, color: KColors.brand)
+                    .disabled(model.isBusy)
+                }
+            }
             if model.contacts.isEmpty {
                 emptyPeople(
                     title: String(localized: "No saved people yet", bundle: .module),
@@ -152,7 +159,6 @@ struct MembersStep: View {
                     message: String(localized: "All your saved people are in this kameti. Add someone new instead.", bundle: .module)
                 )
             } else {
-                PlainField(prompt: String(localized: "Search", bundle: .module), text: $search, capitalization: .words)
                 VStack(spacing: 0) {
                     ForEach(Array(list.enumerated()), id: \.element.id) { index, contact in
                         Button { Task { await model.addMember(from: contact) } } label: {
@@ -330,7 +336,7 @@ struct SlotsStep: View {
                 VStack(alignment: .leading, spacing: KSpace.lg) {
                     WizardHeading(
                         title: String(localized: "Fill the \(slots.count) slots", bundle: .module),
-                        subtitle: String(localized: "Each slot is \(amount.format()) a month. Give it to one person or share it between up to 4.", bundle: .module)
+                        subtitle: String(localized: "Each slot is \(amount.format()) a month. Give it to one person or share it between up to 3.", bundle: .module)
                     )
                     VStack(spacing: KSpace.sm) {
                         HStack {
@@ -362,9 +368,16 @@ struct SlotsStep: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
                     }
-                    VStack(spacing: KSpace.sm) {
+                    VStack(alignment: .leading, spacing: KSpace.sm) {
                         ForEach(slots) { slot in
-                            Button { model.editingSlotId = slot.id } label: { slotRow(slot, amount: amount, byId: byId) }
+                            let date = addingMonths(slot.payoutMonthIndex - 1, to: model.startMonth)
+                            let year = date.formatted(Date.FormatStyle(timeZone: .gmt).year())
+                            let previous = slot.payoutMonthIndex > 1
+                                ? addingMonths(slot.payoutMonthIndex - 2, to: model.startMonth).formatted(Date.FormatStyle(timeZone: .gmt).year()) : nil
+                            if year != previous {
+                                Text(year).kText(KTextToken.label, color: KColors.textSecondary).padding(.top, KSpace.sm)
+                            }
+                            Button { model.editingSlotId = slot.id } label: { slotRow(slot, date: date, amount: amount, byId: byId) }
                                 .buttonStyle(.plain)
                         }
                     }
@@ -378,7 +391,7 @@ struct SlotsStep: View {
     }
 
     /// One slot: its number, who is in it and a status mark (design AC-4).
-    private func slotRow(_ slot: Slot, amount: Money, byId: [String: Member]) -> some View {
+    private func slotRow(_ slot: Slot, date: Date, amount: Money, byId: [String: Member]) -> some View {
         let active = PlanChecks.activeShares(of: slot.id, in: model.shares)
         let amounts = active.map(\.monthlyAmount)
         let valid = PlanChecks.isValidSplit(amounts, slotAmount: amount)
@@ -386,11 +399,14 @@ struct SlotsStep: View {
         let title = active.isEmpty ? String(localized: "Empty", bundle: .module)
             : active.map { byId[$0.memberId]?.name ?? "" }.joined(separator: " + ")
         return HStack(spacing: KSpace.md) {
-            Text("\(slot.payoutMonthIndex)")
-                .kText(KTextToken.bodyStrong, color: partial ? KColors.warning : KColors.textPrimary)
-                .monospacedDigit()
-                .frame(width: 36, height: 36)
-                .background(partial ? KColors.warningSubtle : KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: 10))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(date.formatted(Date.FormatStyle(timeZone: .gmt).month(.abbreviated)))
+                    .kText(KTextToken.bodyStrong, color: partial ? KColors.warning : KColors.textPrimary)
+                Text("Slot \(slot.payoutMonthIndex)", bundle: .module)
+                    .kText(KTextToken.caption, color: KColors.textSecondary)
+            }
+            .frame(width: 48, alignment: .leading)
+            Rectangle().fill(KColors.border).frame(width: 1).padding(.vertical, 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).kText(KTextToken.bodyStrong).lineLimit(1)
                 if active.isEmpty {
@@ -407,7 +423,7 @@ struct SlotsStep: View {
             }
             Spacer(minLength: KSpace.sm)
             if valid {
-                Image(systemName: "checkmark").font(.system(size: 16, weight: .semibold)).foregroundStyle(KColors.positive)
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(KColors.positive)
             } else if active.isEmpty {
                 Image(systemName: "plus").font(.system(size: 16, weight: .semibold)).foregroundStyle(KColors.brand)
             } else {
@@ -455,7 +471,7 @@ struct SlotSplitView: View {
                 VStack(alignment: .leading, spacing: KSpace.lg) {
                     WizardHeading(
                         title: String(localized: "Who pays what each month?", bundle: .module),
-                        subtitle: String(localized: "This slot needs \(split.total.format()) a month. Up to 4 people.", bundle: .module)
+                        subtitle: String(localized: "This slot needs \(split.total.format()) a month. Up to 3 people.", bundle: .module)
                     )
                     progressCard(remaining: remaining)
                     ForEach(Array(split.lines.enumerated()), id: \.element.id) { index, line in
@@ -464,7 +480,7 @@ struct SlotSplitView: View {
                                 .transition(.opacity.combined(with: .scale(scale: 0.96)))
                         }
                     }
-                    if !split.isFull { addSection }
+                    if split.canAdd { addSection }
                 }
                 .padding(KSpace.xl)
                 .animation(.smooth(duration: 0.3), value: split)
@@ -548,23 +564,14 @@ struct SlotSplitView: View {
     @ViewBuilder
     private func personCard(member: Member, line: SlotSplit.Line, color: Color) -> some View {
         let payout = line.amount * model.months
-        let isOpen = split.lines.count > 1 && activeId == line.id
-        let single = split.lines.count == 1
-        if isOpen || single {
+        let isOpen = split.lines.count == 1 || activeId == line.id
+        if isOpen {
             VStack(alignment: .leading, spacing: KSpace.md) {
                 HStack(spacing: KSpace.md) {
                     identity(member: member, payout: payout, size: .large)
                     trashButton(member)
                 }
-                if single {
-                    HStack {
-                        Text("Whole slot", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
-                        Spacer()
-                        KMoneyText(line.amount, style: .title)
-                    }
-                } else {
-                    amountControls(line: line)
-                }
+                amountControls(line: line)
             }
             .padding(KSpace.lg)
             .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
@@ -623,14 +630,20 @@ struct SlotSplitView: View {
                 Spacer()
                 VStack(spacing: 2) {
                     KMoneyText(line.amount, style: .display)
-                    Text("a month · steps of \(Money(SlotSplit.step(for: split.total)).formatCompact())", bundle: .module)
-                        .kText(KTextToken.caption, color: KColors.textSecondary)
+                    Group {
+                        if line.amount.rupees < SlotSplit.unit {
+                            Text("Pick an amount", bundle: .module)
+                        } else {
+                            Text("a month · steps of \(Money(SlotSplit.step(for: split.total)).formatCompact())", bundle: .module)
+                        }
+                    }
+                    .kText(KTextToken.caption, color: KColors.textSecondary)
                 }
                 Spacer()
                 roundButton("plus", label: String(localized: "More", bundle: .module)) { split.nudge(line.id, by: 1) }
             }
             KFlowLayout {
-                ForEach(SlotSplit.presets(for: split.total, people: split.lines.count), id: \.self) { preset in
+                ForEach(split.options(for: line.id), id: \.self) { preset in
                     KChip(preset.formatCompact(), isOn: line.amount == preset) { split.set(line.id, to: preset) }
                 }
             }
@@ -672,7 +685,7 @@ struct SlotSplitView: View {
                         Button {
                             withAnimation(.smooth(duration: 0.3)) {
                                 split.add(member.id)
-                                if split.lines.count > 1 { activeId = member.id }
+                                activeId = member.id
                             }
                         } label: {
                             HStack(spacing: KSpace.sm) {

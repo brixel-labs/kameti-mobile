@@ -3,7 +3,8 @@ import KametiDomain
 import KametiUI
 import SwiftUI
 
-/// Step 5 (AC-5): who gets the pot when. Drag to reorder.
+/// Step 5 (AC-5): who gets the pot when. Hold a row and drag to reorder; the
+/// list uses the system's own reordering.
 struct OrderStep: View {
     @Bindable var model: CreateWizardModel
     @State private var order: [String] = []
@@ -12,44 +13,25 @@ struct OrderStep: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            List {
-                Section {
-                    WizardHeading(
-                        title: String(localized: "Who gets the pot when?", bundle: .module),
-                        subtitle: String(localized: "Hold and drag to reorder. Members will see this order.", bundle: .module)
-                    )
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: KSpace.sm, trailing: 0))
-                    HStack(spacing: KSpace.md) {
-                        Button { withAnimation(.smooth) { order.shuffle() } } label: {
-                            Label(String(localized: "Random draw", bundle: .module), systemImage: "shuffle").frame(maxWidth: .infinity)
-                        }
-                        Button { withAnimation(.smooth) { order = original } } label: {
-                            Text("Same as slots", bundle: .module).frame(maxWidth: .infinity)
-                        }
+            VStack(alignment: .leading, spacing: KSpace.md) {
+                WizardHeading(
+                    title: String(localized: "Who gets the pot when?", bundle: .module),
+                    subtitle: String(localized: "Hold and drag to reorder. Members will see this order.", bundle: .module)
+                )
+                HStack {
+                    Text(String(localized: "\(order.count) months", bundle: .module).uppercased())
+                        .kText(KTextToken.label, color: KColors.textSecondary)
+                    Spacer()
+                    KTonalButton(String(localized: "Shuffle", bundle: .module), symbol: "shuffle", style: .neutral) {
+                        order.shuffle()
                     }
-                    .kText(KTextToken.bodyStrong)
-                    .buttonStyle(.glass)
-                    .controlSize(.large)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                }
-                .listRowSeparator(.hidden)
-                Section {
-                    ForEach(Array(order.enumerated()), id: \.element) { index, slotId in
-                        row(index: index, slotId: slotId)
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                    }
-                    .onMove { order.move(fromOffsets: $0, toOffset: $1) }
+                    KTonalButton(String(localized: "Reset", bundle: .module), style: .neutral) { order = original }
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
             .padding(.horizontal, KSpace.xl)
-            .environment(\.editMode, .constant(.active))
-            .animation(.smooth, value: order)
+            .padding(.top, KSpace.xl)
+            .padding(.bottom, KSpace.sm)
+            KReorderList(ids: $order) { index, slotId in row(index: index, slotId: slotId) }
             WizardFooter(primaryTitle: String(localized: "Next: review", bundle: .module), isLoading: model.isBusy, onBack: { model.back() }) {
                 Task { await model.saveOrder(order) }
             }
@@ -57,27 +39,31 @@ struct OrderStep: View {
         .onAppear { if order.isEmpty { order = original } }
     }
 
-    /// A month, who receives that month; the owner's own turn is tinted.
+    /// A numbered row: who gets the pot that month, with a grip. The owner's
+    /// own turns have a filled green number.
     private func row(index: Int, slotId: String) -> some View {
         let date = addingMonths(index, to: model.startMonth)
         let mine = PlanChecks.activeShares(of: slotId, in: model.shares).contains { $0.memberId == model.selfMember?.id }
-        let names = names(of: slotId)
         return HStack(spacing: KSpace.md) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(date.formatted(Date.FormatStyle(timeZone: .gmt).month(.abbreviated)).uppercased())
-                    .kText(KTextToken.caption, color: mine ? KColors.onYourTurn : KColors.textSecondary)
-                Text(date.formatted(Date.FormatStyle(timeZone: .gmt).year()))
-                    .kText(KTextToken.bodyStrong, color: mine ? KColors.onYourTurn : KColors.textPrimary)
-                    .monospacedDigit()
+            Text("\(index + 1)")
+                .kText(KTextToken.bodyStrong, color: mine ? KColors.textOnBrand : KColors.textPrimary).monospacedDigit()
+                .frame(width: 32, height: 32)
+                .background(mine ? KColors.brand : KColors.surface, in: Circle())
+                .overlay(Circle().stroke(KColors.border).opacity(mine ? 0 : 1))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(names(of: slotId)).kText(KTextToken.bodyStrong).lineLimit(1)
+                Text(shortMonthLabel(date)).kText(KTextToken.caption, color: KColors.textSecondary)
             }
-            .frame(width: 52, alignment: .leading)
-            Text(names).kText(KTextToken.body, color: mine ? KColors.onYourTurn : KColors.textPrimary).lineLimit(1)
-            Spacer(minLength: 0)
+            Spacer(minLength: KSpace.sm)
+            KGripHandle(boxed: false)
         }
-        .padding(.horizontal, KSpace.md)
+        .padding(.leading, KSpace.md)
+        .padding(.trailing, KSpace.sm)
         .padding(.vertical, KSpace.sm + 2)
-        .background(mine ? KColors.yourTurn : KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
-        .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(mine ? KColors.yourTurnBorder : KColors.border))
+        .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
+        .overlay(RoundedRectangle(cornerRadius: KRadius.card).stroke(KColors.border))
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("Drag to move \(monthLabel(date))", bundle: .module))
     }
 
@@ -145,6 +131,7 @@ struct ReviewStep: View {
             } secondary: {
                 Button(String(localized: "Save draft", bundle: .module), action: onSaveDraft)
                     .kText(KTextToken.bodyStrong, color: KColors.onBrandSubtle)
+                    .padding(.top, KSpace.sm)
             }
         }
     }
