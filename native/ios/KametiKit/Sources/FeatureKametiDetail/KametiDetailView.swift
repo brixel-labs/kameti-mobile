@@ -32,6 +32,15 @@ public struct KametiDetailView: View {
         .navigationTitle(title)
         .navigationSubtitle(subtitle)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if case .loaded(let data) = model.state, !data.isOwner {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Label(String(localized: "View only", bundle: .module), systemImage: "eye")
+                        .kText(KTextStyle(size: 12, weight: .semibold), color: KColors.textSecondary)
+                        .padding(.horizontal, KSpace.sm)
+                }
+            }
+        }
         .task { await model.load() }
         .refreshable { await model.load() }
     }

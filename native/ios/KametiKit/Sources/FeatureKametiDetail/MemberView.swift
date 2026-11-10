@@ -3,9 +3,9 @@ import KametiDomain
 import KametiUI
 import SwiftUI
 
-/// A member's read-only view (boards A-Member-View, AD-Member-View; FR-60 to
-/// FR-64): my due, my payout, this month's pot, the schedule and my payments.
-/// It builds no write controls; the backend enforces the same rule.
+/// A member's read-only view (board A · Member view; FR-60 to FR-64): my due
+/// this month, my payout, this month's pot and my payments. It builds no write
+/// controls; the backend enforces the same rule.
 struct MemberView: View {
     let data: KametiDetailData
 
@@ -22,6 +22,7 @@ struct MemberView: View {
                 }
             }
             .padding(.horizontal, KSpace.xl)
+            .padding(.top, KSpace.sm)
             .padding(.bottom, KSpace.xl)
         }
     }
@@ -29,61 +30,183 @@ struct MemberView: View {
     @ViewBuilder
     private func content(for me: Member) -> some View {
         let balance = data.balances.first { $0.memberId == me.id }
-        let mine = DetailLogic.newestFirst(data.payments.filter { $0.memberId == me.id })
+        dueCard(balance: balance)
+        if let turn = DetailLogic.nextTurn(for: me, kameti: data.kameti, from: data.current?.monthIndex ?? 1, slots: data.slots, shares: data.shares) {
+            payoutCard(me: me, monthIndex: turn.monthIndex, payout: turn.payout)
+        }
+        if let current = data.current { potCard(current) }
+        paymentsCard(me: me)
+    }
 
+    // MARK: Your due
+
+    private func dueCard(balance: MemberBalanceRow?) -> some View {
+        let owes = balance?.owes ?? .zero
+        let current = data.current
+        let month = (current?.monthStart).map { DetailLogic.monthTitle($0).split(separator: " ").first.map(String.init)?.uppercased() ?? "" } ?? ""
+        return VStack(alignment: .leading, spacing: KSpace.md) {
+            Text(String(localized: "\(month) · YOUR DUE", bundle: .module))
+                .kText(KTextToken.label, color: KColors.textOnBrand.opacity(0.85))
+            if owes.isPositive {
+                KMoneyText(owes, style: .displayLg).foregroundStyle(KColors.textOnBrand)
+            } else {
+                Text("Paid up", bundle: .module).kText(KTextToken.displayLg, color: KColors.textOnBrand)
+            }
+            if let current, owes.isPositive {
+                let due = DetailLogic.dueDate(of: data.kameti, monthIndex: current.monthIndex)
+                Label {
+                    Text("\(dueLabel(due)) · pay the owner by cash or bank", bundle: .module)
+                } icon: { Image(systemName: "clock") }
+                    .kText(KTextToken.bodySm, color: KColors.textOnBrand)
+                    .padding(.horizontal, KSpace.md).padding(.vertical, KSpace.sm + 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
+            }
+        }
+        .padding(KSpace.xl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(KColors.brand, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    private func dueLabel(_ due: Date) -> String {
+        let days = Calendar(identifier: .gregorian).dateComponents([.day], from: data.today, to: due).day ?? 0
+        switch days {
+        case 0: return String(localized: "Due today", bundle: .module)
+        case 1: return String(localized: "Due tomorrow, \(DetailLogic.dayMonth(due))", bundle: .module)
+        default: return String(localized: "Due \(DetailLogic.dayMonth(due))", bundle: .module)
+        }
+    }
+
+    // MARK: Your payout
+
+    private func payoutCard(me: Member, monthIndex: Int, payout: Money) -> some View {
+        let start = DetailLogic.monthStart(of: data.kameti, monthIndex: monthIndex)
+        let others = DetailLogic.recipients(kameti: data.kameti, monthIndex: monthIndex, slots: data.slots, shares: data.shares, members: data.members)
+            .filter { $0.member.id != me.id }.map(\.member.name)
+        return card(title: String(localized: "Your payout", bundle: .module)) {
+            HStack(spacing: KSpace.md + 2) {
+                VStack(spacing: 0) {
+                    Text(start.formatted(Date.FormatStyle(timeZone: .gmt).month(.abbreviated)).uppercased())
+                        .kText(KTextStyle(size: 11, weight: .semibold), color: KColors.onBrandSubtle)
+                    Text(start.formatted(Date.FormatStyle(timeZone: .gmt).year()))
+                        .kText(KTextStyle(size: 18, weight: .bold), color: KColors.onBrandSubtle).monospacedDigit()
+                }
+                .frame(width: 56, height: 56)
+                .background(KColors.brandSubtle, in: RoundedRectangle(cornerRadius: 14))
+                VStack(alignment: .leading, spacing: 2) {
+                    KMoneyText(payout, style: .title)
+                    Text(others.isEmpty
+                         ? String(localized: "Whole slot · month \(monthIndex)", bundle: .module)
+                         : String(localized: "Shared with \(others.formatted(.list(type: .and))) · month \(monthIndex)", bundle: .module))
+                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                }
+            }
+        }
+    }
+
+    // MARK: This month's pot
+
+    private func potCard(_ current: MonthCollectionRow) -> some View {
+        let recipients = DetailLogic.recipients(kameti: data.kameti, monthIndex: current.monthIndex, slots: data.slots, shares: data.shares, members: data.members)
+        let percent = KPotProgress.percent(of: current.received, target: current.target)
+        return card(title: String(localized: "This month's pot", bundle: .module), trailing: {
+            NavigationLink {
+                ScrollView { ScheduleSection(data: data).padding(KSpace.xl) }
+                    .background(KColors.background)
+                    .navigationTitle(String(localized: "Schedule", bundle: .module))
+                    .navigationBarTitleDisplayMode(.inline)
+            } label: {
+                Text("Schedule", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
+            }
+        }) {
+            HStack {
+                Text(recipients.isEmpty
+                     ? String(localized: "This month's pot", bundle: .module)
+                     : String(localized: "To \(recipients.map { $0.member.id == data.me?.id ? "You" : $0.member.name }.joined(separator: " + "))", bundle: .module))
+                    .kText(KTextToken.body)
+                Spacer()
+                Text("\(percent)%").kText(KTextToken.bodyStrong).monospacedDigit()
+            }
+            GeometryReader { proxy in
+                Capsule().fill(KColors.surfaceSunken)
+                    .overlay(alignment: .leading) {
+                        Capsule().fill(KColors.brand).frame(width: proxy.size.width * CGFloat(min(max(percent, 0), 100)) / 100)
+                    }
+            }
+            .frame(height: 8)
+            Text("\(current.paidCount) of \(current.memberCount) members have paid", bundle: .module)
+                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+        }
+    }
+
+    // MARK: Your payments
+
+    private func paymentsCard(me: Member) -> some View {
+        let mine = DetailLogic.newestFirst(data.payments.filter { $0.memberId == me.id && $0.voidedAt == nil })
+        let upTo = data.current?.monthIndex ?? 0
+        let rows = data.months.filter { $0.memberId == me.id && $0.monthIndex <= upTo }.sorted { $0.monthIndex < $1.monthIndex }
+        return card(title: String(localized: "Your payments", bundle: .module)) {
+            if rows.isEmpty {
+                Text("You haven't made any payments yet.", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(rows.enumerated()), id: \.element.monthIndex) { index, row in
+                        let paid = mine.first { DetailLogic.monthIndex(of: $0.receivedOn, kameti: data.kameti) == row.monthIndex }
+                        monthRow(row, payment: paid, showsDivider: index < rows.count - 1)
+                    }
+                }
+            }
+        }
+    }
+
+    private func monthRow(_ row: MemberMonthRow, payment: Payment?, showsDivider: Bool) -> some View {
+        let settled = [.paid, .advance].contains(row.status)
+        let tone = settled ? KColors.positive : (row.status == .partial ? KColors.warning : KColors.negative)
+        let subtitle: String = {
+            if settled, let payment {
+                return String(localized: "Paid \(DetailLogic.dayMonth(payment.receivedOn)) · \(payment.method.label.lowercased())", bundle: .module)
+            }
+            if settled { return String(localized: "Paid", bundle: .module) }
+            return row.status == .partial
+                ? String(localized: "\(row.allocated.format()) paid so far", bundle: .module)
+                : String(localized: "Not paid yet", bundle: .module)
+        }()
+        return VStack(spacing: 0) {
+            HStack(spacing: KSpace.md) {
+                Image(systemName: settled ? "checkmark" : "circle")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(tone)
+                    .frame(width: 32, height: 32)
+                    .background(settled ? KColors.positiveSubtle : (row.status == .partial ? KColors.warningSubtle : KColors.negativeSubtle), in: Circle())
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(DetailLogic.monthTitle(row.monthStart).split(separator: " ").first.map(String.init) ?? "").kText(KTextToken.bodyStrong)
+                    Text(subtitle).kText(KTextToken.caption, color: settled ? KColors.textSecondary : tone)
+                }
+                Spacer()
+                KMoneyText(row.due, style: .title)
+            }
+            .padding(.vertical, KSpace.sm + 2)
+            if showsDivider { Divider() }
+        }
+    }
+
+    // MARK: Card shell
+
+    private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        card(title: title, trailing: { EmptyView() }, content: content)
+    }
+
+    private func card<Trailing: View, Content: View>(
+        title: String, @ViewBuilder trailing: () -> Trailing, @ViewBuilder content: () -> Content
+    ) -> some View {
         KCard {
             VStack(alignment: .leading, spacing: KSpace.md) {
-                if let balance {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("My monthly due", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
-                            KMoneyText(balance.monthlyDue, style: .display)
-                        }
-                        Spacer()
-                        KBalancePill(balance: balance.balance)
-                    }
+                HStack {
+                    Text(title.uppercased()).kText(KTextToken.label, color: KColors.textSecondary)
+                    Spacer()
+                    trailing()
                 }
-                if let turn = DetailLogic.nextTurn(for: me, kameti: data.kameti, from: data.current?.monthIndex ?? 1, slots: data.slots, shares: data.shares) {
-                    Divider()
-                    let month = DetailLogic.monthTitle(DetailLogic.monthStart(of: data.kameti, monthIndex: turn.monthIndex))
-                    Label(String(localized: "Your turn: \(month) · \(turn.payout.format())", bundle: .module), systemImage: "star.fill")
-                        .kText(KTextToken.bodyStrong, color: KColors.onYourTurn)
-                        .padding(KSpace.md)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(KColors.yourTurn, in: RoundedRectangle(cornerRadius: KRadius.input))
-                }
-            }
-        }
-
-        if let current = data.current {
-            KSectionHeader(String(localized: "This month", bundle: .module))
-            KCard {
-                VStack(alignment: .leading, spacing: KSpace.md) {
-                    HStack {
-                        Text(DetailLogic.monthTitle(current.monthStart)).kText(KTextToken.bodyStrong)
-                        Spacer()
-                        CollectionStatePill(state: current.state)
-                    }
-                    KPotProgress(
-                        collected: current.received, target: current.target,
-                        caption: String(localized: "\(current.paidCount) of \(current.memberCount) paid", bundle: .module)
-                    )
-                }
-            }
-        }
-
-        KSectionHeader(String(localized: "Schedule", bundle: .module))
-        ScheduleSection(data: data)
-
-        KSectionHeader(String(localized: "My payments", bundle: .module))
-        if mine.isEmpty {
-            Text("You haven't made any payments yet.", bundle: .module)
-                .kText(KTextToken.bodySm, color: KColors.textSecondary)
-        } else {
-            VStack(spacing: 0) {
-                ForEach(Array(mine.enumerated()), id: \.element.id) { index, payment in
-                    PaymentRow(payment: payment, member: me, members: data.members, showsMember: false, showsDivider: index < mine.count - 1)
-                }
+                content()
             }
         }
     }

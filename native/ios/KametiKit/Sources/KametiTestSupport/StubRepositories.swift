@@ -95,7 +95,7 @@ public struct StubLedgerRepository: LedgerRepository {
     }
     public func memberMonths(kametiId: String, memberId: String?) async throws(Failure) -> [MemberMonthRow] {
         if let failure { throw failure }
-        return months
+        return memberId.map { id in months.filter { $0.memberId == id } } ?? months
     }
     public func monthCollections(kametiId: String) async throws(Failure) -> [MonthCollectionRow] {
         if let failure { throw failure }
@@ -108,7 +108,7 @@ public struct StubPaymentsRepository: PaymentsRepository {
     public init(_ rows: [Payment] = []) { self.rows = rows }
 
     public func payments(kametiId: String) async throws(Failure) -> [Payment] { rows }
-    public func payouts(kametiId: String) async throws(Failure) -> [Payout] { throw notStubbed }
+    public func payouts(kametiId: String) async throws(Failure) -> [Payout] { [] }
     public func recordPayment(_ new: NewPayment) async throws(Failure) -> Payment { throw notStubbed }
     public func recordPayments(kametiId: String, receivedOn: Date, items: [BatchPaymentItem], method: PaymentMethod) async throws(Failure) -> [Payment] { throw notStubbed }
     public func voidPayment(id: String, reason: String) async throws(Failure) -> Payment { throw notStubbed }

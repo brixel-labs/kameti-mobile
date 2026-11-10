@@ -112,6 +112,11 @@ public enum SampleData {
         )
     }
 
+    static let officeMonths = [
+        MemberMonthRow(kametiId: "office", memberId: "o2", monthIndex: 1, monthStart: date(10), isCurrent: false, due: Money(100_000), allocated: Money(100_000), remaining: .zero, status: .paid),
+        MemberMonthRow(kametiId: "office", memberId: "o2", monthIndex: 2, monthStart: date(11), isCurrent: true, due: Money(100_000), allocated: .zero, remaining: Money(100_000), status: .unpaid),
+    ]
+
     // MARK: Payments
 
     static func payment(_ id: String, _ kameti: String, _ member: String, _ amount: Int, month: Int, day: Int, method: PaymentMethod = .cash, reference: String? = nil) -> Payment {
@@ -282,7 +287,7 @@ struct SampleLedgerRepository: LedgerRepository {
         kametiId == "family" ? SampleData.familyBalances : SampleData.officeBalances
     }
     func memberMonths(kametiId: String, memberId: String?) async throws(Failure) -> [MemberMonthRow] {
-        kametiId == "family" ? SampleData.familyMonths : []
+        kametiId == "family" ? SampleData.familyMonths : SampleData.officeMonths.filter { memberId == nil || $0.memberId == memberId }
     }
     func monthCollections(kametiId: String) async throws(Failure) -> [MonthCollectionRow] {
         kametiId == "family" ? SampleData.familyCollections : SampleData.officeCollections

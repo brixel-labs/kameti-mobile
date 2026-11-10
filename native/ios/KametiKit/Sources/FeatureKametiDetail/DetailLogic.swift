@@ -60,6 +60,26 @@ public enum DetailLogic {
         }
     }
 
+    /// Today's date in Pakistan, as a date-only (UTC midnight) value.
+    public static func pakistanToday(_ now: Date) -> Date {
+        let local = now.addingTimeInterval(KametiClock.pakistanOffset)
+        return utc.startOfDay(for: local)
+    }
+
+    /// How many slots this member has an active share in.
+    public static func slotCount(of member: Member, shares: [Share]) -> Int {
+        Set(shares.filter { $0.memberId == member.id && $0.effectiveToMonth == nil }.map(\.slotId)).count
+    }
+
+    /// The first month index whose date range contains `date`, if any.
+    public static func monthIndex(of date: Date, kameti: Kameti) -> Int? {
+        (1...max(kameti.monthsN, 1)).first { index in
+            let start = monthStart(of: kameti, monthIndex: index)
+            let next = utc.date(byAdding: .month, value: 1, to: start) ?? start
+            return date >= start && date < next
+        }
+    }
+
     /// The signed-in user's member row, if they are a member.
     public static func myMember(in members: [Member], userId: String?) -> Member? {
         guard let userId else { return nil }

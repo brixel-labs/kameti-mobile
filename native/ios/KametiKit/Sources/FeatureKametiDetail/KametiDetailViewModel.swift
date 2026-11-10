@@ -1,3 +1,4 @@
+import Foundation
 import KametiCore
 import KametiDomain
 import Observation
@@ -14,6 +15,9 @@ public struct KametiDetailData: Equatable, Sendable {
     /// Every member's month statuses. Owner only: empty for a member.
     public let months: [MemberMonthRow]
     public let payments: [Payment]
+    public let payouts: [Payout]
+    /// Today in Pakistan (date-only), for "Today" labels.
+    public let today: Date
 
     public var isOwner: Bool { kameti.isOwned(by: userId) }
     public var me: Member? { DetailLogic.myMember(in: members, userId: userId) }
@@ -55,11 +59,17 @@ public final class KametiDetailViewModel {
             let shares = try await dependencies.kametis.shares(kametiId: kametiId)
             let collections = try await dependencies.ledger.monthCollections(kametiId: kametiId)
             let balances = try await dependencies.ledger.memberBalances(kametiId: kametiId)
-            let months = owner ? try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: nil) : []
+            // Owners see every member's months; a member only their own.
+            let mine = DetailLogic.myMember(in: members, userId: userId)
+            let months = owner
+                ? try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: nil)
+                : (mine == nil ? [] : try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: mine?.id))
             let payments = try await dependencies.payments.payments(kametiId: kametiId)
+            let payouts = (try? await dependencies.payments.payouts(kametiId: kametiId)) ?? []
             state = .loaded(KametiDetailData(
                 kameti: kameti, userId: userId, members: members, slots: slots, shares: shares,
-                collections: collections, balances: balances, months: months, payments: payments
+                collections: collections, balances: balances, months: months, payments: payments,
+                payouts: payouts, today: DetailLogic.pakistanToday(dependencies.clock.now())
             ))
         } catch {
             // Keep what is on screen if a refresh fails.

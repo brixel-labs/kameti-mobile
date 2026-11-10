@@ -39,16 +39,20 @@ struct KametiDetailViewModelTests {
         #expect(data.me?.id == "m")
     }
 
-    @Test func memberDoesNotLoadOthersMonths() async {
-        let month = MemberMonthRow(
-            kametiId: "k", memberId: "x", monthIndex: 1, monthStart: DateOnly.make(year: 2026, month: 11),
-            isCurrent: true, due: Money(1), allocated: .zero, remaining: Money(1), status: .unpaid
+    @Test func aMemberLoadsOnlyTheirOwnMonths() async {
+        func row(_ member: String) -> MemberMonthRow {
+            MemberMonthRow(
+                kametiId: "k", memberId: member, monthIndex: 1, monthStart: DateOnly.make(year: 2026, month: 11),
+                isCurrent: true, due: Money(1), allocated: .zero, remaining: Money(1), status: .unpaid
+            )
+        }
+        let model = KametiDetailViewModel(
+            kametiId: "k", userId: "me", dependencies: dependencies(owner: "other", ledger: StubLedgerRepository(months: [row("x"), row("m")]))
         )
-        let model = KametiDetailViewModel(kametiId: "k", userId: "me", dependencies: dependencies(owner: "other", ledger: StubLedgerRepository(months: [month])))
         await model.load()
         guard case .loaded(let data) = model.state else { Issue.record("not loaded"); return }
         #expect(!data.isOwner)
-        #expect(data.months.isEmpty)
+        #expect(data.months.map(\.memberId) == ["m"])
     }
 
     @Test func aFailureShowsAsFailedState() async {

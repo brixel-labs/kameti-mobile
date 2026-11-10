@@ -10,6 +10,8 @@ public final class ProfileViewModel {
     public private(set) var profile: Profile?
     public private(set) var runningCount = 0
     public private(set) var memberCount = 0
+    public private(set) var pastCount = 0
+    public private(set) var peopleCount = 0
     public private(set) var failure: Failure?
     public private(set) var isLoading = false
 
@@ -32,6 +34,8 @@ public final class ProfileViewModel {
             self.profile = me
             runningCount = all.filter { $0.isOwned(by: userId) }.count
             memberCount = all.count - runningCount
+            pastCount = all.filter { [.completed, .archived, .cancelled].contains($0.status) }.count
+            peopleCount = (try? await dependencies.contacts.contacts().count) ?? 0
         } catch {
             failure = error
         }
