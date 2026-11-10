@@ -11,15 +11,24 @@ import PackageDescription
 // The app target is the one place that wires KametiData into the features.
 let package = Package(
     name: "KametiKit",
+    defaultLocalization: "en",
     platforms: [.iOS(.v26)],
     products: [
         .library(name: "KametiCore", targets: ["KametiCore"]),
         .library(name: "KametiDomain", targets: ["KametiDomain"]),
+        .library(name: "KametiUI", targets: ["KametiUI"]),
     ],
     targets: [
         .target(name: "KametiCore"),
         .target(name: "KametiDomain", dependencies: ["KametiCore"]),
+        // Design system: tokens are generated from native/design-tokens/tokens.json.
+        .target(
+            name: "KametiUI",
+            dependencies: ["KametiCore"],
+            resources: [.process("Resources")]
+        ),
         .testTarget(name: "KametiCoreTests", dependencies: ["KametiCore"]),
+        .testTarget(name: "KametiUITests", dependencies: ["KametiUI", "KametiCore"]),
         .testTarget(
             name: "KametiDomainTests",
             dependencies: ["KametiDomain", "KametiCore"]

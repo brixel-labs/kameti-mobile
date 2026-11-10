@@ -1,0 +1,11 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Credit %@" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Credit %@" } } } },
+    "Owes %@" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Owes %@" } } } },
+    "Over by %@" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Over by %@" } } } },
+    "Settled" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settled" } } } },
+    "of %@ · %lld%%" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "of %1$@ · %2$lld%%" } } } }
+  },
+  "version" : "1.0"
+}
