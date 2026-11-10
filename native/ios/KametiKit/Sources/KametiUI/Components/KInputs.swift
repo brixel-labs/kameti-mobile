@@ -104,15 +104,19 @@ public struct KChip: View {
     private let title: String
     private let isOn: Bool
     private let style: Style
+    private let symbol: String?
     private let action: () -> Void
 
-    public init(_ title: String, isOn: Bool, style: Style = .filled, action: @escaping () -> Void) {
-        self.title = title; self.isOn = isOn; self.style = style; self.action = action
+    public init(_ title: String, symbol: String? = nil, isOn: Bool, style: Style = .filled, action: @escaping () -> Void) {
+        self.title = title; self.symbol = symbol; self.isOn = isOn; self.style = style; self.action = action
     }
 
     public var body: some View {
         Button(action: action) {
-            Text(title)
+            HStack(spacing: KSpace.xs) {
+                if let symbol { Image(systemName: symbol).imageScale(.small).accessibilityHidden(true) }
+                Text(title)
+            }
                 .kText(KTextToken.bodyStrong, color: foreground)
                 .padding(.horizontal, KSpace.lg)
                 .padding(.vertical, KSpace.sm + 2)

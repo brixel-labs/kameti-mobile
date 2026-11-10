@@ -12,17 +12,6 @@
         }
       }
     },
-    "Add a person" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add a person"
-          }
-        }
-      }
-    },
     "Add everyone who pays. Invites go out after you start." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -56,6 +45,28 @@
         }
       }
     },
+    "Add someone" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add someone"
+          }
+        }
+      }
+    },
+    "Add someone below." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add someone below."
+          }
+        }
+      }
+    },
     "Add the people who pay into this kameti." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -85,6 +96,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "All your saved people are in this kameti. Add someone new instead."
+          }
+        }
+      }
+    },
+    "Assigned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assigned"
           }
         }
       }
@@ -408,6 +430,17 @@
         }
       }
     },
+    "Less" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less"
+          }
+        }
+      }
+    },
     "Members" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -448,6 +481,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Months (= slots)"
+          }
+        }
+      }
+    },
+    "More" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
           }
         }
       }
@@ -793,6 +837,17 @@
         }
       }
     },
+    "Reset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        }
+      }
+    },
     "Runs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -998,6 +1053,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Who's in?"
+          }
+        }
+      }
+    },
+    "Whole slot" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Whole slot"
           }
         }
       }
