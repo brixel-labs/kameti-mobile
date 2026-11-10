@@ -167,7 +167,7 @@ struct MembersStep: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(contact.name).kText(KTextToken.bodyStrong)
                                     Text(contact.email ?? String(localized: "No email", bundle: .module))
-                                        .kText(KTextToken.caption, color: KColors.textSecondary)
+                                        .kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
                                 }
                                 Spacer()
                                 Image(systemName: "plus.circle.fill").font(.system(size: 24)).foregroundStyle(KColors.brand)
@@ -190,7 +190,7 @@ struct MembersStep: View {
     private func emptyPeople(title: String, message: String) -> some View {
         VStack(spacing: KSpace.sm) {
             Text(title).kText(KTextToken.bodyStrong)
-            Text(message).kText(KTextToken.bodySm, color: KColors.textSecondary).multilineTextAlignment(.center)
+            Text(message).kText(KTextToken.subtitle, color: KColors.textSubtitle).multilineTextAlignment(.center)
             Button { chosenMode = true; mode = .newPerson } label: {
                 Label(String(localized: "Add new person", bundle: .module), systemImage: "person.badge.plus")
                     .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
@@ -227,7 +227,7 @@ struct MembersStep: View {
     @ViewBuilder private var memberList: some View {
         if model.members.isEmpty {
             Text("Add the people who pay into this kameti.", bundle: .module)
-                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, KSpace.lg)
         } else {
@@ -248,9 +248,9 @@ struct MembersStep: View {
                     Text(member.profileId != nil ? String(localized: "You (\(member.name))", bundle: .module) : member.name)
                         .kText(KTextToken.bodyStrong)
                     if member.profileId != nil {
-                        Text("Owner", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
+                        Text("Owner", bundle: .module).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
                     } else if let email = model.emails[member.id] {
-                        Text(email).kText(KTextToken.caption, color: KColors.textSecondary)
+                        Text(email).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
                     } else {
                         Text("No email · can't get the app invite", bundle: .module).kText(KTextToken.caption, color: KColors.warning)
                     }
@@ -403,22 +403,22 @@ struct SlotsStep: View {
                 Text(date.formatted(Date.FormatStyle(timeZone: .gmt).month(.abbreviated)))
                     .kText(KTextToken.bodyStrong, color: partial ? KColors.warning : KColors.textPrimary)
                 Text("Slot \(slot.payoutMonthIndex)", bundle: .module)
-                    .kText(KTextToken.caption, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
             }
             .frame(width: 48, alignment: .leading)
             Rectangle().fill(KColors.border).frame(width: 1).padding(.vertical, 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).kText(KTextToken.bodyStrong).lineLimit(1)
                 if active.isEmpty {
-                    Text("Tap to add people", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    Text("Tap to add people", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 } else if partial {
                     Text("\(PlanChecks.remaining(amounts, slotAmount: amount).format()) still to assign", bundle: .module)
                         .kText(KTextToken.bodySm, color: KColors.warning)
                 } else if active.count == 1 {
-                    Text("Whole slot · \(amount.format())", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    Text("Whole slot · \(amount.format())", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 } else {
                     Text(amounts.map { $0.format(symbol: false) }.joined(separator: " + "))
-                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 }
             }
             Spacer(minLength: KSpace.sm)
@@ -598,7 +598,7 @@ struct SlotSplitView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.profileId != nil ? String(localized: "You (\(member.name))", bundle: .module) : member.name).kText(KTextToken.bodyStrong)
                 Text("Gets \(payout.format()) in \(monthLabel(month).split(separator: " ").first.map(String.init) ?? "")", bundle: .module)
-                    .kText(KTextToken.caption, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
             }
             Spacer(minLength: KSpace.sm)
         }
@@ -637,7 +637,7 @@ struct SlotSplitView: View {
                             Text("a month · steps of \(Money(SlotSplit.step(for: split.total)).formatCompact())", bundle: .module)
                         }
                     }
-                    .kText(KTextToken.caption, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
                 }
                 Spacer()
                 roundButton("plus", label: String(localized: "More", bundle: .module)) { split.nudge(line.id, by: 1) }
@@ -672,11 +672,11 @@ struct SlotSplitView: View {
                 Text("Add someone".uppercased()).kText(KTextToken.label, color: KColors.textSecondary)
                 Spacer()
                 Text("\(split.lines.count) of \(SlotSplit.maxPeople) spots used", bundle: .module)
-                    .kText(KTextToken.caption, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
             }
             if candidates.isEmpty {
                 Text("Everyone is already in this slot. Add more people in step 3.", bundle: .module)
-                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitle, color: KColors.textSubtitle)
             } else {
                 KFlowLayout {
                     ForEach(candidates) { member in

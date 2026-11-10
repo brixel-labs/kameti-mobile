@@ -100,7 +100,7 @@ public struct ProfileView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName).kText(KTextToken.titleLg)
                 Text("\(model.runningCount) kametis run · \(model.memberCount) joined", bundle: .module)
-                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitle, color: KColors.textSubtitle)
             }
             Spacer(minLength: KSpace.sm)
             Image(systemName: "chevron.right").foregroundStyle(KColors.textTertiary)
@@ -151,7 +151,7 @@ public struct ProfileView: View {
                     icon(symbol, tint)
                     Text(title).kText(KTextToken.body, color: color)
                     Spacer(minLength: KSpace.sm)
-                    if let value { Text(value).kText(KTextToken.bodySm, color: KColors.textSecondary) }
+                    if let value { Text(value).kText(KTextToken.subtitle, color: KColors.textSubtitle) }
                     if showsChevron { Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(KColors.textTertiary) }
                 }
                 .frame(minHeight: 52)

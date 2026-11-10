@@ -72,7 +72,7 @@ public struct KAmountField: View {
             if let error {
                 Text(error).kText(KTextToken.caption, color: KColors.negative)
             } else if let helper {
-                Text(helper).kText(KTextToken.caption, color: KColors.textSecondary)
+                Text(helper).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
             }
         }
     }
@@ -275,7 +275,9 @@ public struct KStepper: View {
 }
 
 public extension View {
-    /// The shared bottom sheet: grabber, a title with a close button and the content.
+    /// The shared bottom sheet: grabber, a title with a close button and the
+    /// content. The grabber is drawn here (not by the system) so every sheet
+    /// has the same grabber, title and close position whatever its height.
     func kBottomSheet<Content: View>(
         isPresented: Binding<Bool>, title: String,
         detents: Set<PresentationDetent> = [.medium, .large],
@@ -297,13 +299,26 @@ public extension View {
                     .accessibilityLabel(Text("Close", bundle: .module))
                 }
                 .padding(.horizontal, KSpace.xl)
-                .padding(.top, KSpace.xl)
+                // Same title position with or without a grabber.
+                .padding(.top, 35)
                 .padding(.bottom, KSpace.md)
                 content()
             }
+            .frame(maxHeight: .infinity, alignment: .top)
+            .overlay(alignment: .top) {
+                // Only a sheet that can be resized shows a grabber.
+                if detents.count > 1 {
+                    Capsule()
+                        .fill(KColors.borderStrong)
+                        .frame(width: 40, height: 5)
+                        .padding(.top, 14)
+                        .accessibilityHidden(true)
+                }
+            }
+            .ignoresSafeArea(.container, edges: .top)
             .background(KColors.background)
             .presentationDetents(detents)
-            .presentationDragIndicator(.visible)
+            .presentationDragIndicator(.hidden)
             .presentationBackground(KColors.background)
         }
     }
@@ -335,6 +350,7 @@ public struct KSelectField<Value: Hashable>: View {
                 .frame(height: KSize.fieldHeight)
                 .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
                 .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
+                .contentShape(RoundedRectangle(cornerRadius: KRadius.input))
             }
             .buttonStyle(.plain)
         }
@@ -533,5 +549,45 @@ public struct KUnderlineTabs<Tab: Hashable>: View {
         .padding(.horizontal, inset)
         .fixedSize(horizontal: false, vertical: true)
         .background(alignment: .bottom) { Rectangle().fill(KColors.border).frame(height: 1) }
+    }
+}
+
+/// A segmented control in the design's look: a light track with a white,
+/// sliding selection.
+public struct KSegmented<Value: Hashable>: View {
+    private let options: [(value: Value, title: String)]
+    @Binding private var selection: Value
+    @Namespace private var slider
+
+    public init(_ options: [(value: Value, title: String)], selection: Binding<Value>) {
+        self.options = options; _selection = selection
+    }
+
+    public var body: some View {
+        HStack(spacing: 0) {
+            ForEach(options.indices, id: \.self) { index in
+                let option = options[index]
+                let isOn = option.value == selection
+                Button {
+                    withAnimation(.smooth(duration: 0.22)) { selection = option.value }
+                } label: {
+                    Text(option.title)
+                        .kText(KTextStyle(size: 14, weight: isOn ? .semibold : .medium), color: isOn ? KColors.textPrimary : KColors.textSecondary)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background {
+                            if isOn {
+                                RoundedRectangle(cornerRadius: 9).fill(KColors.surface)
+                                    .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
+                                    .matchedGeometryEffect(id: "selection", in: slider)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isOn ? .isSelected : [])
+            }
+        }
+        .padding(4)
+        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: 12))
     }
 }

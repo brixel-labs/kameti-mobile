@@ -9,8 +9,9 @@ public enum SampleData {
     public static let userId = "demo-user"
 
     public static func dependencies() -> KametiDependencies {
-        KametiDependencies(
-            kametis: SampleKametiRepository(), ledger: SampleLedgerRepository(), payments: SamplePaymentsRepository(),
+        let store = SamplePaymentStore()
+        return KametiDependencies(
+            kametis: SampleKametiRepository(), ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store),
             invites: UnusedRepositories(), audit: UnusedRepositories(),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
             contacts: SampleContactsRepository(), auth: FakeAuthRepository(userId: userId)
@@ -282,26 +283,156 @@ final class SampleKametiRepository: KametiRepository {
 
 private let readOnly = Failure.unknown(description: "sample data is read only")
 
-struct SampleLedgerRepository: LedgerRepository {
-    func memberBalances(kametiId: String) async throws(Failure) -> [MemberBalanceRow] {
-        kametiId == "family" ? SampleData.familyBalances : SampleData.officeBalances
-    }
-    func memberMonths(kametiId: String, memberId: String?) async throws(Failure) -> [MemberMonthRow] {
-        kametiId == "family" ? SampleData.familyMonths : SampleData.officeMonths.filter { memberId == nil || $0.memberId == memberId }
-    }
-    func monthCollections(kametiId: String) async throws(Failure) -> [MonthCollectionRow] {
-        kametiId == "family" ? SampleData.familyCollections : SampleData.officeCollections
+/// The recorded payments of the sample kametis, shared by the ledger and the
+/// payments repositories so a payment recorded in the demo shows up in the
+/// balances, statuses and collections too.
+final class SamplePaymentStore: Sendable {
+    private let payments = Mutex([
+        "family": SampleData.familyPayments, "office": SampleData.officePayments,
+    ])
+
+    func all(_ kametiId: String) -> [Payment] { payments.withLock { $0[kametiId] ?? [] } }
+
+    func add(_ payment: Payment) { payments.withLock { $0[payment.kametiId, default: []].append(payment) } }
+
+    func void(id: String, reason: String) -> Payment? {
+        payments.withLock { state in
+            for key in state.keys {
+                guard let index = state[key]?.firstIndex(where: { $0.id == id }), let old = state[key]?[index] else { continue }
+                let voided = Payment(
+                    id: old.id, kametiId: old.kametiId, memberId: old.memberId, amount: old.amount, receivedOn: old.receivedOn,
+                    method: old.method, createdAt: old.createdAt, reference: old.reference, note: old.note,
+                    paidByName: old.paidByName, voidedAt: Date(), voidReason: reason
+                )
+                state[key]?[index] = voided
+                return voided
+            }
+            return nil
+        }
     }
 }
 
-struct SamplePaymentsRepository: PaymentsRepository {
-    func payments(kametiId: String) async throws(Failure) -> [Payment] {
-        kametiId == "family" ? SampleData.familyPayments : SampleData.officePayments
+/// A small stand-in for the backend's ledger views: oldest due first, so the
+/// demo's balances and statuses follow the payments.
+enum SampleLedger {
+    struct Result {
+        var balances: [MemberBalanceRow] = []
+        var months: [MemberMonthRow] = []
+        var collections: [MonthCollectionRow] = []
     }
+
+    private static let calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }()
+
+    static func compute(kameti: Kameti, members: [Member], shares: [Share], payments: [Payment], current: Int) -> Result {
+        var result = Result()
+        let valid = payments.filter { $0.voidedAt == nil }
+        func monthIndex(of date: Date) -> Int {
+            let parts = calendar.dateComponents([.month], from: kameti.startMonth, to: date)
+            return (parts.month ?? 0) + 1
+        }
+        func start(_ index: Int) -> Date { calendar.date(byAdding: .month, value: index - 1, to: kameti.startMonth) ?? kameti.startMonth }
+        var allocatedByMonth: [Int: Int] = [:]
+        var paidCountByMonth: [Int: Int] = [:]
+        for member in members {
+            let due = shares.filter { $0.memberId == member.id && $0.effectiveToMonth == nil }.reduce(0) { $0 + $1.monthlyAmount.rupees }
+            guard due > 0 else { continue }
+            let paid = valid.filter { $0.memberId == member.id }.reduce(0) { $0 + $1.amount.rupees }
+            var left = paid
+            for month in 1...max(current, 1) {
+                let allocated = min(due, left)
+                left -= allocated
+                allocatedByMonth[month, default: 0] += allocated
+                if allocated >= due { paidCountByMonth[month, default: 0] += 1 }
+                let status: MonthStatusCode = allocated >= due
+                    ? (left > 0 && month == current ? .advance : .paid)
+                    : (allocated == 0 ? (month < current ? .overdue : .unpaid) : .partial)
+                result.months.append(MemberMonthRow(
+                    kametiId: kameti.id, memberId: member.id, monthIndex: month, monthStart: start(month), isCurrent: month == current,
+                    due: Money(due), allocated: Money(allocated), remaining: Money(due - allocated), status: status
+                ))
+            }
+            let dueToDate = due * current
+            result.balances.append(MemberBalanceRow(
+                kametiId: kameti.id, memberId: member.id, currentMonthIndex: current, monthlyDue: Money(due), dueToDate: Money(dueToDate),
+                totalPaid: Money(paid), balance: Money(dueToDate - paid), owes: Money(max(dueToDate - paid, 0)), credit: Money(max(paid - dueToDate, 0))
+            ))
+        }
+        let payers = members.filter { member in shares.contains { $0.memberId == member.id && $0.effectiveToMonth == nil } }.count
+        let target = kameti.pot.rupees
+        for month in 1...kameti.monthsN {
+            let received = valid.filter { monthIndex(of: $0.receivedOn) == month }.reduce(0) { $0 + $1.amount.rupees }
+            let state: MonthCollectionState = month < current ? .paidOut : (month == current ? (received >= target ? .fullyCollected : .collecting) : .upcoming)
+            result.collections.append(MonthCollectionRow(
+                kametiId: kameti.id, monthIndex: month, monthStart: start(month), isCurrent: month == current, target: Money(target),
+                received: Money(received), covered: Money(allocatedByMonth[month] ?? 0), paidCount: paidCountByMonth[month] ?? 0, memberCount: payers,
+                payoutShortfall: .zero, paidOut: Money(month < current ? target : 0), recipients: 1, recipientsPaid: month < current ? 1 : 0,
+                paidOutShortBy: .zero, state: state
+            ))
+        }
+        return result
+    }
+}
+
+struct SampleLedgerRepository: LedgerRepository {
+    let store: SamplePaymentStore
+
+    private func ledger(_ kametiId: String) -> SampleLedger.Result {
+        switch kametiId {
+        case "family":
+            return SampleLedger.compute(kameti: SampleData.family, members: SampleData.familyMembers, shares: SampleData.familyShares, payments: store.all("family"), current: 2)
+        case "office":
+            return SampleLedger.compute(kameti: SampleData.office, members: SampleData.officeMembers, shares: SampleData.officeShares, payments: store.all("office"), current: 2)
+        default:
+            return SampleLedger.Result()
+        }
+    }
+
+    func memberBalances(kametiId: String) async throws(Failure) -> [MemberBalanceRow] { ledger(kametiId).balances }
+    func memberMonths(kametiId: String, memberId: String?) async throws(Failure) -> [MemberMonthRow] {
+        ledger(kametiId).months.filter { memberId == nil || $0.memberId == memberId }
+    }
+    func monthCollections(kametiId: String) async throws(Failure) -> [MonthCollectionRow] { ledger(kametiId).collections }
+}
+
+struct SamplePaymentsRepository: PaymentsRepository {
+    let store: SamplePaymentStore
+
+    func payments(kametiId: String) async throws(Failure) -> [Payment] { store.all(kametiId) }
     func payouts(kametiId: String) async throws(Failure) -> [Payout] { [] }
-    func recordPayment(_ new: NewPayment) async throws(Failure) -> Payment { throw readOnly }
-    func recordPayments(kametiId: String, receivedOn: Date, items: [BatchPaymentItem], method: PaymentMethod) async throws(Failure) -> [Payment] { throw readOnly }
-    func voidPayment(id: String, reason: String) async throws(Failure) -> Payment { throw readOnly }
+
+    func recordPayment(_ new: NewPayment) async throws(Failure) -> Payment {
+        guard new.amount.isPositive else { throw Failure.server(code: "invalid_amount", detail: nil) }
+        let kametiId = SampleData.familyMembers.contains { $0.id == new.memberId } ? "family" : "office"
+        let payment = Payment(
+            id: UUID().uuidString.lowercased(), kametiId: kametiId, memberId: new.memberId, amount: new.amount, receivedOn: new.receivedOn,
+            method: new.method, createdAt: Date(), reference: new.reference, note: new.note, paidByName: new.paidByName
+        )
+        store.add(payment)
+        return payment
+    }
+
+    func recordPayments(kametiId: String, receivedOn: Date, items: [BatchPaymentItem], method: PaymentMethod) async throws(Failure) -> [Payment] {
+        var created: [Payment] = []
+        for item in items {
+            let payment = Payment(
+                id: UUID().uuidString.lowercased(), kametiId: kametiId, memberId: item.memberId, amount: item.amount, receivedOn: receivedOn,
+                method: method, createdAt: Date()
+            )
+            store.add(payment)
+            created.append(payment)
+        }
+        return created
+    }
+
+    func voidPayment(id: String, reason: String) async throws(Failure) -> Payment {
+        guard let voided = store.void(id: id, reason: reason) else { throw notFound }
+        return voided
+    }
+
     func recordPayout(_ new: NewPayout) async throws(Failure) -> Payout { throw readOnly }
     func voidPayout(id: String, reason: String) async throws(Failure) -> Payout { throw readOnly }
 }

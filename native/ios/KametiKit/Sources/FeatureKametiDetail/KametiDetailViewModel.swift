@@ -39,8 +39,12 @@ public final class KametiDetailViewModel {
     private let kametiId: String
     private let userId: String
     private let dependencies: KametiDependencies
+    /// What the caller already knows (from Home), so the title and subtitle
+    /// show the moment the screen opens, before the details load.
+    public let preview: Kameti?
 
-    public init(kametiId: String, userId: String, dependencies: KametiDependencies) {
+    public init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti? = nil) {
+        self.preview = preview
         self.kametiId = kametiId
         self.userId = userId
         self.dependencies = dependencies
@@ -77,4 +81,35 @@ public final class KametiDetailViewModel {
             state = .failed(error)
         }
     }
+
+    /// Records a payment the owner received, then reloads. `idempotencyKey` is
+    /// made once per sheet so a retry never records it twice. Returns the
+    /// failure to show, or `nil`.
+    public func recordPayment(
+        memberId: String, amount: Money, receivedOn: Date, method: PaymentMethod, reference: String?, note: String?, idempotencyKey: String
+    ) async -> Failure? {
+        do throws(Failure) {
+            _ = try await dependencies.payments.recordPayment(NewPayment(
+                memberId: memberId, amount: amount, receivedOn: receivedOn, idempotencyKey: idempotencyKey,
+                method: method, reference: reference, note: note
+            ))
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
+    /// Voids a payment with a reason (payments are never edited or deleted).
+    public func voidPayment(id: String, reason: String) async -> Failure? {
+        do throws(Failure) {
+            _ = try await dependencies.payments.voidPayment(id: id, reason: reason)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
+    public var idempotencyKey: String { dependencies.makeIdempotencyKey() }
 }

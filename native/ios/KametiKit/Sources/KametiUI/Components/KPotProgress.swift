@@ -91,11 +91,11 @@ public struct KPotProgress: View {
         switch headline {
         case .percent:
             Text("of \(target.format(symbol: false)) · \(percent)%", bundle: .module)
-                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 .monospacedDigit()
         case .ofTarget:
             Text("of \(target.format())", bundle: .module)
-                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 .monospacedDigit()
         case .none:
             EmptyView()
@@ -105,9 +105,9 @@ public struct KPotProgress: View {
     @ViewBuilder private var captionRow: some View {
         if caption != nil || trailingCaption != nil {
             HStack {
-                if let caption { Text(caption).kText(KTextToken.caption, color: KColors.textSecondary) }
+                if let caption { Text(caption).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle) }
                 Spacer(minLength: KSpace.sm)
-                if let trailingCaption { Text(trailingCaption).kText(KTextToken.caption, color: KColors.textSecondary) }
+                if let trailingCaption { Text(trailingCaption).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle) }
             }
         }
     }

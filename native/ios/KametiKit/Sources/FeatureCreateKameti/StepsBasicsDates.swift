@@ -196,7 +196,7 @@ struct DatesStep: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Most slots per person", bundle: .module).kText(KTextToken.bodyStrong)
-                        Text("Up to \(WizardLimits.maxSlotsPerMember)", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        Text("Up to \(WizardLimits.maxSlotsPerMember)", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
                     }
                     Spacer()
                     KCompactStepper(
@@ -214,7 +214,7 @@ struct DatesStep: View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).kText(KTextToken.bodyStrong)
-                Text(subtitle).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                Text(subtitle).kText(KTextToken.subtitle, color: KColors.textSubtitle)
             }
         }
         .toggleStyle(KToggleStyle())

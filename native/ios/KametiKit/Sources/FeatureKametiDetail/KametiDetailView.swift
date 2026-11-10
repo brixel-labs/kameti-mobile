@@ -45,14 +45,19 @@ public struct KametiDetailView: View {
         .refreshable { await model.load() }
     }
 
+    /// The kameti to name the screen after: the loaded one, else what Home passed.
+    private var known: Kameti? {
+        if case .loaded(let data) = model.state { return data.kameti }
+        return model.preview
+    }
+
     private var subtitle: String {
-        guard case .loaded(let data) = model.state else { return "" }
-        return String(localized: "\(data.kameti.monthsN) months · \(data.kameti.slotAmountC.format()) per slot", bundle: .module)
+        guard let kameti = known else { return "" }
+        return String(localized: "\(kameti.monthsN) months · \(kameti.slotAmountC.format()) per slot", bundle: .module)
     }
 
     private var title: String {
-        if case .loaded(let data) = model.state { return data.kameti.name }
-        return String(localized: "Kameti", bundle: .module)
+        known?.name ?? String(localized: "Kameti", bundle: .module)
     }
 
     @ViewBuilder
@@ -65,7 +70,7 @@ public struct KametiDetailView: View {
                 description: Text("Finish setting it up to start collecting.", bundle: .module)
             )
         } else {
-            OwnerTabs(data: data)
+            OwnerTabs(data: data, model: model)
         }
     }
 }
