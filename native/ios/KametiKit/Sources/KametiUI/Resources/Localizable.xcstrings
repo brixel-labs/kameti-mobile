@@ -153,6 +153,9 @@
         }
       }
     },
+    "of %@" : {
+
+    },
     "of %@ · %lld%%" : {
       "extractionState" : "manual",
       "localizations" : {

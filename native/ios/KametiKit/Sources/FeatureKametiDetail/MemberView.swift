@@ -82,7 +82,14 @@ struct MemberView: View {
         } else {
             VStack(spacing: 0) {
                 ForEach(Array(mine.enumerated()), id: \.element.id) { index, payment in
-                    PaymentRow(payment: payment, member: me, members: data.members, showsMember: false, showsDivider: index < mine.count - 1)
+                    PaymentRow(
+                        kind: .received,
+                        title: DetailLogic.dayMonth(payment.receivedOn),
+                        subtitle: payment.voidedAt != nil
+                            ? String(localized: "Voided · \(payment.voidReason ?? "")", bundle: .module)
+                            : DetailLogic.paymentSubtitle(payment, methodLabel: payment.method.label) { String(localized: "paid by \($0)", bundle: .module) },
+                        amount: payment.amount, isVoided: payment.voidedAt != nil, showsDivider: index < mine.count - 1
+                    )
                 }
             }
         }

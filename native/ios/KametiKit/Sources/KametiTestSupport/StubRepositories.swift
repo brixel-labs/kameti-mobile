@@ -108,7 +108,7 @@ public struct StubPaymentsRepository: PaymentsRepository {
     public init(_ rows: [Payment] = []) { self.rows = rows }
 
     public func payments(kametiId: String) async throws(Failure) -> [Payment] { rows }
-    public func payouts(kametiId: String) async throws(Failure) -> [Payout] { throw notStubbed }
+    public func payouts(kametiId: String) async throws(Failure) -> [Payout] { [] }
     public func recordPayment(_ new: NewPayment) async throws(Failure) -> Payment { throw notStubbed }
     public func recordPayments(kametiId: String, receivedOn: Date, items: [BatchPaymentItem], method: PaymentMethod) async throws(Failure) -> [Payment] { throw notStubbed }
     public func voidPayment(id: String, reason: String) async throws(Failure) -> Payment { throw notStubbed }

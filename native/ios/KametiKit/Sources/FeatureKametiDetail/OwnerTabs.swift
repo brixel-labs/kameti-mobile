@@ -197,80 +197,247 @@ struct StatusTextPill: View {
     }
 }
 
+/// Members (board A v2 · Members): search, a heads-up for people who haven't
+/// joined, and one row per member with slots, balance and join state.
 struct MembersTab: View {
     let data: KametiDetailData
+    @State private var search = ""
 
     var body: some View {
-        let waiting = data.members.filter { $0.joinStatus == .pendingApproval }.count
         let balances = Dictionary(data.balances.map { ($0.memberId, $0) }, uniquingKeysWith: { first, _ in first })
+        let notJoined = data.members.filter { $0.joinStatus != .joined && $0.profileId == nil }.count
+        let list = data.members.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) }
         if data.members.isEmpty {
             ContentUnavailableView(
                 String(localized: "No members yet", bundle: .module), systemImage: "person.2",
                 description: Text("Members you add will show here.", bundle: .module)
             )
         } else {
-            if waiting > 0 {
-                Label(String(localized: "\(waiting) waiting for your approval", bundle: .module), systemImage: "person.badge.clock")
-                    .kText(KTextToken.bodySm, color: KColors.info)
-                    .padding(KSpace.md)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(KColors.infoSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
+            HStack(spacing: KSpace.sm) {
+                Image(systemName: "magnifyingglass").foregroundStyle(KColors.textSecondary)
+                TextField(String(localized: "Search \(data.members.count) members", bundle: .module), text: $search)
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
             }
+            .padding(.horizontal, KSpace.md)
+            .frame(minHeight: 44)
+            .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
+
+            if notJoined > 0 {
+                HStack(spacing: KSpace.sm + 2) {
+                    Image(systemName: "envelope").foregroundStyle(KColors.warning)
+                    Text(notJoined == 1
+                         ? String(localized: "1 person hasn't joined the app yet", bundle: .module)
+                         : String(localized: "\(notJoined) people haven't joined the app yet", bundle: .module))
+                        .kText(KTextToken.bodySm, color: KColors.warning)
+                    Spacer(minLength: KSpace.sm)
+                    // Sending invites arrives with the invites screens.
+                    Button {} label: {
+                        Text("Invite all", bundle: .module)
+                            .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.textOnBrand)
+                            .padding(.horizontal, KSpace.md).frame(height: 32)
+                            .background(KColors.warning, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(KSpace.md)
+                .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: 12))
+            }
+
             VStack(spacing: 0) {
-                ForEach(Array(data.members.enumerated()), id: \.element.id) { index, member in
+                ForEach(Array(list.enumerated()), id: \.element.id) { index, member in
                     let balance = balances[member.id]
+                    let slots = DetailLogic.slotCount(of: member, shares: data.shares)
                     DetailRow(
                         member: member, in: data.members,
-                        subtitle: balance.map { String(localized: "Due \($0.monthlyDue.format()) a month", bundle: .module) },
-                        showsDivider: index < data.members.count - 1
+                        subtitle: balance.map {
+                            slots == 1
+                                ? String(localized: "1 slot · \($0.monthlyDue.format())/mo", bundle: .module)
+                                : String(localized: "\(slots) slots · \($0.monthlyDue.format())/mo", bundle: .module)
+                        },
+                        showsDivider: index < list.count - 1
                     ) {
-                        VStack(alignment: .trailing, spacing: KSpace.xs) {
-                            if let balance { KBalancePill(balance: balance.balance) }
-                            JoinStatusPill(status: member.joinStatus)
+                        VStack(alignment: .trailing, spacing: 4) {
+                            if let balance { BalanceChip(balance: balance) }
+                            joinCaption(member.joinStatus)
                         }
                     }
                 }
             }
         }
     }
+
+    @ViewBuilder
+    private func joinCaption(_ status: JoinStatus) -> some View {
+        switch status {
+        case .joined: Text("Joined", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
+        case .invited: Text("Invited", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.warning)
+        case .pendingApproval: Text("Needs approval", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.info)
+        case .notInvited: Text("Not invited", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
+        case .declined: Text("Declined", bundle: .module).kText(KTextToken.caption, color: KColors.negative)
+        }
+    }
 }
 
-struct PaymentsTab: View {
-    let data: KametiDetailData
+/// "Owes Rs 4,50,000", "Settled" or "Credit Rs 1,25,000" as a small pill.
+struct BalanceChip: View {
+    let balance: MemberBalanceRow
 
     var body: some View {
-        let sorted = DetailLogic.newestFirst(data.payments)
-        let valid = sorted.filter { $0.voidedAt == nil }.count
-        if sorted.isEmpty {
+        if balance.owes.isPositive {
+            KPill(String(localized: "Owes \(balance.owes.format())", bundle: .module), foreground: KColors.negative, background: KColors.negativeSubtle)
+        } else if balance.credit.isPositive {
+            KPill(String(localized: "Credit \(balance.credit.format())", bundle: .module), foreground: KColors.info, background: KColors.infoSubtle)
+        } else {
+            KPill(String(localized: "Settled", bundle: .module), foreground: KColors.positive, background: KColors.positiveSubtle)
+        }
+    }
+}
+
+/// Payments (board A v2 · Payments): a month and Received / Paid out filter,
+/// two summary cards, and the money list grouped by day.
+struct PaymentsTab: View {
+    enum Kind: Hashable { case received, paidOut }
+
+    let data: KametiDetailData
+    @State private var monthIndex: Int?
+    @State private var kind = Kind.received
+    @State private var pickingMonth = false
+
+    private var month: Int {
+        monthIndex ?? data.current?.monthIndex ?? DetailLogic.monthIndex(of: data.today, kameti: data.kameti) ?? 1
+    }
+
+    var body: some View {
+        let kameti = data.kameti
+        let start = DetailLogic.monthStart(of: kameti, monthIndex: month)
+        let inMonth: (Date) -> Bool = { DetailLogic.monthIndex(of: $0, kameti: kameti) == month }
+        let payments = DetailLogic.newestFirst(data.payments.filter { inMonth($0.receivedOn) })
+        let payouts = data.payouts.filter { inMonth($0.paidOn) }.sorted { $0.paidOn > $1.paidOn }
+        let row = data.collections.first { $0.monthIndex == month }
+        let valid = payments.filter { $0.voidedAt == nil }.count
+        let owing = DetailLogic.owing(data.months, monthIndex: month).count
+        let stillDue = row.map { max($0.target.rupees - $0.received.rupees, 0) } ?? 0
+        let byId = Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        HStack(spacing: KSpace.sm) {
+            Button { pickingMonth = true } label: {
+                HStack(spacing: 6) {
+                    Text(DetailLogic.monthTitle(start)).kText(KTextStyle(size: 13, weight: .semibold))
+                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
+                }
+                .padding(.horizontal, KSpace.md).frame(height: 34)
+                .background(KColors.surface, in: Capsule())
+                .overlay(Capsule().stroke(KColors.border))
+            }
+            .buttonStyle(.plain)
+            filterChip(String(localized: "Received", bundle: .module), .received)
+            filterChip(String(localized: "Paid out", bundle: .module), .paidOut)
+            Spacer(minLength: 0)
+        }
+
+        HStack(spacing: KSpace.md) {
+            summaryCard(String(localized: "Received", bundle: .module), amount: row?.received ?? .zero,
+                        note: String(localized: "\(valid) payments", bundle: .module), tone: .neutral)
+            summaryCard(String(localized: "Still due", bundle: .module), amount: Money(stillDue),
+                        note: String(localized: "\(owing) members", bundle: .module), tone: .negative)
+        }
+
+        let entries: [Entry] = kind == .received
+            ? payments.map { payment in
+                Entry(
+                    id: payment.id, date: payment.receivedOn, kind: .received,
+                    title: byId[payment.memberId]?.name ?? "",
+                    subtitle: payment.voidedAt != nil
+                        ? String(localized: "Voided · \(payment.voidReason ?? "")", bundle: .module)
+                        : DetailLogic.paymentSubtitle(payment, methodLabel: payment.method.label) { String(localized: "paid by \($0)", bundle: .module) },
+                    amount: payment.amount, isVoided: payment.voidedAt != nil
+                )
+            }
+            : payouts.map { payout in
+                Entry(
+                    id: payout.id, date: payout.paidOn, kind: .paidOut,
+                    title: byId[payout.memberId]?.name ?? "",
+                    subtitle: payout.voidedAt != nil
+                        ? String(localized: "Voided · \(payout.voidReason ?? "")", bundle: .module)
+                        : [payout.method.label, payout.reference].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "),
+                    amount: payout.amount, isVoided: payout.voidedAt != nil
+                )
+            }
+
+        if entries.isEmpty {
             ContentUnavailableView(
-                String(localized: "No payments yet", bundle: .module), systemImage: "receipt",
-                description: Text("Recorded payments will show here.", bundle: .module)
+                kind == .received ? String(localized: "No payments yet", bundle: .module) : String(localized: "No payouts yet", bundle: .module),
+                systemImage: "receipt",
+                description: Text("Nothing recorded in \(DetailLogic.monthTitle(start)).", bundle: .module)
             )
         } else {
-            KCard {
-                VStack(alignment: .leading, spacing: KSpace.sm) {
-                    if let current = data.current {
-                        HStack {
-                            Text("Received this month", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
-                            Spacer()
-                            KMoneyText(current.received, style: .title)
-                        }
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(groupedByDay(entries), id: \.day) { group in
+                    Text(dayTitle(group.day).uppercased())
+                        .kText(KTextToken.label, color: KColors.textSecondary)
+                        .padding(.top, KSpace.md).padding(.bottom, 2)
+                    ForEach(Array(group.entries.enumerated()), id: \.element.id) { index, entry in
+                        PaymentRow(
+                            kind: entry.kind == .received ? .received : .paidOut, title: entry.title, subtitle: entry.subtitle,
+                            amount: entry.amount, isVoided: entry.isVoided, showsDivider: index < group.entries.count - 1
+                        )
                     }
-                    HStack {
-                        Text("Payments", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
-                        Spacer()
-                        Text("\(valid) recorded", bundle: .module).kText(KTextToken.bodyStrong)
-                    }
-                }
-            }
-            VStack(spacing: 0) {
-                ForEach(Array(sorted.enumerated()), id: \.element.id) { index, payment in
-                    PaymentRow(
-                        payment: payment, member: data.members.first { $0.id == payment.memberId },
-                        members: data.members, showsDivider: index < sorted.count - 1
-                    )
                 }
             }
         }
+    }
+
+    // MARK: Pieces
+
+    private struct Entry: Identifiable {
+        let id: String
+        let date: Date
+        let kind: Kind
+        let title: String
+        let subtitle: String
+        let amount: Money
+        let isVoided: Bool
+    }
+
+    private func groupedByDay(_ entries: [Entry]) -> [(day: Date, entries: [Entry])] {
+        var result: [(day: Date, entries: [Entry])] = []
+        for entry in entries {
+            if let last = result.indices.last, result[last].day == entry.date { result[last].entries.append(entry) }
+            else { result.append((entry.date, [entry])) }
+        }
+        return result
+    }
+
+    private func dayTitle(_ day: Date) -> String {
+        day == data.today
+            ? String(localized: "Today · \(DetailLogic.dayMonth(day))", bundle: .module)
+            : DetailLogic.dayMonth(day)
+    }
+
+    private func filterChip(_ title: String, _ value: Kind) -> some View {
+        let isOn = kind == value
+        return Button { withAnimation(.smooth(duration: 0.2)) { kind = value } } label: {
+            Text(title)
+                .kText(KTextStyle(size: 13, weight: isOn ? .semibold : .medium), color: isOn ? KColors.onBrandSubtle : KColors.textPrimary)
+                .padding(.horizontal, KSpace.md).frame(height: 34)
+                .background(isOn ? KColors.brandSubtle : KColors.surface, in: Capsule())
+                .overlay(Capsule().stroke(isOn ? KColors.brand : KColors.border))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    private func summaryCard(_ title: String, amount: Money, note: String, tone: KMoneyText.Tone) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).kText(KTextToken.caption, color: KColors.textSecondary)
+            KMoneyText(amount, style: .title, tone: tone)
+            Text(note).kText(KTextToken.caption, color: KColors.textSecondary)
+        }
+        .padding(KSpace.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(KColors.surface, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(KColors.border))
     }
 }
