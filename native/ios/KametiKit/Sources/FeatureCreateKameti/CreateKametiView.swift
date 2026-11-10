@@ -24,9 +24,16 @@ public struct CreateKametiView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            WizardProgress(step: model.step)
-                .padding(.horizontal, KSpace.xl)
-                .padding(.top, KSpace.xs)
+            VStack(alignment: .trailing, spacing: KSpace.xs) {
+                WizardProgress(step: model.step)
+                Text("Step \(model.step.rawValue + 1) of \(WizardStep.allCases.count)", bundle: .module)
+                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(model.step.rawValue)))
+                    .animation(.smooth(duration: 0.35), value: model.step)
+            }
+            .padding(.horizontal, KSpace.xl)
+            .padding(.top, KSpace.xs)
             ZStack {
                 stepView(shownStep)
                     .id(shownStep)
@@ -50,14 +57,6 @@ public struct CreateKametiView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
         .toolbar {
-            // Plain text: no glass capsule behind it, so it doesn't read as a button.
-            ToolbarItem(placement: .topBarTrailing) {
-                Text("Step \(model.step.rawValue + 1) of \(WizardStep.allCases.count)", bundle: .module)
-                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
-                    .contentTransition(.numericText())
-                    .animation(.smooth, value: model.step)
-            }
-            .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .topBarLeading) {
                 if model.isAtStart {
                     Button(String(localized: "Close", bundle: .module), systemImage: "xmark", action: onClose)
