@@ -44,6 +44,9 @@ public final class CreateWizardModel {
     /// Emails typed for members added here (display only).
     public private(set) var emails: [String: String] = [:]
 
+    /// The owner's saved people ("My people"), for picking into the kameti.
+    public private(set) var contacts: [Contact] = []
+    public private(set) var contactsLoaded = false
     /// The owner's first name, for the reminder preview.
     public private(set) var ownerName: String?
 
@@ -80,6 +83,18 @@ public final class CreateWizardModel {
         if let profile = try? await dependencies.profiles.myProfile(userId: userId) {
             ownerName = profile.displayName.split(separator: " ").first.map(String.init)
         }
+    }
+
+    public func loadContacts() async {
+        guard !contactsLoaded else { return }
+        if let list = try? await dependencies.contacts.contacts() { contacts = list }
+        contactsLoaded = true
+    }
+
+    /// Saved people not yet in this kameti.
+    public var availableContacts: [Contact] {
+        let used = Set(members.compactMap(\.contactId))
+        return contacts.filter { !used.contains($0.id) }
     }
 
     // MARK: Local edits
@@ -166,6 +181,16 @@ public final class CreateWizardModel {
                 kametiId: id, NewMember(name: name.trimmingCharacters(in: .whitespaces), email: cleanEmail)
             )
             if let cleanEmail { self.emails[member.id] = cleanEmail }
+            try await self.reload()
+        }
+    }
+
+    /// Adds a saved person from "My people".
+    public func addMember(from contact: Contact) async {
+        guard let id = kametiId else { return }
+        await write { () async throws(Failure) in
+            let member = try await self.dependencies.kametis.addMember(kametiId: id, NewMember(contactId: contact.id))
+            if let email = contact.email { self.emails[member.id] = email }
             try await self.reload()
         }
     }

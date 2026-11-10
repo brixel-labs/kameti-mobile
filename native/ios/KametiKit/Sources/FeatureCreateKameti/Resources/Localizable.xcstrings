@@ -34,6 +34,17 @@
         }
       }
     },
+    "Add new person" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add new person"
+          }
+        }
+      }
+    },
     "Add person" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -63,6 +74,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adds up"
+          }
+        }
+      }
+    },
+    "All your saved people are in this kameti. Add someone new instead." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All your saved people are in this kameti. Add someone new instead."
           }
         }
       }
@@ -243,6 +265,17 @@
         }
       }
     },
+    "Everyone is already in" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everyone is already in"
+          }
+        }
+      }
+    },
     "Everyone is already in this slot. Add more people in step 3." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -305,6 +338,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fix the checks above before starting."
+          }
+        }
+      }
+    },
+    "From my people" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From my people"
           }
         }
       }
@@ -430,6 +474,17 @@
         }
       }
     },
+    "My people" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My people"
+          }
+        }
+      }
+    },
     "Name" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -518,6 +573,17 @@
         }
       }
     },
+    "No email" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No email"
+          }
+        }
+      }
+    },
     "No email · can't get the app invite" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -529,13 +595,13 @@
         }
       }
     },
-    "No one added yet" : {
+    "No saved people yet" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No one added yet"
+            "value" : "No saved people yet"
           }
         }
       }
@@ -613,6 +679,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Owner"
+          }
+        }
+      }
+    },
+    "People you add to a kameti are saved here, so next time you can pick them." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "People you add to a kameti are saved here, so next time you can pick them."
           }
         }
       }
@@ -756,6 +833,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Save slot"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
           }
         }
       }
@@ -932,6 +1020,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your kameti"
+          }
+        }
+      }
+    },
+    "e.g. Office Kameti 2026" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "e.g. Office Kameti 2026"
           }
         }
       }

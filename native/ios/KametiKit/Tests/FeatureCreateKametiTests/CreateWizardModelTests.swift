@@ -127,3 +127,23 @@ struct CreateWizardModelTests {
         #expect(model.shares.isEmpty)
     }
 }
+
+@MainActor
+@Suite("CreateWizardModel contacts")
+struct CreateWizardContactsTests {
+    @Test func savedPeopleCanBePickedAndLeaveTheList() async throws {
+        let model = makeModel()
+        model.name = "Test kameti"
+        model.amountText = "100000"
+        model.setMonths(2)
+        await model.saveBasics()
+        await model.loadContacts()
+        #expect(model.contacts.count == SampleData.contacts.count)
+        let first = try #require(model.availableContacts.first)
+        await model.addMember(from: first)
+        #expect(model.failure == nil)
+        #expect(model.members.map(\.name) == [first.name])
+        #expect(!model.availableContacts.contains(first))
+        #expect(model.availableContacts.count == SampleData.contacts.count - 1)
+    }
+}

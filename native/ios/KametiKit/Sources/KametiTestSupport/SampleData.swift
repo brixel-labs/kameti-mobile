@@ -13,9 +13,17 @@ public enum SampleData {
             kametis: SampleKametiRepository(), ledger: SampleLedgerRepository(), payments: SamplePaymentsRepository(),
             invites: UnusedRepositories(), audit: UnusedRepositories(),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
-            contacts: UnusedRepositories(), auth: FakeAuthRepository(userId: userId)
+            contacts: SampleContactsRepository(), auth: FakeAuthRepository(userId: userId)
         )
     }
+
+    static let contacts = [
+        Contact(id: "c1", ownerId: userId, name: "Ali Raza", email: "ali.raza@gmail.com"),
+        Contact(id: "c2", ownerId: userId, name: "Sara Khan", email: "sara.k@outlook.com"),
+        Contact(id: "c3", ownerId: userId, name: "Hira Shah"),
+        Contact(id: "c4", ownerId: userId, name: "Omar Farooq", email: "omar.f@gmail.com"),
+        Contact(id: "c5", ownerId: userId, name: "Zainab Tariq", email: "zainab.t@gmail.com"),
+    ]
 
     // MARK: Family kameti (I run it)
 
@@ -132,6 +140,10 @@ public enum SampleData {
     }
 }
 
+struct SampleContactsRepository: ContactsRepository {
+    func contacts() async throws(Failure) -> [Contact] { SampleData.contacts }
+}
+
 private let notFound = Failure.server(code: "not_found", detail: nil)
 
 /// An in-memory kameti store seeded with the sample kametis. It supports the
@@ -216,9 +228,10 @@ final class SampleKametiRepository: KametiRepository {
     func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member {
         state.withLock { s in
             s.counter += 1
+            let contact = new.contactId.flatMap { id in SampleData.contacts.first { $0.id == id } }
             let member = Member(
-                id: "m-\(s.counter)", kametiId: kametiId, name: new.isSelf ? "Demo Owner" : (new.name ?? "Member"),
-                joinStatus: new.isSelf ? .joined : .notInvited, profileId: new.isSelf ? SampleData.userId : nil
+                id: "m-\(s.counter)", kametiId: kametiId, name: new.isSelf ? "Demo Owner" : (contact?.name ?? new.name ?? "Member"),
+                joinStatus: new.isSelf ? .joined : .notInvited, contactId: new.contactId, profileId: new.isSelf ? SampleData.userId : nil
             )
             s.members[kametiId, default: []].append(member)
             return member

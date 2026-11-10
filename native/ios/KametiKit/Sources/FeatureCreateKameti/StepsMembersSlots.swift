@@ -7,11 +7,18 @@ private func colorIndex(_ member: Member, _ members: [Member]) -> Int {
     Int(member.color ?? "") ?? max(members.firstIndex(of: member) ?? 0, 0)
 }
 
-/// Step 3 (AC-3): who is in. Invites go out after the kameti starts.
+/// Step 3 (AC-3): who is in. Pick from "My people" (the owner's saved
+/// contacts) or add someone new; anyone added is saved to My people for next
+/// time. Invites go out after the kameti starts.
 struct MembersStep: View {
+    enum Mode { case fromPeople, newPerson }
+
     @Bindable var model: CreateWizardModel
+    @State private var mode = Mode.newPerson
+    @State private var chosenMode = false
     @State private var newName = ""
     @State private var newEmail = ""
+    @State private var search = ""
     @State private var submitted = false
     @State private var removing: Member?
 
@@ -29,62 +36,30 @@ struct MembersStep: View {
                         title: String(localized: "Who's in?", bundle: .module),
                         subtitle: String(localized: "Add everyone who pays. Invites go out after you start.", bundle: .module)
                     )
-                    Toggle(isOn: Binding(
-                        get: { model.selfMember != nil },
-                        set: { included in Task { await model.setSelfMember(included: included) } }
-                    )) {
-                        Text("I'm also a member", bundle: .module).kText(KTextToken.bodyStrong)
-                    }
-                    .toggleStyle(KToggleStyle())
-                    .disabled(model.isBusy)
-
-                    KCard {
-                        VStack(alignment: .leading, spacing: KSpace.md) {
-                            Text("New person".uppercased()).kText(KTextToken.label, color: KColors.textSecondary)
-                            WizardField(
-                                title: String(localized: "Name", bundle: .module), text: $newName,
-                                error: submitted && !nameValid ? String(localized: "Enter a name.", bundle: .module) : nil,
-                                capitalization: .words
-                            )
-                            WizardField(
-                                title: String(localized: "Email for the invite (optional)", bundle: .module), text: $newEmail,
-                                error: submitted && !emailValid ? String(localized: "Enter a valid email, or leave it empty.", bundle: .module) : nil,
-                                keyboard: .emailAddress, capitalization: .never
-                            )
-                            Button(action: add) {
-                                Label(
-                                    nameValid ? String(localized: "Add \(newName.trimmingCharacters(in: .whitespaces))", bundle: .module)
-                                        : String(localized: "Add person", bundle: .module),
-                                    systemImage: "person.badge.plus"
-                                )
-                                .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.glass)
-                            .controlSize(.large)
-                            .disabled(model.isBusy)
+                    modeSwitch
+                    Group {
+                        switch mode {
+                        case .newPerson: newPersonCard
+                        case .fromPeople: peopleCard
                         }
                     }
-
-                    if model.members.isEmpty {
-                        ContentUnavailableView(
-                            String(localized: "No one added yet", bundle: .module), systemImage: "person.2",
-                            description: Text("Add the people who pay into this kameti.", bundle: .module)
-                        )
-                    } else {
-                        Text(String(localized: "\(model.members.count) added", bundle: .module).uppercased())
-                            .kText(KTextToken.label, color: KColors.textSecondary)
-                        VStack(spacing: 0) {
-                            ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
-                                memberRow(member, divider: index < model.members.count - 1)
-                            }
-                        }
-                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                    summaryRow
+                    memberList
                 }
                 .padding(KSpace.xl)
+                .animation(.smooth(duration: 0.3), value: mode)
+                .animation(.smooth(duration: 0.3), value: model.members)
             }
-            WizardFooter(primaryTitle: String(localized: "Next: slots", bundle: .module), isEnabled: !model.members.isEmpty, onBack: { model.back() }) {
-                model.goTo(.slots)
-            }
+            WizardFooter(
+                primaryTitle: String(localized: "Next: slots", bundle: .module), isEnabled: !model.members.isEmpty,
+                onBack: { model.back() }
+            ) { model.goTo(.slots) }
+        }
+        .task {
+            await model.loadContacts()
+            // Start on My people only when there is someone saved to pick.
+            if !chosenMode, !model.availableContacts.isEmpty { mode = .fromPeople }
         }
         .alert(
             String(localized: "Remove this person?", bundle: .module), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }),
@@ -97,6 +72,162 @@ struct MembersStep: View {
         }
     }
 
+    // MARK: Mode switch
+
+    private var modeSwitch: some View {
+        HStack(spacing: KSpace.md) {
+            modeButton(.fromPeople, title: String(localized: "From my people", bundle: .module), symbol: "person.2")
+            modeButton(.newPerson, title: String(localized: "Add new person", bundle: .module), symbol: "person.badge.plus")
+        }
+    }
+
+    private func modeButton(_ target: Mode, title: String, symbol: String) -> some View {
+        let isOn = mode == target
+        return Button {
+            chosenMode = true
+            mode = target
+        } label: {
+            Label(title, systemImage: symbol)
+                .kText(KTextToken.bodyStrong, color: isOn ? KColors.onBrandSubtle : KColors.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(isOn ? KColors.brandSubtle : KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(isOn ? KColors.brand : KColors.border, lineWidth: isOn ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    // MARK: Add new person
+
+    private var newPersonCard: some View {
+        VStack(alignment: .leading, spacing: KSpace.md) {
+            Text("New person", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.textSecondary)
+            PlainField(
+                prompt: String(localized: "Name", bundle: .module), text: $newName,
+                error: submitted && !nameValid ? String(localized: "Enter a name.", bundle: .module) : nil,
+                capitalization: .words
+            )
+            PlainField(
+                prompt: String(localized: "Email for the invite (optional)", bundle: .module), text: $newEmail,
+                error: submitted && !emailValid ? String(localized: "Enter a valid email, or leave it empty.", bundle: .module) : nil,
+                keyboard: .emailAddress, capitalization: .never
+            )
+            Button(action: add) {
+                Text(nameValid ? String(localized: "Add \(firstName)", bundle: .module) : String(localized: "Add person", bundle: .module))
+                    .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.glassProminent)
+            .tint(KColors.brand)
+            .controlSize(.large)
+            .disabled(model.isBusy)
+        }
+        .padding(KSpace.lg)
+        .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
+        .overlay(RoundedRectangle(cornerRadius: KRadius.card).stroke(KColors.brand, lineWidth: 1.5))
+    }
+
+    private var firstName: String {
+        newName.trimmingCharacters(in: .whitespaces).split(separator: " ").first.map(String.init) ?? ""
+    }
+
+    // MARK: From my people
+
+    private var peopleCard: some View {
+        let list = model.availableContacts.filter {
+            search.isEmpty || $0.name.localizedCaseInsensitiveContains(search)
+        }
+        return VStack(alignment: .leading, spacing: KSpace.md) {
+            Text("My people", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.textSecondary)
+            if model.contacts.isEmpty {
+                emptyPeople(
+                    title: String(localized: "No saved people yet", bundle: .module),
+                    message: String(localized: "People you add to a kameti are saved here, so next time you can pick them.", bundle: .module)
+                )
+            } else if model.availableContacts.isEmpty {
+                emptyPeople(
+                    title: String(localized: "Everyone is already in", bundle: .module),
+                    message: String(localized: "All your saved people are in this kameti. Add someone new instead.", bundle: .module)
+                )
+            } else {
+                PlainField(prompt: String(localized: "Search", bundle: .module), text: $search, capitalization: .words)
+                VStack(spacing: 0) {
+                    ForEach(Array(list.enumerated()), id: \.element.id) { index, contact in
+                        Button { Task { await model.addMember(from: contact) } } label: {
+                            HStack(spacing: KSpace.md) {
+                                KAvatar(name: contact.name, colorIndex: contact.name.unicodeScalars.reduce(0) { $0 + Int($1.value) } % 6, size: .medium)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(contact.name).kText(KTextToken.bodyStrong)
+                                    Text(contact.email ?? String(localized: "No email", bundle: .module))
+                                        .kText(KTextToken.caption, color: KColors.textSecondary)
+                                }
+                                Spacer()
+                                Image(systemName: "plus.circle.fill").font(.system(size: 24)).foregroundStyle(KColors.brand)
+                            }
+                            .padding(.vertical, KSpace.sm)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(model.isBusy)
+                        if index < list.count - 1 { Divider() }
+                    }
+                }
+            }
+        }
+        .padding(KSpace.lg)
+        .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
+        .overlay(RoundedRectangle(cornerRadius: KRadius.card).stroke(KColors.brand, lineWidth: 1.5))
+    }
+
+    private func emptyPeople(title: String, message: String) -> some View {
+        VStack(spacing: KSpace.sm) {
+            Text(title).kText(KTextToken.bodyStrong)
+            Text(message).kText(KTextToken.bodySm, color: KColors.textSecondary).multilineTextAlignment(.center)
+            Button(String(localized: "Add new person", bundle: .module)) { chosenMode = true; mode = .newPerson }
+                .buttonStyle(.glass)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, KSpace.md)
+    }
+
+    // MARK: Added members
+
+    private var summaryRow: some View {
+        HStack {
+            Text("\(model.members.count) added", bundle: .module)
+                .kText(KTextToken.bodyStrong, color: KColors.textSecondary)
+                .contentTransition(.numericText(value: Double(model.members.count)))
+            Spacer()
+            Toggle(isOn: Binding(
+                get: { model.selfMember != nil },
+                set: { included in Task { await model.setSelfMember(included: included) } }
+            )) {
+                Text("I'm also a member", bundle: .module).kText(KTextToken.body)
+            }
+            .toggleStyle(KCheckboxStyle())
+            .fixedSize()
+            .disabled(model.isBusy)
+        }
+    }
+
+    @ViewBuilder private var memberList: some View {
+        if model.members.isEmpty {
+            Text("Add the people who pay into this kameti.", bundle: .module)
+                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, KSpace.lg)
+        } else {
+            VStack(spacing: 0) {
+                ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
+                    memberRow(member, divider: index < model.members.count - 1)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+        }
+    }
+
     private func memberRow(_ member: Member, divider: Bool) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: KSpace.md) {
@@ -106,17 +237,22 @@ struct MembersStep: View {
                         .kText(KTextToken.bodyStrong)
                     if member.profileId != nil {
                         Text("Owner", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
-                    } else if model.emails[member.id] == nil {
-                        Text("No email · can't get the app invite", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
                     } else if let email = model.emails[member.id] {
                         Text(email).kText(KTextToken.caption, color: KColors.textSecondary)
+                    } else {
+                        Text("No email · can't get the app invite", bundle: .module).kText(KTextToken.caption, color: KColors.warning)
                     }
                 }
                 Spacer()
                 if member.profileId == nil {
-                    Button(role: .destructive) { removing = member } label: { Image(systemName: "trash") }
-                        .accessibilityLabel(Text("Remove", bundle: .module))
-                        .foregroundStyle(KColors.negative)
+                    Button { removing = member } label: {
+                        Image(systemName: "xmark").font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(KColors.textSecondary)
+                            .frame(width: 36, height: 36)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Remove", bundle: .module))
                 }
             }
             .padding(.vertical, KSpace.md)
@@ -130,6 +266,29 @@ struct MembersStep: View {
         let name = newName, email = newEmail
         newName = ""; newEmail = ""; submitted = false
         Task { await model.addMember(name: name, email: email) }
+    }
+}
+
+/// A bordered input with only a placeholder, for use inside a card.
+struct PlainField: View {
+    let prompt: String
+    @Binding var text: String
+    var error: String?
+    var keyboard = UIKeyboardType.default
+    var capitalization = TextInputAutocapitalization.sentences
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: KSpace.xs) {
+            TextField(prompt, text: $text)
+                .keyboardType(keyboard)
+                .textInputAutocapitalization(capitalization)
+                .autocorrectionDisabled()
+                .padding(.horizontal, KSpace.md)
+                .frame(minHeight: KSize.fieldHeight)
+                .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(error == nil ? KColors.border : KColors.negative))
+            if let error { Text(error).kText(KTextToken.caption, color: KColors.negative) }
+        }
     }
 }
 

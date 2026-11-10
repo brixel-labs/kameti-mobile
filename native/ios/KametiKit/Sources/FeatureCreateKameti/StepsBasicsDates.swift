@@ -22,6 +22,7 @@ struct BasicsStep: View {
                     )
                     WizardField(
                         title: String(localized: "Kameti name", bundle: .module), text: $model.name,
+                        prompt: String(localized: "e.g. Office Kameti 2026", bundle: .module),
                         error: submitted && !model.nameValid ? String(localized: "Use 3 to 40 characters.", bundle: .module) : nil,
                         helper: String(localized: "Members see this name.", bundle: .module),
                         capitalization: .words
@@ -29,6 +30,7 @@ struct BasicsStep: View {
                     VStack(alignment: .leading, spacing: KSpace.sm) {
                         KAmountField(
                             String(localized: "Each slot pays per month", bundle: .module), digits: $model.amountText,
+                            placeholder: "2,50,000",
                             error: submitted && !model.slotAmountValid ? String(localized: "Enter an amount in steps of Rs 1,000.", bundle: .module) : nil
                         )
                         KFlowLayout {

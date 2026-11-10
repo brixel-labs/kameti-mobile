@@ -37,9 +37,10 @@ public struct KAmountField: View {
     @Binding private var digits: String
     private let error: String?
     private let helper: String?
+    private let placeholder: String
 
-    public init(_ title: String, digits: Binding<String>, error: String? = nil, helper: String? = nil) {
-        self.title = title; _digits = digits; self.error = error; self.helper = helper
+    public init(_ title: String, digits: Binding<String>, placeholder: String = "0", error: String? = nil, helper: String? = nil) {
+        self.title = title; _digits = digits; self.placeholder = placeholder; self.error = error; self.helper = helper
     }
 
     /// `250000` becomes `2,50,000`; empty stays empty.
@@ -60,7 +61,7 @@ public struct KAmountField: View {
             Text(title).kText(KTextToken.bodyStrong, color: KColors.textSecondary)
             HStack(spacing: KSpace.sm) {
                 Text("Rs").kText(KTextToken.body, color: KColors.textSecondary)
-                TextField("0", text: text)
+                TextField(placeholder, text: text)
                     .keyboardType(.numberPad)
                     .kText(KTextToken.title)
             }
@@ -397,5 +398,34 @@ public struct KToggleStyle: ToggleStyle {
                     .padding(3)
             }
             .animation(.spring(duration: 0.25, bounce: 0.25), value: isOn)
+    }
+}
+
+/// A rounded-square checkbox with the label on its trailing side.
+/// Use it as `Toggle(isOn:) { label }.toggleStyle(KCheckboxStyle())`.
+public struct KCheckboxStyle: ToggleStyle {
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
+        Button { configuration.isOn.toggle() } label: {
+            HStack(spacing: KSpace.sm) {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(configuration.isOn ? KColors.brand : KColors.surface)
+                    .frame(width: 26, height: 26)
+                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(configuration.isOn ? KColors.brand : KColors.borderStrong, lineWidth: 1.5))
+                    .overlay {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(KColors.textOnBrand)
+                            .opacity(configuration.isOn ? 1 : 0)
+                            .scaleEffect(configuration.isOn ? 1 : 0.5)
+                    }
+                    .animation(.spring(duration: 0.25, bounce: 0.3), value: configuration.isOn)
+                configuration.label
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityRepresentation { Toggle(isOn: configuration.$isOn) { configuration.label } }
     }
 }
