@@ -160,12 +160,6 @@ abstract class AppLocalizations {
   /// **'New kameti'**
   String get homeNewKameti;
 
-  /// No description provided for @homeSignOut.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out'**
-  String get homeSignOut;
-
   /// No description provided for @homeRoleOwner.
   ///
   /// In en, this message translates to:
@@ -633,6 +627,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask the person running it to add you.'**
   String get detailNotAMemberBody;
+
+  /// No description provided for @kametiEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit kameti'**
+  String get kametiEditTitle;
+
+  /// No description provided for @kametiEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit kameti'**
+  String get kametiEditAction;
+
+  /// No description provided for @kametiName.
+  ///
+  /// In en, this message translates to:
+  /// **'Kameti name'**
+  String get kametiName;
+
+  /// No description provided for @kametiDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get kametiDescription;
+
+  /// No description provided for @kametiDueDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Due by day of the month'**
+  String get kametiDueDay;
+
+  /// No description provided for @kametiDueDayHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a day from 1 to 28.'**
+  String get kametiDueDayHelper;
+
+  /// No description provided for @kametiNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 3 to 40 characters.'**
+  String get kametiNameError;
+
+  /// No description provided for @kametiDueDayError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a day from 1 to 28.'**
+  String get kametiDueDayError;
+
+  /// No description provided for @kametiSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get kametiSave;
+
+  /// No description provided for @kametiUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Kameti updated'**
+  String get kametiUpdated;
+
+  /// No description provided for @membersAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get membersAdd;
+
+  /// No description provided for @membersAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a member'**
+  String get membersAddTitle;
+
+  /// No description provided for @membersEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit member'**
+  String get membersEditTitle;
+
+  /// No description provided for @membersName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get membersName;
+
+  /// No description provided for @membersNickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname or relation (optional)'**
+  String get membersNickname;
+
+  /// No description provided for @membersNicknameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Ata – office'**
+  String get membersNicknameHint;
+
+  /// No description provided for @membersEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email (optional)'**
+  String get membersEmail;
+
+  /// No description provided for @membersPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (optional)'**
+  String get membersPhone;
+
+  /// No description provided for @membersSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get membersSave;
+
+  /// No description provided for @membersFromContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'From my people'**
+  String get membersFromContacts;
+
+  /// No description provided for @membersOrAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Or add someone new'**
+  String get membersOrAddNew;
+
+  /// No description provided for @membersAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added'**
+  String membersAdded(String name);
+
+  /// No description provided for @membersUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Member updated'**
+  String get membersUpdated;
+
+  /// No description provided for @membersRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove member'**
+  String get membersRemove;
+
+  /// No description provided for @membersRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String membersRemoveTitle(String name);
+
+  /// No description provided for @membersRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll be taken out of this kameti. This can\'t be undone.'**
+  String get membersRemoveBody;
+
+  /// No description provided for @membersRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Member removed'**
+  String get membersRemoved;
+
+  /// No description provided for @membersNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get membersNameRequired;
+
+  /// No description provided for @membersEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get membersEmailInvalid;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTitle;
+
+  /// No description provided for @profileOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileOpen;
+
+  /// No description provided for @profileAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get profileAccount;
+
+  /// No description provided for @profileRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Kametis I run'**
+  String get profileRunning;
+
+  /// No description provided for @profileMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Kametis I\'m in'**
+  String get profileMember;
+
+  /// No description provided for @profileSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get profileSignOut;
+
+  /// No description provided for @profileSignOutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of Kameti?'**
+  String get profileSignOutTitle;
+
+  /// No description provided for @profileSignOutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll need to sign in again to see your kametis.'**
+  String get profileSignOutBody;
+
+  /// No description provided for @activityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activityTitle;
+
+  /// No description provided for @activityEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get activityEmptyTitle;
+
+  /// No description provided for @activityEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes to payments, payouts, members and the schedule are listed here.'**
+  String get activityEmptyBody;
+
+  /// No description provided for @activityPaymentRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment recorded · {amount}'**
+  String activityPaymentRecorded(String amount);
+
+  /// No description provided for @activityPaymentVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment voided · {amount}'**
+  String activityPaymentVoided(String amount);
+
+  /// No description provided for @activityPayoutRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout recorded · {amount}'**
+  String activityPayoutRecorded(String amount);
+
+  /// No description provided for @activityPayoutVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout voided · {amount}'**
+  String activityPayoutVoided(String amount);
+
+  /// No description provided for @activityMemberAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Member added'**
+  String get activityMemberAdded;
+
+  /// No description provided for @activityMemberUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Member details changed'**
+  String get activityMemberUpdated;
+
+  /// No description provided for @activityMemberRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Member removed'**
+  String get activityMemberRemoved;
+
+  /// No description provided for @activitySharesChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Slot shares changed'**
+  String get activitySharesChanged;
+
+  /// No description provided for @activityOrderChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout order changed'**
+  String get activityOrderChanged;
+
+  /// No description provided for @activityKametiCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Kameti created'**
+  String get activityKametiCreated;
+
+  /// No description provided for @activityKametiStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Kameti started'**
+  String get activityKametiStarted;
+
+  /// No description provided for @activityKametiUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Kameti details changed'**
+  String get activityKametiUpdated;
+
+  /// No description provided for @activityOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Change recorded'**
+  String get activityOther;
+
+  /// No description provided for @activityVoidReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String activityVoidReason(String reason);
+
+  /// No description provided for @detailActivityAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get detailActivityAction;
+
+  /// No description provided for @detailDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish setting up'**
+  String get detailDraftTitle;
+
+  /// No description provided for @detailDraftBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This kameti is still a draft. Add members, split the slots and set the payout order, then start it.'**
+  String get detailDraftBody;
+
+  /// No description provided for @detailContinueSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue setup'**
+  String get detailContinueSetup;
+
+  /// No description provided for @detailDraftSummaryMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Months'**
+  String get detailDraftSummaryMonths;
+
+  /// No description provided for @detailDraftSummarySlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Each slot pays'**
+  String get detailDraftSummarySlot;
+
+  /// No description provided for @detailDraftSummaryPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Pot each month'**
+  String get detailDraftSummaryPot;
+
+  /// No description provided for @detailDraftSummaryStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get detailDraftSummaryStart;
+
+  /// No description provided for @detailDraftSummaryDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due by day'**
+  String get detailDraftSummaryDue;
+
+  /// No description provided for @detailDraftSummaryMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members added'**
+  String get detailDraftSummaryMembers;
 
   /// No description provided for @startKameti.
   ///

@@ -45,9 +45,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNewKameti => 'New kameti';
 
   @override
-  String get homeSignOut => 'Sign out';
-
-  @override
   String get homeRoleOwner => 'Owner';
 
   @override
@@ -339,6 +336,216 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailNotAMemberBody => 'Ask the person running it to add you.';
+
+  @override
+  String get kametiEditTitle => 'Edit kameti';
+
+  @override
+  String get kametiEditAction => 'Edit kameti';
+
+  @override
+  String get kametiName => 'Kameti name';
+
+  @override
+  String get kametiDescription => 'Description (optional)';
+
+  @override
+  String get kametiDueDay => 'Due by day of the month';
+
+  @override
+  String get kametiDueDayHelper => 'Choose a day from 1 to 28.';
+
+  @override
+  String get kametiNameError => 'Use 3 to 40 characters.';
+
+  @override
+  String get kametiDueDayError => 'Enter a day from 1 to 28.';
+
+  @override
+  String get kametiSave => 'Save changes';
+
+  @override
+  String get kametiUpdated => 'Kameti updated';
+
+  @override
+  String get membersAdd => 'Add member';
+
+  @override
+  String get membersAddTitle => 'Add a member';
+
+  @override
+  String get membersEditTitle => 'Edit member';
+
+  @override
+  String get membersName => 'Name';
+
+  @override
+  String get membersNickname => 'Nickname or relation (optional)';
+
+  @override
+  String get membersNicknameHint => 'e.g. Ata – office';
+
+  @override
+  String get membersEmail => 'Email (optional)';
+
+  @override
+  String get membersPhone => 'Phone (optional)';
+
+  @override
+  String get membersSave => 'Save changes';
+
+  @override
+  String get membersFromContacts => 'From my people';
+
+  @override
+  String get membersOrAddNew => 'Or add someone new';
+
+  @override
+  String membersAdded(String name) {
+    return '$name added';
+  }
+
+  @override
+  String get membersUpdated => 'Member updated';
+
+  @override
+  String get membersRemove => 'Remove member';
+
+  @override
+  String membersRemoveTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get membersRemoveBody =>
+      'They\'ll be taken out of this kameti. This can\'t be undone.';
+
+  @override
+  String get membersRemoved => 'Member removed';
+
+  @override
+  String get membersNameRequired => 'Enter a name';
+
+  @override
+  String get membersEmailInvalid => 'Enter a valid email address';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get profileOpen => 'Profile';
+
+  @override
+  String get profileAccount => 'Account';
+
+  @override
+  String get profileRunning => 'Kametis I run';
+
+  @override
+  String get profileMember => 'Kametis I\'m in';
+
+  @override
+  String get profileSignOut => 'Sign out';
+
+  @override
+  String get profileSignOutTitle => 'Sign out of Kameti?';
+
+  @override
+  String get profileSignOutBody =>
+      'You\'ll need to sign in again to see your kametis.';
+
+  @override
+  String get activityTitle => 'Activity';
+
+  @override
+  String get activityEmptyTitle => 'Nothing here yet';
+
+  @override
+  String get activityEmptyBody =>
+      'Changes to payments, payouts, members and the schedule are listed here.';
+
+  @override
+  String activityPaymentRecorded(String amount) {
+    return 'Payment recorded · $amount';
+  }
+
+  @override
+  String activityPaymentVoided(String amount) {
+    return 'Payment voided · $amount';
+  }
+
+  @override
+  String activityPayoutRecorded(String amount) {
+    return 'Payout recorded · $amount';
+  }
+
+  @override
+  String activityPayoutVoided(String amount) {
+    return 'Payout voided · $amount';
+  }
+
+  @override
+  String get activityMemberAdded => 'Member added';
+
+  @override
+  String get activityMemberUpdated => 'Member details changed';
+
+  @override
+  String get activityMemberRemoved => 'Member removed';
+
+  @override
+  String get activitySharesChanged => 'Slot shares changed';
+
+  @override
+  String get activityOrderChanged => 'Payout order changed';
+
+  @override
+  String get activityKametiCreated => 'Kameti created';
+
+  @override
+  String get activityKametiStarted => 'Kameti started';
+
+  @override
+  String get activityKametiUpdated => 'Kameti details changed';
+
+  @override
+  String get activityOther => 'Change recorded';
+
+  @override
+  String activityVoidReason(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get detailActivityAction => 'Activity';
+
+  @override
+  String get detailDraftTitle => 'Finish setting up';
+
+  @override
+  String get detailDraftBody =>
+      'This kameti is still a draft. Add members, split the slots and set the payout order, then start it.';
+
+  @override
+  String get detailContinueSetup => 'Continue setup';
+
+  @override
+  String get detailDraftSummaryMonths => 'Months';
+
+  @override
+  String get detailDraftSummarySlot => 'Each slot pays';
+
+  @override
+  String get detailDraftSummaryPot => 'Pot each month';
+
+  @override
+  String get detailDraftSummaryStart => 'Starts';
+
+  @override
+  String get detailDraftSummaryDue => 'Due by day';
+
+  @override
+  String get detailDraftSummaryMembers => 'Members added';
 
   @override
   String get startKameti => 'Start a kameti';
