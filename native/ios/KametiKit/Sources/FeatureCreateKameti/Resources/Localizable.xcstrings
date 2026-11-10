@@ -188,6 +188,17 @@
         }
       }
     },
+    "Edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
     "Email for the invite (optional)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -254,13 +265,13 @@
         }
       }
     },
-    "Every slot has its own payout month" : {
+    "Everyone has a payout month" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every slot has its own payout month"
+            "value" : "Everyone has a payout month"
           }
         }
       }
@@ -738,17 +749,6 @@
         }
       }
     },
-    "Ready" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ready"
-          }
-        }
-      }
-    },
     "Ready to start?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -998,6 +998,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Who's in?"
+          }
+        }
+      }
+    },
+    "You" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You"
+          }
+        }
+      }
+    },
+    "You can also send them later from Members" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can also send them later from Members"
           }
         }
       }

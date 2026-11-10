@@ -321,6 +321,7 @@ struct SlotsStep: View {
         let slots = model.slots.sorted { $0.payoutMonthIndex < $1.payoutMonthIndex }
         let amount = model.slotAmount ?? .zero
         let ready = slots.count - checks.emptySlots.count - checks.badSlots.count
+        let byId = Dictionary(model.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         return VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: KSpace.lg) {
@@ -328,16 +329,31 @@ struct SlotsStep: View {
                         title: String(localized: "Fill the \(slots.count) slots", bundle: .module),
                         subtitle: String(localized: "Each slot is \(amount.format()) a month. Give it to one person or share it between up to 4.", bundle: .module)
                     )
-                    HStack {
-                        Text("Slots ready", bundle: .module).kText(KTextToken.bodyStrong)
-                        Spacer()
-                        Text("\(ready) of \(slots.count)", bundle: .module).kText(KTextToken.bodyStrong, color: checks.passes ? KColors.positive : KColors.textSecondary)
+                    VStack(spacing: KSpace.sm) {
+                        HStack {
+                            Text("Slots ready", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
+                            Spacer()
+                            Text("\(ready) of \(slots.count)", bundle: .module)
+                                .kText(KTextToken.bodyStrong)
+                                .contentTransition(.numericText(value: Double(ready)))
+                        }
+                        GeometryReader { proxy in
+                            Capsule().fill(KColors.border)
+                                .overlay(alignment: .leading) {
+                                    Capsule().fill(KColors.brand)
+                                        .frame(width: slots.isEmpty ? 0 : proxy.size.width * CGFloat(ready) / CGFloat(slots.count))
+                                }
+                        }
+                        .frame(height: 6)
                     }
+                    .animation(.smooth, value: ready)
                     if !checks.unassigned.isEmpty {
-                        Label(
-                            String(localized: "\(checks.unassigned.map(\.name).formatted(.list(type: .and))) not in any slot yet.", bundle: .module),
-                            systemImage: "person.crop.circle.badge.exclamationmark"
-                        )
+                        let names = checks.unassigned.map(\.name).formatted(.list(type: .and))
+                        Label {
+                            Text(checks.unassigned.count == 1
+                                 ? String(localized: "\(names) isn't in any slot yet.", bundle: .module)
+                                 : String(localized: "\(names) aren't in any slot yet.", bundle: .module))
+                        } icon: { Image(systemName: "exclamationmark.circle") }
                         .kText(KTextToken.bodySm, color: KColors.warning)
                         .padding(KSpace.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -345,7 +361,7 @@ struct SlotsStep: View {
                     }
                     VStack(spacing: KSpace.sm) {
                         ForEach(slots) { slot in
-                            Button { model.editingSlotId = slot.id } label: { slotRow(slot, amount: amount) }
+                            Button { model.editingSlotId = slot.id } label: { slotRow(slot, amount: amount, byId: byId) }
                                 .buttonStyle(.plain)
                         }
                     }
@@ -358,37 +374,47 @@ struct SlotsStep: View {
         }
     }
 
-    private func slotRow(_ slot: Slot, amount: Money) -> some View {
+    /// One slot: its number, who is in it and a status mark (design AC-4).
+    private func slotRow(_ slot: Slot, amount: Money, byId: [String: Member]) -> some View {
         let active = PlanChecks.activeShares(of: slot.id, in: model.shares)
-        let month = monthLabel(addingMonths(slot.payoutMonthIndex - 1, to: model.startMonth))
-        let valid = PlanChecks.isValidSplit(active.map(\.monthlyAmount), slotAmount: amount)
-        let byId = Dictionary(model.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        return KCard {
-            HStack {
-                VStack(alignment: .leading, spacing: KSpace.xs) {
-                    Text("Slot \(slot.payoutMonthIndex) · \(month)", bundle: .module).kText(KTextToken.bodyStrong)
-                    if active.isEmpty {
-                        Text("Tap to add people", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
-                    } else if active.count == 1, valid {
-                        Text("Whole slot · \(byId[active[0].memberId]?.name ?? "")", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
-                    } else {
-                        Text(active.map { "\(byId[$0.memberId]?.name ?? "") \($0.monthlyAmount.formatCompact())" }.joined(separator: " + "))
-                            .kText(KTextToken.bodySm, color: KColors.textSecondary)
-                        if !valid {
-                            Text("\(PlanChecks.remaining(active.map(\.monthlyAmount), slotAmount: amount).format()) still to assign", bundle: .module)
-                                .kText(KTextToken.caption, color: KColors.warning)
-                        }
-                    }
+        let amounts = active.map(\.monthlyAmount)
+        let valid = PlanChecks.isValidSplit(amounts, slotAmount: amount)
+        let partial = !active.isEmpty && !valid
+        let title = active.isEmpty ? String(localized: "Empty", bundle: .module)
+            : active.map { byId[$0.memberId]?.name ?? "" }.joined(separator: " + ")
+        return HStack(spacing: KSpace.md) {
+            Text("\(slot.payoutMonthIndex)")
+                .kText(KTextToken.bodyStrong, color: partial ? KColors.warning : KColors.textPrimary)
+                .monospacedDigit()
+                .frame(width: 36, height: 36)
+                .background(partial ? KColors.warningSubtle : KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: 10))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).kText(KTextToken.bodyStrong).lineLimit(1)
+                if active.isEmpty {
+                    Text("Tap to add people", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                } else if partial {
+                    Text("\(PlanChecks.remaining(amounts, slotAmount: amount).format()) still to assign", bundle: .module)
+                        .kText(KTextToken.bodySm, color: KColors.warning)
+                } else if active.count == 1 {
+                    Text("Whole slot · \(amount.format())", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                } else {
+                    Text(amounts.map { $0.format(symbol: false) }.joined(separator: " + "))
+                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
                 }
-                Spacer()
-                if valid {
-                    KPill(String(localized: "Ready", bundle: .module), symbol: "checkmark", foreground: KColors.positive, background: KColors.positiveSubtle)
-                } else if active.isEmpty {
-                    KPill(String(localized: "Empty", bundle: .module), symbol: "circle.dashed", foreground: KColors.textSecondary, background: KColors.surfaceSunken)
-                }
-                Image(systemName: "chevron.right").foregroundStyle(KColors.textTertiary)
+            }
+            Spacer(minLength: KSpace.sm)
+            if valid {
+                Image(systemName: "checkmark").font(.system(size: 16, weight: .semibold)).foregroundStyle(KColors.positive)
+            } else if active.isEmpty {
+                Image(systemName: "plus").font(.system(size: 16, weight: .semibold)).foregroundStyle(KColors.brand)
+            } else {
+                Image(systemName: "chevron.right").foregroundStyle(partial ? KColors.warning : KColors.textTertiary)
             }
         }
+        .padding(KSpace.md)
+        .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
+        .overlay(RoundedRectangle(cornerRadius: KRadius.card).stroke(partial ? KColors.warning : KColors.border, lineWidth: partial ? 2 : 1))
+        .contentShape(Rectangle())
     }
 }
 
