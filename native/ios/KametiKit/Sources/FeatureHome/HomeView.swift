@@ -8,10 +8,19 @@ import SwiftUI
 public struct HomeView: View {
     private let model: HomeViewModel
     private let onOpen: (String) -> Void
+    private let onCreate: () -> Void
+    private let onJoin: (String) -> Void
 
-    public init(model: HomeViewModel, onOpen: @escaping (String) -> Void) {
+    public init(
+        model: HomeViewModel,
+        onOpen: @escaping (String) -> Void,
+        onCreate: @escaping () -> Void,
+        onJoin: @escaping (String) -> Void
+    ) {
         self.model = model
         self.onOpen = onOpen
+        self.onCreate = onCreate
+        self.onJoin = onJoin
     }
 
     public var body: some View {
@@ -38,14 +47,25 @@ public struct HomeView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: KSpace.md) {
                 if model.sections.isEmpty {
-                    ContentUnavailableView(
-                        String(localized: "No kametis yet", bundle: .module),
-                        systemImage: "circle.dashed",
-                        description: Text("Start one for your family, office or friends. Or join one you've been invited to.", bundle: .module)
-                    )
+                    KCard {
+                        VStack(spacing: KSpace.md) {
+                            Image(systemName: "circle.dashed")
+                                .font(.system(size: 40)).foregroundStyle(KColors.textTertiary)
+                                .accessibilityHidden(true)
+                            Text("No kametis yet", bundle: .module).kText(KTextToken.title)
+                            Text("Start one for your family, office or friends. Or join one you've been invited to.", bundle: .module)
+                                .kText(KTextToken.body, color: KColors.textSecondary)
+                                .multilineTextAlignment(.center)
+                            startButton
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    InviteCodeCard(onJoin: onJoin)
                 }
-                group(String(localized: "Running by me", bundle: .module), model.sections.mine)
-                group(String(localized: "I'm a member", bundle: .module), model.sections.joined)
+                // "New kameti" sits on the first group's header.
+                let hasMine = !model.sections.mine.isEmpty
+                group(String(localized: "Running by me", bundle: .module), model.sections.mine, showsNew: true)
+                group(String(localized: "I'm a member", bundle: .module), model.sections.joined, showsNew: !hasMine)
                 group(String(localized: "Past", bundle: .module), model.sections.past)
             }
             .padding(.horizontal, KSpace.xl)
@@ -53,10 +73,25 @@ public struct HomeView: View {
         }
     }
 
+    private var startButton: some View {
+        Button(action: onCreate) {
+            Label(String(localized: "Start a kameti", bundle: .module), systemImage: "plus")
+                .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.glassProminent)
+        .tint(KColors.brand)
+        .controlSize(.large)
+    }
+
     @ViewBuilder
-    private func group(_ title: String, _ items: [HomeKametiSummary]) -> some View {
+    private func group(_ title: String, _ items: [HomeKametiSummary], showsNew: Bool = false) -> some View {
         if !items.isEmpty {
-            KSectionHeader(title)
+            KSectionHeader(
+                title,
+                actionTitle: showsNew ? String(localized: "New kameti", bundle: .module) : nil,
+                action: showsNew ? onCreate : nil
+            )
             ForEach(items) { item in
                 Button { onOpen(item.id) } label: { HomeKametiCard(item: item) }
                     .buttonStyle(.plain)
@@ -119,5 +154,49 @@ struct HomeKametiCard: View {
         } else {
             KPill(String(localized: "View only", bundle: .module), symbol: "eye", foreground: KColors.textSecondary, background: KColors.surfaceSunken)
         }
+    }
+}
+
+/// "Have an invite code?" (board AF-Empty-Home): the 6-character code from
+/// the invite email, opened like the link.
+struct InviteCodeCard: View {
+    let onJoin: (String) -> Void
+    @State private var code = ""
+
+    var body: some View {
+        KCard {
+            VStack(alignment: .leading, spacing: KSpace.md) {
+                VStack(alignment: .leading, spacing: KSpace.xs) {
+                    Text("Have an invite code?", bundle: .module).kText(KTextToken.bodyStrong)
+                    Text("It's in the email from the person running your kameti.", bundle: .module)
+                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                }
+                HStack(spacing: KSpace.sm) {
+                    TextField(String(localized: "e.g. K7Q2MX", bundle: .module), text: $code)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .submitLabel(.go)
+                        .onSubmit(join)
+                        .padding(KSpace.md)
+                        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.input))
+                    Button(String(localized: "Join", bundle: .module), action: join)
+                        .buttonStyle(.glass)
+                        .controlSize(.large)
+                        .disabled(trimmed.isEmpty)
+                }
+                Label(String(localized: "Invites sent to your email show up here automatically.", bundle: .module), systemImage: "info.circle")
+                    .kText(KTextToken.bodySm, color: KColors.info)
+                    .padding(KSpace.md)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(KColors.infoSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
+            }
+        }
+    }
+
+    private var trimmed: String { code.trimmingCharacters(in: .whitespaces) }
+
+    private func join() {
+        guard !trimmed.isEmpty else { return }
+        onJoin(trimmed)
     }
 }

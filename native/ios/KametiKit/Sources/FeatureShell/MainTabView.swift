@@ -26,7 +26,12 @@ struct MainTabView: View {
         TabView(selection: $router.tab) {
             Tab(value: AppTab.home) {
                 NavigationStack(path: $router.homePath) {
-                    HomeView(model: homeModel) { router.push(.kametiDetail(id: $0)) }
+                    HomeView(
+                        model: homeModel,
+                        onOpen: { router.push(.kametiDetail(id: $0)) },
+                        onCreate: { router.push(.createKameti) },
+                        onJoin: { router.push(.join(token: $0)) }
+                    )
                         .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies) }
                 }
             } label: {
@@ -79,7 +84,7 @@ private struct RouteDestination: View {
         switch route {
         case .kametiDetail(let id):
             KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies)
-        case .activity, .join:
+        case .createKameti, .activity, .join:
             ContentUnavailableView(
                 String(localized: "This screen is coming next.", bundle: .module),
                 systemImage: "hammer"

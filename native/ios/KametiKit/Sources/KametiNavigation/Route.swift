@@ -9,6 +9,8 @@ public enum AppTab: Hashable, Sendable, CaseIterable {
 /// which feature draws them; FeatureShell maps each route to its view.
 public enum Route: Hashable, Sendable {
     case kametiDetail(id: String)
+    /// The create-kameti wizard.
+    case createKameti
     case activity(kametiId: String)
     /// An invite link token or the 6-character code.
     case join(token: String)
