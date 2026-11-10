@@ -2,6 +2,11 @@ import KametiCore
 import SwiftUI
 import UIKit
 
+public extension KSize {
+    /// One height for every single-line control (field, stepper, select).
+    static let fieldHeight: CGFloat = 56
+}
+
 // Shared input controls: amount field, chips, stepper, bottom sheet and a
 // sheet-based select. Every feature uses these, never SwiftUI's raw controls.
 
@@ -59,7 +64,8 @@ public struct KAmountField: View {
                     .keyboardType(.numberPad)
                     .kText(KTextToken.title)
             }
-            .padding(KSpace.md)
+            .padding(.horizontal, KSpace.md)
+            .frame(minHeight: KSize.fieldHeight)
             .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
             .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(error == nil ? KColors.border : KColors.negative))
             if let error {
@@ -169,7 +175,8 @@ public struct KStepper: View {
             Spacer()
             roundButton("plus", label: increaseLabel, enabled: value < range.upperBound) { onChange(value + 1) }
         }
-        .padding(KSpace.sm)
+        .padding(.horizontal, KSpace.sm)
+        .frame(height: KSize.fieldHeight)
         .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
         .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
         .accessibilityElement(children: .contain)
@@ -246,7 +253,8 @@ public struct KSelectField<Value: Hashable>: View {
                     Spacer(minLength: KSpace.xs)
                     Image(systemName: "chevron.down").imageScale(.small).foregroundStyle(KColors.textSecondary)
                 }
-                .padding(KSpace.md)
+                .padding(.horizontal, KSpace.md)
+                .frame(height: KSize.fieldHeight)
                 .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
                 .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
             }

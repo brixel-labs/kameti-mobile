@@ -101,7 +101,8 @@ struct WizardField: View {
                 .keyboardType(keyboard)
                 .textInputAutocapitalization(capitalization)
                 .autocorrectionDisabled()
-                .padding(KSpace.md)
+                .padding(.horizontal, KSpace.md)
+                .frame(minHeight: KSize.fieldHeight)
                 .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
                 .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(error == nil ? KColors.border : KColors.negative))
             if let error {
