@@ -30,17 +30,23 @@ class AppShell extends ConsumerWidget {
           KNavItem(
             icon: Icons.home_outlined,
             selectedIcon: Icons.home,
+            symbol: 'house',
+            selectedSymbol: 'house.fill',
             label: l10n.navHome,
           ),
           KNavItem(
             icon: Icons.inbox_outlined,
             selectedIcon: Icons.inbox,
+            symbol: 'tray',
+            selectedSymbol: 'tray.fill',
             label: l10n.navInbox,
             showDot: needsAttention,
           ),
           KNavItem(
             icon: Icons.person_outline,
             selectedIcon: Icons.person,
+            symbol: 'person',
+            selectedSymbol: 'person.fill',
             label: l10n.navProfile,
           ),
         ],
