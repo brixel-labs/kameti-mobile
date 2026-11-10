@@ -486,6 +486,7 @@ struct SlotSplitView: View {
     private func footerTitle(_ remaining: Money) -> String {
         if split.lines.isEmpty { return String(localized: "Add someone", bundle: .module) }
         if split.isValid { return String(localized: "Save slot", bundle: .module) }
+        if split.hasUnset { return String(localized: "Set an amount", bundle: .module) }
         return remaining.isNegative
             ? String(localized: "Over by \(Money(-remaining.rupees).format())", bundle: .module)
             : String(localized: "\(remaining.format()) left", bundle: .module)
@@ -520,6 +521,8 @@ struct SlotSplitView: View {
                     Group {
                         if split.lines.isEmpty {
                             Text("Add someone below.", bundle: .module).foregroundStyle(KColors.textSecondary)
+                        } else if split.hasUnset {
+                            Text("Set an amount for everyone", bundle: .module).foregroundStyle(KColors.warning)
                         } else if remaining.isZero {
                             Label(String(localized: "Adds up", bundle: .module), systemImage: "checkmark.circle").foregroundStyle(KColors.positive)
                         } else if remaining.isNegative {
@@ -627,7 +630,7 @@ struct SlotSplitView: View {
                 roundButton("plus", label: String(localized: "More", bundle: .module)) { split.nudge(line.id, by: 1) }
             }
             KFlowLayout {
-                ForEach(SlotSplit.presets(for: split.total), id: \.self) { preset in
+                ForEach(SlotSplit.presets(for: split.total, people: split.lines.count), id: \.self) { preset in
                     KChip(preset.formatCompact(), isOn: line.amount == preset) { split.set(line.id, to: preset) }
                 }
             }

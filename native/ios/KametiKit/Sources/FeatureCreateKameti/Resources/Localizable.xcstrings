@@ -892,6 +892,28 @@
         }
       }
     },
+    "Set an amount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set an amount"
+          }
+        }
+      }
+    },
+    "Set an amount for everyone" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set an amount for everyone"
+          }
+        }
+      }
+    },
     "Slot amount" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -26,19 +26,21 @@ struct SlotSplit: Equatable {
     var isValid: Bool { PlanChecks.isValidSplit(lines.map(\.amount), slotAmount: total) }
     func amount(of id: String) -> Money? { lines.first { $0.id == id }?.amount }
 
-    /// Adding the first person gives them the whole slot; each later person
-    /// re-splits the slot evenly (the owner then adjusts).
+    /// Someone still at less than Rs 1,000 (a newly added person).
+    var hasUnset: Bool { lines.contains { $0.amount.rupees < Self.unit } }
+
+    /// The first person gets the whole slot. Anyone added after that starts at
+    /// Rs 0: the owner sets their amount, and the others adjust (see `set`).
     mutating func add(_ id: String) {
         guard !isFull, !lines.contains(where: { $0.id == id }) else { return }
-        lines.append(Line(id: id, amount: .zero))
-        splitEvenly()
+        lines.append(Line(id: id, amount: lines.isEmpty ? total : .zero))
     }
 
-    /// The remaining people share the slot evenly again (one person gets the
-    /// whole slot).
+    /// The others keep their amounts, except that one person left gets the
+    /// whole slot again.
     mutating func remove(_ id: String) {
         lines.removeAll { $0.id == id }
-        splitEvenly()
+        if lines.count == 1 { lines[0].amount = total }
     }
 
     /// Even split in Rs 1,000 steps; the first person takes any remainder.
@@ -48,13 +50,19 @@ struct SlotSplit: Equatable {
         for index in lines.indices { lines[index].amount = even[index] }
     }
 
-    /// Sets one person's amount, kept in Rs 1,000 steps and leaving at least
-    /// Rs 1,000 for each other person.
+    /// The most one person can take, leaving Rs 1,000 for each other person.
+    func ceiling(people: Int) -> Int { max(total.rupees - Self.unit * (people - 1), Self.unit) }
+
+    /// Sets one person's amount (Rs 1,000 steps, never below Rs 1,000 or above
+    /// what leaves Rs 1,000 for each other person); the rest of the slot is
+    /// shared evenly by the others, so the total always stays the slot amount.
     mutating func set(_ id: String, to amount: Money) {
         guard let index = lines.firstIndex(where: { $0.id == id }), lines.count > 1 else { return }
-        let ceiling = total.rupees - Self.unit * (lines.count - 1)
-        let clamped = min(max(amount.rupees / Self.unit * Self.unit, Self.unit), max(ceiling, Self.unit))
-        lines[index].amount = Money(clamped)
+        let value = min(max(amount.rupees / Self.unit * Self.unit, Self.unit), ceiling(people: lines.count))
+        lines[index].amount = Money(value)
+        let others = lines.indices.filter { $0 != index }
+        guard let even = PlanChecks.evenSplit(slotAmount: Money(total.rupees - value), count: others.count) else { return }
+        for (offset, otherIndex) in others.enumerated() { lines[otherIndex].amount = even[offset] }
     }
 
     mutating func nudge(_ id: String, by direction: Int) {
@@ -67,10 +75,9 @@ struct SlotSplit: Equatable {
         total.rupees >= 200_000 ? 25_000 : total.rupees >= 50_000 ? 5_000 : unit
     }
 
-    /// Preset amounts, only those that leave room for another person.
-    static func presets(for total: Money) -> [Money] {
-        [25_000, 50_000, 100_000, 150_000, 200_000]
-            .filter { $0 + unit <= total.rupees }
-            .map(Money.init)
+    /// Preset amounts that fit with `people` people in the slot.
+    static func presets(for total: Money, people: Int) -> [Money] {
+        let ceiling = max(total.rupees - unit * (max(people, 1) - 1), unit)
+        return [25_000, 50_000, 100_000, 150_000, 200_000].filter { $0 < total.rupees && $0 <= ceiling }.map(Money.init)
     }
 }
