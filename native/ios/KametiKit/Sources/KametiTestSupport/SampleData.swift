@@ -17,7 +17,7 @@ public enum SampleData {
         )
     }
 
-    static let contacts = [
+    public static let contacts = [
         Contact(id: "c1", ownerId: userId, name: "Ali Raza", email: "ali.raza@gmail.com"),
         Contact(id: "c2", ownerId: userId, name: "Sara Khan", email: "sara.k@outlook.com"),
         Contact(id: "c3", ownerId: userId, name: "Hira Shah"),
