@@ -11,7 +11,14 @@
     ],
   },
   "packages": [
-    { "kind": "local", "path": "../KametiKit" },
+    {
+      "kind": "local",
+      "path": "../KametiKit",
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/google/GoogleSignIn-iOS",
+      "version": { "up-to-next-major-version": "10.1.0" },
+    },
   ],
   "files": [
     { "kind": "folder", "path": "Kameti", "target-membership": [ "Kameti" ] },
@@ -35,16 +42,45 @@
         "resources",
       ],
       "package-product-members": [
-        { "package": "KametiKit", "product-name": "KametiCore", "build-phase": { "build-phase": "frameworks" } },
-        { "package": "KametiKit", "product-name": "KametiData", "build-phase": { "build-phase": "frameworks" } },
-        { "package": "KametiKit", "product-name": "KametiDomain", "build-phase": { "build-phase": "frameworks" } },
-        { "package": "KametiKit", "product-name": "KametiUI", "build-phase": { "build-phase": "frameworks" } },
+        {
+          "package": "GoogleSignIn-iOS",
+          "product-name": "GoogleSignIn",
+          "build-phase": { "build-phase": "frameworks" },
+        },         {
+          "package": "KametiKit",
+          "product-name": "FeatureAuth",
+          "build-phase": { "build-phase": "frameworks" },
+        },         {
+          "package": "KametiKit",
+          "product-name": "FeatureShell",
+          "build-phase": { "build-phase": "frameworks" },
+        },         {
+          "package": "KametiKit",
+          "product-name": "KametiNavigation",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "KametiKit",
+          "product-name": "KametiCore",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "KametiKit",
+          "product-name": "KametiData",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "KametiKit",
+          "product-name": "KametiDomain",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "KametiKit",
+          "product-name": "KametiUI",
+          "build-phase": { "build-phase": "frameworks" },
+        },
       ],
       "build-settings": {
         "CODE_SIGN_ENTITLEMENTS": "Kameti.entitlements",
         "CODE_SIGN_STYLE": "Automatic",
-        "DEVELOPMENT_TEAM": "77XZANJHWG",
         "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "77XZANJHWG",
         "ENABLE_APP_SANDBOX": "YES",
         "ENABLE_PREVIEWS": "YES",
         "ENABLE_USER_SELECTED_FILES": "readonly",

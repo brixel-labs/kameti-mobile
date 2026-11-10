@@ -1,20 +1,23 @@
-import KametiCore
-import KametiUI
+import FeatureAuth
+import FeatureShell
+import GoogleSignIn
 import SwiftUI
 
 @main
 struct KametiApp: App {
+    @State private var container = AppConfig.load().map { AppContainer(config: $0) }
+
     var body: some Scene {
         WindowGroup {
-            // Placeholder until the real shell lands: proves KametiKit is linked.
-            VStack(alignment: .leading, spacing: KSpace.lg) {
-                Text("Kameti").kText(KTextToken.titleLg)
-                KPotProgress(collected: Money(2_350_000), target: Money(5_000_000))
-                KBalancePill(balance: Money(-125_000))
+            if let container {
+                RootView(
+                    session: container.session, router: container.router,
+                    signIn: container.signIn, dependencies: container.dependencies
+                )
+                .onOpenURL { _ = GIDSignIn.sharedInstance.handle($0) }
+            } else {
+                ConfigurationMissingView()
             }
-            .padding(KSpace.gutter)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(KColors.background)
         }
     }
 }
