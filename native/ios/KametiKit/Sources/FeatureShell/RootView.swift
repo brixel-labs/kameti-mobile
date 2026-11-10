@@ -10,6 +10,7 @@ public struct RootView: View {
     private let router: AppRouter
     private let signIn: SignInViewModel
     private let dependencies: KametiDependencies
+    @AppStorage(KAppearance.storageKey) private var appearance = KAppearance.system.rawValue
 
     public init(
         session: SessionStore, router: AppRouter, signIn: SignInViewModel,
@@ -34,6 +35,7 @@ public struct RootView: View {
                     .id(userId)
             }
         }
+        .preferredColorScheme((KAppearance(rawValue: appearance) ?? .system).colorScheme)
         .animation(.default, value: session.state)
         .task { session.start() }
         .onOpenURL { router.open($0) }

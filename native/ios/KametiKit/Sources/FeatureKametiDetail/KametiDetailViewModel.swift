@@ -59,7 +59,11 @@ public final class KametiDetailViewModel {
             let shares = try await dependencies.kametis.shares(kametiId: kametiId)
             let collections = try await dependencies.ledger.monthCollections(kametiId: kametiId)
             let balances = try await dependencies.ledger.memberBalances(kametiId: kametiId)
-            let months = owner ? try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: nil) : []
+            // Owners see every member's months; a member only their own.
+            let mine = DetailLogic.myMember(in: members, userId: userId)
+            let months = owner
+                ? try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: nil)
+                : (mine == nil ? [] : try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: mine?.id))
             let payments = try await dependencies.payments.payments(kametiId: kametiId)
             let payouts = (try? await dependencies.payments.payouts(kametiId: kametiId)) ?? []
             state = .loaded(KametiDetailData(

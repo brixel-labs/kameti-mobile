@@ -95,7 +95,7 @@ public struct StubLedgerRepository: LedgerRepository {
     }
     public func memberMonths(kametiId: String, memberId: String?) async throws(Failure) -> [MemberMonthRow] {
         if let failure { throw failure }
-        return months
+        return memberId.map { id in months.filter { $0.memberId == id } } ?? months
     }
     public func monthCollections(kametiId: String) async throws(Failure) -> [MonthCollectionRow] {
         if let failure { throw failure }

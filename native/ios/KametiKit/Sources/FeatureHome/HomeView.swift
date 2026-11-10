@@ -50,10 +50,8 @@ public struct HomeView: View {
                 if model.sections.isEmpty {
                     KCard {
                         VStack(spacing: KSpace.md) {
-                            Image(systemName: "circle.dashed")
-                                .font(.system(size: 40)).foregroundStyle(KColors.textTertiary)
-                                .accessibilityHidden(true)
-                            Text("No kametis yet", bundle: .module).kText(KTextToken.title)
+                            KEmptyIllustration()
+                            Text("No kametis yet", bundle: .module).kText(KTextToken.titleLg)
                             Text("Start one for your family, office or friends. Or join one you've been invited to.", bundle: .module)
                                 .kText(KTextToken.body, color: KColors.textSecondary)
                                 .multilineTextAlignment(.center)
@@ -62,6 +60,11 @@ public struct HomeView: View {
                         .frame(maxWidth: .infinity)
                     }
                     InviteCodeCard(onJoin: onJoin)
+                    Label(String(localized: "Invites sent to your email show up here automatically.", bundle: .module), systemImage: "info.circle")
+                        .kText(KTextToken.bodySm, color: KColors.info)
+                        .padding(KSpace.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(KColors.infoSubtle, in: RoundedRectangle(cornerRadius: KRadius.card))
                 }
                 // "New kameti" sits on the first group's header.
                 let hasMine = !model.sections.mine.isEmpty
@@ -238,20 +241,24 @@ struct InviteCodeCard: View {
                     TextField(String(localized: "e.g. K7Q2MX", bundle: .module), text: $code)
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
+                        .tracking(2)
                         .submitLabel(.go)
                         .onSubmit(join)
-                        .padding(KSpace.md)
-                        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.input))
-                    Button(String(localized: "Join", bundle: .module), action: join)
-                        .buttonStyle(.glass)
-                        .controlSize(.large)
-                        .disabled(trimmed.isEmpty)
+                        .padding(.horizontal, KSpace.md)
+                        .frame(minHeight: 48)
+                        .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                        .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
+                    Button(action: join) {
+                        Text("Join", bundle: .module)
+                            .kText(KTextToken.bodyStrong, color: KColors.brand)
+                            .padding(.horizontal, KSpace.lg)
+                            .frame(minHeight: 48)
+                            .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.brand))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(trimmed.isEmpty)
+                    .opacity(trimmed.isEmpty ? 0.5 : 1)
                 }
-                Label(String(localized: "Invites sent to your email show up here automatically.", bundle: .module), systemImage: "info.circle")
-                    .kText(KTextToken.bodySm, color: KColors.info)
-                    .padding(KSpace.md)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(KColors.infoSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
             }
         }
     }
