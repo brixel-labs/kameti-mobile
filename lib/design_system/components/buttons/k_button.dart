@@ -18,6 +18,7 @@ class KButton extends StatelessWidget {
     required this.onPressed,
     this.variant = KButtonVariant.primary,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.expand = false,
     super.key,
@@ -27,6 +28,7 @@ class KButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.expand = false,
     super.key,
@@ -36,6 +38,7 @@ class KButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.expand = false,
     super.key,
@@ -45,6 +48,7 @@ class KButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.expand = false,
     super.key,
@@ -54,6 +58,10 @@ class KButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final KButtonVariant variant;
   final IconData? icon;
+
+  /// A custom leading widget (a brand logo, say) shown instead of [icon].
+  /// Keep it about 20 px square, like an icon.
+  final Widget? leading;
   final bool isLoading;
   final bool expand;
 
@@ -75,7 +83,10 @@ class KButton extends StatelessWidget {
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) ...[
+              if (leading != null) ...[
+                leading!,
+                const KGap.sm(),
+              ] else if (icon != null) ...[
                 Icon(icon, size: 20, color: fg),
                 const KGap.sm(),
               ],

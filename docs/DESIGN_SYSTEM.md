@@ -82,7 +82,7 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 ### 3.1 Buttons
 | Component | Variants / API | Notes |
 |---|---|---|
-| `KButton` | `.primary`, `.secondary`, `.tertiary`, `.destructive`; `label`, `onPressed`, `icon?`, `isLoading`, `size: sm/md/lg`, `expand` | `onPressed: null` = disabled. Loading shows a spinner and ignores taps (prevents double payments) |
+| `KButton` | `.primary`, `.secondary`, `.tertiary`, `.destructive`; `label`, `onPressed`, `icon?`, `leading?` (a custom ~20 px widget such as a brand logo, shown instead of `icon`), `isLoading`, `size: sm/md/lg`, `expand` | `onPressed: null` = disabled. Loading shows a spinner and ignores taps (prevents double payments) |
 | `KIconButton` | `icon`, `semanticLabel` (required), `onPressed`, `variant: plain/brand/outlined`, `size` (glyph) | Always a 44×44 hit area |
 | `KFab` | `icon`, `label?`, `onPressed` | Owner's main action, e.g. "Record payment" |
 | `KTextLink` | `label`, `onTap` | Inline link |
