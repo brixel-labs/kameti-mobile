@@ -2,6 +2,7 @@ import 'package:kameti/core/money/money.dart';
 import 'package:kameti/core/result/failure.dart';
 import 'package:kameti/core/result/result.dart';
 import 'package:kameti/core/time/kameti_clock.dart';
+import 'package:kameti/features/auth/data/auth_repository.dart';
 import 'package:kameti/features/kameti/data/kameti_providers.dart';
 import 'package:kameti/features/kameti/domain/kameti_models.dart';
 import 'package:kameti/features/kameti/domain/kameti_repository.dart';
@@ -94,6 +95,33 @@ class CreateWizard extends _$CreateWizard {
   }
 
   // ---- Server writes ----
+
+  /// Reopens a draft saved earlier: loads it and its members into the
+  /// wizard, starting at step 1. Returns the failure to show, or null.
+  Future<Failure?> resume(String kametiId) async {
+    final kametiResult = await _repo.getKameti(kametiId);
+    final membersResult = await _repo.listMembers(kametiId);
+    if (!ref.mounted) return null;
+    if (kametiResult case Err(:final failure)) return failure;
+    if (membersResult case Err(:final failure)) return failure;
+    final kameti = kametiResult.getOrThrow();
+    final members = membersResult.getOrThrow();
+    final userId = await ref.read(currentUserIdProvider.future);
+    if (!ref.mounted) return null;
+    final self = members.where((m) => m.profileId == userId).firstOrNull;
+    state = CreateWizardState(
+      startMonth: kameti.startMonth,
+      kametiId: kameti.id,
+      name: kameti.name,
+      slotAmount: kameti.slotAmountC,
+      months: kameti.monthsN,
+      dueDay: kameti.dueDay,
+      reminderDays: kameti.reminderDays,
+      maxSlotsPerMember: kameti.maxSlotsPerMember,
+      selfMemberId: self?.id,
+    );
+    return null;
+  }
 
   /// Step 1: creates the draft, or updates it when it already exists.
   Future<Failure?> saveBasics() async {

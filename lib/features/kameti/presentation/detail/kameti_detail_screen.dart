@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kameti/app/router.dart';
 import 'package:kameti/design_system/design_system.dart';
 import 'package:kameti/features/kameti/data/kameti_providers.dart';
 import 'package:kameti/features/kameti/domain/kameti_models.dart';
 import 'package:kameti/features/kameti/presentation/detail/detail_refresh.dart';
 import 'package:kameti/features/kameti/presentation/detail/widgets/async_gate.dart';
+import 'package:kameti/features/kameti/presentation/detail/widgets/draft_view.dart';
+import 'package:kameti/features/kameti/presentation/detail/widgets/edit_kameti_sheet.dart';
 import 'package:kameti/features/kameti/presentation/detail/widgets/member_view.dart';
 import 'package:kameti/features/kameti/presentation/detail/widgets/members_tab.dart';
 import 'package:kameti/features/kameti/presentation/detail/widgets/notes_tab.dart';
@@ -50,9 +54,22 @@ class KametiDetailScreen extends ConsumerWidget {
         appBar: KAppBar(
           title: k.name,
           subtitle: subtitle,
-          actions: [_ViewOnlyPill(label: l10n.homeRoleViewOnly)],
+          actions: [
+            _ActivityButton(kametiId: k.id),
+            _ViewOnlyPill(label: l10n.homeRoleViewOnly),
+          ],
         ),
         body: MemberView(kameti: k),
+      );
+    }
+    if (k.status == KametiStatus.draft) {
+      return KScaffold(
+        appBar: KAppBar(
+          title: k.name,
+          subtitle: subtitle,
+          actions: [_EditButton(kameti: k)],
+        ),
+        body: DraftView(kameti: k),
       );
     }
     return _OwnerTabs(kameti: k, subtitle: subtitle);
@@ -74,6 +91,10 @@ class _OwnerTabs extends StatelessWidget {
         appBar: KAppBar(
           title: kameti.name,
           subtitle: subtitle,
+          actions: [
+            _ActivityButton(kametiId: kameti.id),
+            _EditButton(kameti: kameti),
+          ],
           bottom: KTabBar(
             tabs: [
               l10n.detailTabOverview,
@@ -96,6 +117,32 @@ class _OwnerTabs extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ActivityButton extends StatelessWidget {
+  const new({required this.kametiId});
+
+  final String kametiId;
+
+  @override
+  Widget build(BuildContext context) => KIconButton(
+    icon: Icons.history,
+    semanticLabel: AppLocalizations.of(context).detailActivityAction,
+    onPressed: () => context.push(Routes.activityFor(kametiId)),
+  );
+}
+
+class _EditButton extends StatelessWidget {
+  const new({required this.kameti});
+
+  final Kameti kameti;
+
+  @override
+  Widget build(BuildContext context) => KIconButton(
+    icon: Icons.edit_outlined,
+    semanticLabel: AppLocalizations.of(context).kametiEditAction,
+    onPressed: () => showEditKametiSheet(context, kameti: kameti),
+  );
 }
 
 class _ViewOnlyPill extends StatelessWidget {

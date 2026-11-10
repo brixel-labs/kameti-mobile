@@ -105,7 +105,7 @@ final class CreateWizardProvider
   }
 }
 
-String _$createWizardHash() => r'e7375d4828ddda4c81d4561376af73e0f07663d3';
+String _$createWizardHash() => r'068f02d70549051a0a0e6d171c46666798206924';
 
 /// Drives the create-kameti wizard (board AC-1…AC-6, FR-10–FR-12).
 ///
