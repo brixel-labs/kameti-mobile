@@ -2,16 +2,12 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kameti/core/money/money.dart';
 import 'package:kameti/core/result/failure.dart';
-import 'package:kameti/core/result/result.dart';
 import 'package:kameti/features/auth/data/auth_repository.dart';
 import 'package:kameti/features/kameti/data/kameti_providers.dart';
 import 'package:kameti/features/kameti/domain/kameti_models.dart';
 import 'package:kameti/features/ledger/data/ledger_providers.dart';
-import 'package:mocktail/mocktail.dart';
 
 import '../kameti/detail/detail_fixtures.dart';
-
-class _MockAuth extends Mock implements AuthRepository;
 
 /// A kameti the member user runs themselves, not started yet.
 final _ownDraft = Kameti(
@@ -146,21 +142,5 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Office Kameti'), findsOneWidget);
-  });
-
-  testWidgets('sign out calls the auth repository', (tester) async {
-    final auth = _MockAuth();
-    when(auth.signOut).thenAnswer((_) async => const Ok(null));
-    await pumpRoutes(
-      tester,
-      overrides: [
-        currentUserIdProvider.overrideWith((ref) => Stream.value(ownerId)),
-        authRepositoryProvider.overrideWithValue(auth),
-        myKametisProvider.overrideWith((ref) async => const []),
-      ],
-    );
-    await tester.tap(find.bySemanticsLabel('Sign out'));
-    await tester.pumpAndSettle();
-    verify(auth.signOut).called(1);
   });
 }

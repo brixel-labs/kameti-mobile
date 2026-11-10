@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kameti/app/router.dart';
-import 'package:kameti/core/result/failure_message.dart';
-import 'package:kameti/core/result/result.dart';
 import 'package:kameti/design_system/design_system.dart';
 import 'package:kameti/features/auth/data/auth_repository.dart';
 import 'package:kameti/features/home/presentation/widgets/home_kameti_card.dart';
@@ -26,19 +24,6 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context);
-    final result = await ref.read(authRepositoryProvider).signOut();
-    if (!context.mounted) return;
-    if (result case Err(:final failure)) {
-      context.showToast(
-        failureMessage(l10n, failure),
-        tone: KToastTone.negative,
-      );
-    }
-    // On success the router redirect moves to sign-in.
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -50,9 +35,9 @@ class HomeScreen extends ConsumerWidget {
         large: true,
         actions: [
           KIconButton(
-            icon: Icons.logout,
-            semanticLabel: l10n.homeSignOut,
-            onPressed: () => _signOut(context, ref),
+            icon: Icons.person_outline,
+            semanticLabel: l10n.profileOpen,
+            onPressed: () => context.push(Routes.profile),
           ),
         ],
       ),
