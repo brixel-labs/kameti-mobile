@@ -25,11 +25,7 @@ public enum WizardLimits {
 @MainActor
 @Observable
 public final class CreateWizardModel {
-    public private(set) var step = WizardStep.basics {
-        didSet { isMovingForward = step.rawValue >= oldValue.rawValue }
-    }
-    /// Which way the last step change went, so the page slides the right way.
-    public private(set) var isMovingForward = true
+    public private(set) var step = WizardStep.basics
     public var editingSlotId: String?
 
     // Step 1 and 2 fields, kept so Back and Next keep what was typed.

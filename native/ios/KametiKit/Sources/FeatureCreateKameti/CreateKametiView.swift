@@ -10,6 +10,11 @@ public struct CreateKametiView: View {
     @Bindable private var model: CreateWizardModel
     private let onStarted: (String) -> Void
     private let onClose: () -> Void
+    /// The step on screen and the direction of the move. SwiftUI gives a
+    /// removed view the transition it had *before* the change, so the
+    /// direction is set first and the step follows on the next turn.
+    @State private var shownStep = WizardStep.basics
+    @State private var forward = true
 
     public init(model: CreateWizardModel, onStarted: @escaping (String) -> Void, onClose: @escaping () -> Void) {
         self.model = model
@@ -23,16 +28,21 @@ public struct CreateKametiView: View {
                 .padding(.horizontal, KSpace.xl)
                 .padding(.top, KSpace.xs)
             ZStack {
-                stepView
-                    .id(model.step)
+                stepView(shownStep)
+                    .id(shownStep)
                     .transition(.asymmetric(
-                        insertion: .move(edge: model.isMovingForward ? .trailing : .leading),
-                        removal: .move(edge: model.isMovingForward ? .leading : .trailing)
+                        insertion: .move(edge: forward ? .trailing : .leading),
+                        removal: .move(edge: forward ? .leading : .trailing)
                     ))
             }
-            .animation(.smooth(duration: 0.35), value: model.step)
             .frame(maxHeight: .infinity)
             .clipped()
+            .onChange(of: model.step) { old, new in
+                forward = new.rawValue >= old.rawValue
+                Task { @MainActor in
+                    withAnimation(.smooth(duration: 0.35)) { shownStep = new }
+                }
+            }
         }
         .background(KColors.background)
         .kDismissesKeyboard()
@@ -67,8 +77,8 @@ public struct CreateKametiView: View {
 }
 
 private extension CreateKametiView {
-    @ViewBuilder var stepView: some View {
-        switch model.step {
+    @ViewBuilder func stepView(_ step: WizardStep) -> some View {
+        switch step {
         case .basics: BasicsStep(model: model)
         case .dates: DatesStep(model: model)
         case .members: MembersStep(model: model)

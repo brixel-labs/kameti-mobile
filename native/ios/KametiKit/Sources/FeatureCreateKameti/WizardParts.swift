@@ -59,7 +59,7 @@ struct WizardFooter<Secondary: View>: View {
             HStack(spacing: KSpace.md) {
                 if let onBack {
                     Button(action: onBack) {
-                        Text("Back", bundle: .module)
+                        Text("Previous", bundle: .module)
                             .kText(KTextToken.bodyStrong)
                             .padding(.horizontal, KSpace.lg)
                     }

@@ -639,6 +639,17 @@
         }
       }
     },
+    "Previous" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous"
+          }
+        }
+      }
+    },
     "Random draw" : {
       "extractionState" : "manual",
       "localizations" : {
