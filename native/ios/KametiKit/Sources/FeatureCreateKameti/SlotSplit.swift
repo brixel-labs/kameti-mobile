@@ -34,15 +34,16 @@ struct SlotSplit: Equatable {
         splitEvenly()
     }
 
-    /// Back to one person, they get the whole slot again; otherwise the
-    /// others keep their amounts (some may be left to assign).
+    /// The remaining people share the slot evenly again (one person gets the
+    /// whole slot).
     mutating func remove(_ id: String) {
         lines.removeAll { $0.id == id }
-        if lines.count == 1 { lines[0].amount = total }
+        splitEvenly()
     }
 
     /// Even split in Rs 1,000 steps; the first person takes any remainder.
     mutating func splitEvenly() {
+        if lines.count == 1 { lines[0].amount = total; return }
         guard let even = PlanChecks.evenSplit(slotAmount: total, count: lines.count) else { return }
         for index in lines.indices { lines[index].amount = even[index] }
     }

@@ -51,6 +51,8 @@ struct WizardFooter<Secondary: View>: View {
     var isEnabled = true
     var isLoading = false
     var onBack: (() -> Void)?
+    var backTitle: String?
+    var backIsDestructive = false
     let action: () -> Void
     @ViewBuilder var secondary: Secondary
 
@@ -59,8 +61,8 @@ struct WizardFooter<Secondary: View>: View {
             HStack(spacing: KSpace.md) {
                 if let onBack {
                     Button(action: onBack) {
-                        Text("Previous", bundle: .module)
-                            .kText(KTextToken.bodyStrong)
+                        Text(backTitle ?? String(localized: "Previous", bundle: .module))
+                            .kText(KTextToken.bodyStrong, color: backIsDestructive ? KColors.negative : KColors.textPrimary)
                             .padding(.horizontal, KSpace.lg)
                     }
                     .buttonStyle(.glass)
@@ -89,8 +91,8 @@ struct WizardFooter<Secondary: View>: View {
 }
 
 extension WizardFooter where Secondary == EmptyView {
-    init(primaryTitle: String, isEnabled: Bool = true, isLoading: Bool = false, onBack: (() -> Void)? = nil, action: @escaping () -> Void) {
-        self.init(primaryTitle: primaryTitle, isEnabled: isEnabled, isLoading: isLoading, onBack: onBack, action: action, secondary: { EmptyView() })
+    init(primaryTitle: String, isEnabled: Bool = true, isLoading: Bool = false, onBack: (() -> Void)? = nil, backTitle: String? = nil, backIsDestructive: Bool = false, action: @escaping () -> Void) {
+        self.init(primaryTitle: primaryTitle, isEnabled: isEnabled, isLoading: isLoading, onBack: onBack, backTitle: backTitle, backIsDestructive: backIsDestructive, action: action, secondary: { EmptyView() })
     }
 }
 

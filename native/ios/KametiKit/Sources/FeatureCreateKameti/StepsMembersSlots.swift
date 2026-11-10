@@ -303,17 +303,20 @@ struct SlotsStep: View {
     @Bindable var model: CreateWizardModel
 
     var body: some View {
-        ZStack {
-            if let slotId = model.editingSlotId, let slot = model.slots.first(where: { $0.id == slotId }) {
-                SlotSplitView(model: model, slot: slot)
-                    .transition(.move(edge: .trailing))
-            } else {
-                list
-                    .transition(.move(edge: .leading))
+        list
+            .kBottomSheet(
+                isPresented: Binding(get: { model.editingSlotId != nil }, set: { if !$0 { model.editingSlotId = nil } }),
+                title: sheetTitle, detents: [.large]
+            ) {
+                if let slotId = model.editingSlotId, let slot = model.slots.first(where: { $0.id == slotId }) {
+                    SlotSplitView(model: model, slot: slot)
+                }
             }
-        }
-        .animation(.smooth(duration: 0.35), value: model.editingSlotId)
-        .clipped()
+    }
+
+    private var sheetTitle: String {
+        guard let slotId = model.editingSlotId, let slot = model.slots.first(where: { $0.id == slotId }) else { return "" }
+        return String(localized: "Slot \(slot.payoutMonthIndex) · \(monthLabel(addingMonths(slot.payoutMonthIndex - 1, to: model.startMonth)))", bundle: .module)
     }
 
     private var list: some View {
@@ -450,14 +453,10 @@ struct SlotSplitView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: KSpace.lg) {
-                    VStack(alignment: .leading, spacing: KSpace.xs) {
-                        Text("Slot \(slot.payoutMonthIndex) · \(monthLabel(month))".uppercased())
-                            .kText(KTextToken.label, color: KColors.brand)
-                        WizardHeading(
-                            title: String(localized: "Who pays what each month?", bundle: .module),
-                            subtitle: String(localized: "This slot needs \(split.total.format()) a month. Up to 4 people.", bundle: .module)
-                        )
-                    }
+                    WizardHeading(
+                        title: String(localized: "Who pays what each month?", bundle: .module),
+                        subtitle: String(localized: "This slot needs \(split.total.format()) a month. Up to 4 people.", bundle: .module)
+                    )
                     progressCard(remaining: remaining)
                     ForEach(Array(split.lines.enumerated()), id: \.element.id) { index, line in
                         if let member = byId[line.id] {
@@ -473,19 +472,16 @@ struct SlotSplitView: View {
             }
             WizardFooter(
                 primaryTitle: footerTitle(remaining), isEnabled: split.isValid, isLoading: model.isBusy,
-                onBack: { model.back() }
+                onBack: hasSavedPeople ? { Task { await model.saveSlotShares(slotId: slot.id, shares: []) } } : nil,
+                backTitle: String(localized: "Empty slot", bundle: .module), backIsDestructive: true
             ) {
                 let inputs = split.lines.map { ShareInput(memberId: $0.id, monthlyAmount: $0.amount) }
                 Task { await model.saveSlotShares(slotId: slot.id, shares: inputs) }
-            } secondary: {
-                if !PlanChecks.activeShares(of: slot.id, in: model.shares).isEmpty {
-                    Button(String(localized: "Empty this slot", bundle: .module), role: .destructive) {
-                        Task { await model.saveSlotShares(slotId: slot.id, shares: []) }
-                    }
-                }
             }
         }
     }
+
+    private var hasSavedPeople: Bool { !PlanChecks.activeShares(of: slot.id, in: model.shares).isEmpty }
 
     private func footerTitle(_ remaining: Money) -> String {
         if split.lines.isEmpty { return String(localized: "Add someone", bundle: .module) }
@@ -553,7 +549,10 @@ struct SlotSplitView: View {
         let single = split.lines.count == 1
         if isOpen || single {
             VStack(alignment: .leading, spacing: KSpace.md) {
-                header(member: member, payout: payout, size: .large)
+                HStack(spacing: KSpace.md) {
+                    identity(member: member, payout: payout, size: .large)
+                    trashButton(member)
+                }
                 if single {
                     HStack {
                         Text("Whole slot", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
@@ -570,8 +569,9 @@ struct SlotSplitView: View {
         } else {
             Button { activeId = line.id } label: {
                 HStack(spacing: KSpace.md) {
-                    header(member: member, payout: payout, size: .medium)
+                    identity(member: member, payout: payout, size: .medium)
                     KMoneyText(line.amount, style: .title)
+                    trashButton(member)
                 }
                 .padding(.horizontal, KSpace.md)
                 .padding(.vertical, KSpace.sm + 2)
@@ -582,7 +582,7 @@ struct SlotSplitView: View {
         }
     }
 
-    private func header(member: Member, payout: Money, size: KAvatar.Size) -> some View {
+    private func identity(member: Member, payout: Money, size: KAvatar.Size) -> some View {
         HStack(spacing: KSpace.md) {
             KAvatar(name: member.name, colorIndex: Int(member.color ?? "") ?? max(model.members.firstIndex(of: member) ?? 0, 0), size: size)
             VStack(alignment: .leading, spacing: 2) {
@@ -591,6 +591,11 @@ struct SlotSplitView: View {
                     .kText(KTextToken.caption, color: KColors.textSecondary)
             }
             Spacer(minLength: KSpace.sm)
+        }
+    }
+
+    private func trashButton(_ member: Member) -> some View {
+        Group {
             Button {
                 withAnimation(.smooth(duration: 0.3)) {
                     split.remove(member.id)
@@ -625,7 +630,6 @@ struct SlotSplitView: View {
                 ForEach(SlotSplit.presets(for: split.total), id: \.self) { preset in
                     KChip(preset.formatCompact(), isOn: line.amount == preset) { split.set(line.id, to: preset) }
                 }
-                KChip(String(localized: "Reset", bundle: .module), symbol: "arrow.counterclockwise", isOn: false) { split.splitEvenly() }
             }
             .frame(maxWidth: .infinity)
         }

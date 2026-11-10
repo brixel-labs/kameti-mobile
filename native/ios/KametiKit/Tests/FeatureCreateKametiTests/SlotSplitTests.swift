@@ -55,12 +55,13 @@ struct SlotSplitTests {
         #expect(split.amount(of: "a") == total)
     }
 
-    @Test func removingFromThreeKeepsTheOthersAsTheyAre() {
+    @Test func removingSomeoneSplitsTheSlotEvenlyAmongTheRest() {
         var split = SlotSplit(total: Money(300_000))
         split.add("a"); split.add("b"); split.add("c")
+        split.set("a", to: Money(200_000))
         split.remove("c")
-        #expect(split.lines.map(\.amount) == [Money(100_000), Money(100_000)])
-        #expect(split.remaining == Money(100_000))
+        #expect(split.lines.map(\.amount) == [Money(150_000), Money(150_000)])
+        #expect(split.isValid)
     }
 
     @Test func atMostFourPeopleAndNoDuplicates() {

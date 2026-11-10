@@ -243,13 +243,13 @@
         }
       }
     },
-    "Empty this slot" : {
+    "Empty slot" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Empty this slot"
+            "value" : "Empty slot"
           }
         }
       }
@@ -833,17 +833,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove this person?"
-          }
-        }
-      }
-    },
-    "Reset" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
           }
         }
       }
