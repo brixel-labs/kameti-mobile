@@ -1,3 +1,4 @@
+import FeatureCreateKameti
 import FeatureHome
 import FeatureKametiDetail
 import KametiDomain
@@ -32,7 +33,7 @@ struct MainTabView: View {
                         onCreate: { router.push(.createKameti) },
                         onJoin: { router.push(.join(token: $0)) }
                     )
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }) }
                 }
             } label: {
                 Label(String(localized: "Home", bundle: .module), systemImage: "house")
@@ -42,7 +43,7 @@ struct MainTabView: View {
                 NavigationStack(path: $router.inboxPath) {
                     ComingNextView(title: String(localized: "Inbox", bundle: .module), symbol: "tray",
                                    message: String(localized: "Invitations and join requests will show here.", bundle: .module))
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }) }
                 }
             } label: {
                 Label(String(localized: "Inbox", bundle: .module), systemImage: "tray")
@@ -51,7 +52,7 @@ struct MainTabView: View {
             Tab(value: AppTab.profile) {
                 NavigationStack(path: $router.profilePath) {
                     ProfileView(model: profileModel)
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }) }
                 }
             } label: {
                 Label(String(localized: "Profile", bundle: .module), systemImage: "person")
@@ -79,12 +80,16 @@ private struct RouteDestination: View {
     let route: Route
     let userId: String
     let dependencies: KametiDependencies
+    let router: AppRouter
+    let onFinished: () -> Void
 
     var body: some View {
         switch route {
         case .kametiDetail(let id):
             KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies)
-        case .createKameti, .activity, .join:
+        case .createKameti:
+            CreateKametiScreen(userId: userId, dependencies: dependencies, router: router, onFinished: onFinished)
+        case .activity, .join:
             ContentUnavailableView(
                 String(localized: "This screen is coming next.", bundle: .module),
                 systemImage: "hammer"
@@ -102,4 +107,32 @@ private struct KametiDetailScreen: View {
     }
 
     var body: some View { KametiDetailView(model: model) }
+}
+
+/// Owns the wizard model for as long as the wizard is on screen. Closing
+/// keeps the draft (it is on the server); starting opens the new kameti.
+private struct CreateKametiScreen: View {
+    @State private var model: CreateWizardModel
+    let router: AppRouter
+    let onFinished: () -> Void
+
+    init(userId: String, dependencies: KametiDependencies, router: AppRouter, onFinished: @escaping () -> Void) {
+        _model = State(initialValue: CreateWizardModel(userId: userId, dependencies: dependencies))
+        self.router = router
+        self.onFinished = onFinished
+    }
+
+    var body: some View {
+        CreateKametiView(
+            model: model,
+            onStarted: { id in
+                onFinished()
+                router.homePath = [.kametiDetail(id: id)]
+            },
+            onClose: {
+                onFinished()
+                router.popToRoot()
+            }
+        )
+    }
 }

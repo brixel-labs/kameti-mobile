@@ -1,6 +1,7 @@
 import Foundation
 import KametiCore
 import KametiDomain
+import Synchronization
 
 /// Believable sample kametis, so every screen can be seen without a backend
 /// (the "demo" flavor, previews). Two kametis: one I run, one I'm a member of.
@@ -133,23 +134,132 @@ public enum SampleData {
 
 private let notFound = Failure.server(code: "not_found", detail: nil)
 
-struct SampleKametiRepository: KametiRepository {
-    func listKametis() async throws(Failure) -> [Kameti] { [SampleData.family, SampleData.office] }
+/// An in-memory kameti store seeded with the sample kametis. It supports the
+/// whole create flow (draft, members, slot splits, order, start), so the
+/// wizard can be tried without a backend. Nothing is saved to disk.
+final class SampleKametiRepository: KametiRepository {
+    private struct State {
+        var kametis = [SampleData.family, SampleData.office]
+        var members = ["family": SampleData.familyMembers, "office": SampleData.officeMembers]
+        var slots = ["family": SampleData.familySlots, "office": SampleData.officeSlots]
+        var shares = ["family": SampleData.familyShares, "office": SampleData.officeShares]
+        var counter = 0
+    }
+
+    private let state = Mutex(State())
+
+    func listKametis() async throws(Failure) -> [Kameti] { state.withLock { $0.kametis } }
+
     func kameti(id: String) async throws(Failure) -> Kameti {
-        guard let found = [SampleData.family, SampleData.office].first(where: { $0.id == id }) else { throw notFound }
+        guard let found = state.withLock({ $0.kametis.first { $0.id == id } }) else { throw notFound }
         return found
     }
-    func members(kametiId: String) async throws(Failure) -> [Member] { kametiId == "family" ? SampleData.familyMembers : SampleData.officeMembers }
-    func slots(kametiId: String) async throws(Failure) -> [Slot] { kametiId == "family" ? SampleData.familySlots : SampleData.officeSlots }
-    func shares(kametiId: String) async throws(Failure) -> [Share] { kametiId == "family" ? SampleData.familyShares : SampleData.officeShares }
-    func createKameti(_ new: NewKameti) async throws(Failure) -> Kameti { throw readOnly }
-    func updateKameti(id: String, changes: KametiChanges) async throws(Failure) -> Kameti { throw readOnly }
-    func startKameti(id: String) async throws(Failure) -> Kameti { throw readOnly }
-    func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member { throw readOnly }
+    func members(kametiId: String) async throws(Failure) -> [Member] { state.withLock { $0.members[kametiId] ?? [] } }
+    func slots(kametiId: String) async throws(Failure) -> [Slot] { state.withLock { ($0.slots[kametiId] ?? []).sorted { $0.payoutMonthIndex < $1.payoutMonthIndex } } }
+    func shares(kametiId: String) async throws(Failure) -> [Share] { state.withLock { $0.shares[kametiId] ?? [] } }
+
+    func createKameti(_ new: NewKameti) async throws(Failure) -> Kameti {
+        state.withLock { s in
+            s.counter += 1
+            let id = "draft-\(s.counter)"
+            let created = Kameti(
+                id: id, ownerId: SampleData.userId, name: new.name, description: new.description, startMonth: new.startMonth,
+                monthsN: new.months, slotAmountC: new.slotAmount, dueDay: new.dueDay, reminderDays: new.reminderDays,
+                maxSlotsPerMember: new.maxSlotsPerMember, status: .draft
+            )
+            s.kametis.insert(created, at: 0)
+            s.members[id] = []
+            s.shares[id] = []
+            s.slots[id] = (1...new.months).map { Slot(id: "\(id)-s\($0)", kametiId: id, payoutMonthIndex: $0) }
+            return created
+        }
+    }
+
+    func updateKameti(id: String, changes: KametiChanges) async throws(Failure) -> Kameti {
+        try state.withLock { s throws(Failure) in
+            guard let index = s.kametis.firstIndex(where: { $0.id == id }) else { throw notFound }
+            let old = s.kametis[index]
+            let months = changes.months ?? old.monthsN
+            let updated = Kameti(
+                id: id, ownerId: old.ownerId, name: changes.name ?? old.name, description: changes.description ?? old.description,
+                startMonth: changes.startMonth ?? old.startMonth, monthsN: months, slotAmountC: changes.slotAmount ?? old.slotAmountC,
+                dueDay: changes.dueDay ?? old.dueDay, reminderDays: changes.reminderDays ?? old.reminderDays,
+                maxSlotsPerMember: changes.maxSlotsPerMember ?? old.maxSlotsPerMember, status: old.status, startedAt: old.startedAt
+            )
+            s.kametis[index] = updated
+            if old.status == .draft, months != (s.slots[id] ?? []).count {
+                s.slots[id] = (1...months).map { Slot(id: "\(id)-s\($0)", kametiId: id, payoutMonthIndex: $0) }
+                s.shares[id] = []
+            }
+            return updated
+        }
+    }
+
+    func startKameti(id: String) async throws(Failure) -> Kameti {
+        try state.withLock { s throws(Failure) in
+            guard let index = s.kametis.firstIndex(where: { $0.id == id }) else { throw notFound }
+            let old = s.kametis[index]
+            let slots = s.slots[id] ?? []
+            let shares = s.shares[id] ?? []
+            let filled = slots.allSatisfy { slot in shares.contains { $0.slotId == slot.id } }
+            guard filled, !slots.isEmpty else { throw Failure.server(code: "kameti_not_ready", detail: nil) }
+            let started = Kameti(
+                id: id, ownerId: old.ownerId, name: old.name, description: old.description, startMonth: old.startMonth,
+                monthsN: old.monthsN, slotAmountC: old.slotAmountC, dueDay: old.dueDay, reminderDays: old.reminderDays,
+                maxSlotsPerMember: old.maxSlotsPerMember, status: .active, startedAt: Date()
+            )
+            s.kametis[index] = started
+            return started
+        }
+    }
+
+    func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member {
+        state.withLock { s in
+            s.counter += 1
+            let member = Member(
+                id: "m-\(s.counter)", kametiId: kametiId, name: new.isSelf ? "Demo Owner" : (new.name ?? "Member"),
+                joinStatus: new.isSelf ? .joined : .notInvited, profileId: new.isSelf ? SampleData.userId : nil
+            )
+            s.members[kametiId, default: []].append(member)
+            return member
+        }
+    }
+
     func updateMember(id: String, changes: MemberChanges) async throws(Failure) -> Member { throw readOnly }
-    func removeMember(id: String) async throws(Failure) { throw readOnly }
-    func setSlotShares(slotId: String, shares: [ShareInput]) async throws(Failure) -> [Share] { throw readOnly }
-    func reorderSlots(kametiId: String, slotIdsInOrder: [String]) async throws(Failure) -> [Slot] { throw readOnly }
+
+    func removeMember(id: String) async throws(Failure) {
+        state.withLock { s in
+            for key in s.members.keys {
+                s.members[key]?.removeAll { $0.id == id }
+                s.shares[key]?.removeAll { $0.memberId == id }
+            }
+        }
+    }
+
+    func setSlotShares(slotId: String, shares: [ShareInput]) async throws(Failure) -> [Share] {
+        try state.withLock { s throws(Failure) in
+            guard let kametiId = s.slots.first(where: { $0.value.contains { $0.id == slotId } })?.key,
+                  let kameti = s.kametis.first(where: { $0.id == kametiId }) else { throw notFound }
+            let total = shares.reduce(Money.zero) { $0 + $1.monthlyAmount }
+            guard shares.isEmpty || (total == kameti.slotAmountC && shares.count <= 4 && shares.allSatisfy { $0.monthlyAmount.rupees % 1_000 == 0 && $0.monthlyAmount.rupees >= 1_000 }) else {
+                throw Failure.server(code: "invalid_shares", detail: nil)
+            }
+            s.shares[kametiId]?.removeAll { $0.slotId == slotId }
+            let created = shares.enumerated().map {
+                Share(id: "\(slotId)-h\($0.offset)", kametiId: kametiId, slotId: slotId, memberId: $0.element.memberId, monthlyAmount: $0.element.monthlyAmount, effectiveFromMonth: 1)
+            }
+            s.shares[kametiId, default: []].append(contentsOf: created)
+            return created
+        }
+    }
+
+    func reorderSlots(kametiId: String, slotIdsInOrder: [String]) async throws(Failure) -> [Slot] {
+        state.withLock { s in
+            let reordered = slotIdsInOrder.enumerated().map { Slot(id: $0.element, kametiId: kametiId, payoutMonthIndex: $0.offset + 1) }
+            s.slots[kametiId] = reordered
+            return reordered
+        }
+    }
 }
 
 private let readOnly = Failure.unknown(description: "sample data is read only")
