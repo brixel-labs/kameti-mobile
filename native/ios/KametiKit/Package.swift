@@ -17,6 +17,11 @@ let package = Package(
         .library(name: "KametiCore", targets: ["KametiCore"]),
         .library(name: "KametiDomain", targets: ["KametiDomain"]),
         .library(name: "KametiUI", targets: ["KametiUI"]),
+        .library(name: "KametiData", targets: ["KametiData"]),
+    ],
+    dependencies: [
+        // Official Supabase SDK: auth, PostgREST, RPC and edge functions.
+        .package(url: "https://github.com/supabase/supabase-swift.git", from: "2.55.0"),
     ],
     targets: [
         .target(name: "KametiCore"),
@@ -27,7 +32,23 @@ let package = Package(
             dependencies: ["KametiCore"],
             resources: [.process("Resources")]
         ),
+        // Supabase-backed implementations of the repository protocols. Only
+        // the app target links this; features depend on KametiDomain.
+        .target(
+            name: "KametiData",
+            dependencies: [
+                "KametiCore", "KametiDomain",
+                .product(name: "Supabase", package: "supabase-swift"),
+            ]
+        ),
         .testTarget(name: "KametiCoreTests", dependencies: ["KametiCore"]),
+        .testTarget(
+            name: "KametiDataTests",
+            dependencies: [
+                "KametiData", "KametiDomain", "KametiCore",
+                .product(name: "Supabase", package: "supabase-swift"),
+            ]
+        ),
         .testTarget(name: "KametiUITests", dependencies: ["KametiUI", "KametiCore"]),
         .testTarget(
             name: "KametiDomainTests",
