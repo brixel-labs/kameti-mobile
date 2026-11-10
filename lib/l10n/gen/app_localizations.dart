@@ -628,11 +628,101 @@ abstract class AppLocalizations {
   /// **'Ask the person running it to add you.'**
   String get detailNotAMemberBody;
 
-  /// No description provided for @signInNotConfigured.
+  /// No description provided for @navHome.
   ///
   /// In en, this message translates to:
-  /// **'Google sign-in isn\'t set up in this build.'**
-  String get signInNotConfigured;
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get navInbox;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get navProfile;
+
+  /// No description provided for @inboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get inboxTitle;
+
+  /// No description provided for @inboxApprovals.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your approval'**
+  String get inboxApprovals;
+
+  /// No description provided for @inboxWantsToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} wants to join'**
+  String inboxWantsToJoin(String name);
+
+  /// No description provided for @inboxWantsToJoinBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{kameti} · tap to review'**
+  String inboxWantsToJoinBody(String kameti);
+
+  /// No description provided for @inboxEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get inboxEmptyTitle;
+
+  /// No description provided for @inboxEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitations and join requests show up here. Payment and reminder notifications arrive in a later update.'**
+  String get inboxEmptyBody;
+
+  /// No description provided for @signInErrNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'This build isn\'t connected to the Kameti service.'**
+  String get signInErrNotConfigured;
+
+  /// No description provided for @signInErrMisconfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in isn\'t set up correctly for this build.'**
+  String get signInErrMisconfigured;
+
+  /// No description provided for @signInErrInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in was interrupted. Please try again.'**
+  String get signInErrInterrupted;
+
+  /// No description provided for @signInErrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in isn\'t available on this device right now.'**
+  String get signInErrUnavailable;
+
+  /// No description provided for @signInErrRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t sign you in. Please try again.'**
+  String get signInErrRejected;
+
+  /// No description provided for @signInNoBackend.
+  ///
+  /// In en, this message translates to:
+  /// **'This build isn\'t connected to the Kameti service, so sign-in is turned off.'**
+  String get signInNoBackend;
+
+  /// No description provided for @signInNoBackendHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Developers: run the app with --dart-define-from-file=env/dev.json (or prod.json).'**
+  String get signInNoBackendHint;
 
   /// No description provided for @joinInviteFrom.
   ///
@@ -1281,12 +1371,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile'**
   String get profileTitle;
-
-  /// No description provided for @profileOpen.
-  ///
-  /// In en, this message translates to:
-  /// **'Profile'**
-  String get profileOpen;
 
   /// No description provided for @profileAccount.
   ///

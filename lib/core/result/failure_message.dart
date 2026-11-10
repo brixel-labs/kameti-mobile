@@ -7,6 +7,13 @@ String failureMessage(AppLocalizations l10n, Failure failure) =>
       NetworkFailure() => l10n.errNetwork,
       AuthFailure() => l10n.errSession,
       UnknownFailure() => l10n.errUnknown,
+      SignInFailure(:final problem) => switch (problem) {
+        SignInProblem.notConfigured => l10n.signInErrNotConfigured,
+        SignInProblem.misconfigured => l10n.signInErrMisconfigured,
+        SignInProblem.interrupted => l10n.signInErrInterrupted,
+        SignInProblem.unavailable => l10n.signInErrUnavailable,
+        SignInProblem.rejected => l10n.signInErrRejected,
+      },
       ServerFailure(:final code) => _serverMessage(l10n, code),
     };
 

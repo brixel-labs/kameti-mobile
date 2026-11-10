@@ -48,6 +48,36 @@ final class AuthFailure extends Failure {
   final String message;
 }
 
+/// Why a sign-in with Apple or Google didn't complete (a cancelled sheet is
+/// not a failure; it returns `Ok(false)`).
+enum SignInProblem {
+  /// This build has no backend settings (no `--dart-define-from-file`).
+  notConfigured,
+
+  /// The provider's client IDs or signing key don't match this build.
+  misconfigured,
+
+  /// The sign-in sheet was interrupted before it finished.
+  interrupted,
+
+  /// Sign-in can't be shown right now (no account on the device, no UI).
+  unavailable,
+
+  /// The provider answered but Kameti's backend refused the sign-in.
+  rejected,
+}
+
+/// A sign-in that failed, with a reason the screen can explain. [detail]
+/// is for developers (logged, never shown).
+final class SignInFailure extends Failure {
+  const new(this.problem, [this.detail]);
+  final SignInProblem problem;
+  final Object? detail;
+
+  @override
+  String toString() => 'SignInFailure($problem, $detail)';
+}
+
 final class UnknownFailure extends Failure {
   const new(this.error, [this.stack]);
   final Object error;

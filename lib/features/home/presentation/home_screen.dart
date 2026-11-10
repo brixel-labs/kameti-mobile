@@ -34,17 +34,7 @@ class HomeScreen extends ConsumerWidget {
     final kametis = ref.watch(myKametisProvider);
     final userId = ref.watch(currentUserIdProvider);
     return KScaffold(
-      appBar: KAppBar(
-        title: l10n.appTitle,
-        large: true,
-        actions: [
-          KIconButton(
-            icon: Icons.person_outline,
-            semanticLabel: l10n.profileOpen,
-            onPressed: () => context.push(Routes.profile),
-          ),
-        ],
-      ),
+      appBar: KAppBar(title: l10n.appTitle, large: true),
       body: AsyncGate(
         values: [kametis, userId],
         onRetry: () => _refresh(ref),

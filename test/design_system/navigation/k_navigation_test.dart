@@ -185,6 +185,11 @@ void main() {
   });
 
   group('KBottomNav', () {
+    test('uses the design-system bar off iOS 26', () {
+      // Tests run on the Android default platform: no native Liquid Glass.
+      expect(KBottomNav.usesNativeBar, isFalse);
+    });
+
     const items = [
       KNavItem(icon: Icons.home_outlined, label: 'Home'),
       KNavItem(icon: Icons.inbox_outlined, label: 'Inbox', showDot: true),

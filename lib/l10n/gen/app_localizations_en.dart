@@ -338,8 +338,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailNotAMemberBody => 'Ask the person running it to add you.';
 
   @override
-  String get signInNotConfigured =>
-      'Google sign-in isn\'t set up in this build.';
+  String get navHome => 'Home';
+
+  @override
+  String get navInbox => 'Inbox';
+
+  @override
+  String get navProfile => 'Profile';
+
+  @override
+  String get inboxTitle => 'Inbox';
+
+  @override
+  String get inboxApprovals => 'Waiting for your approval';
+
+  @override
+  String inboxWantsToJoin(String name) {
+    return '$name wants to join';
+  }
+
+  @override
+  String inboxWantsToJoinBody(String kameti) {
+    return '$kameti · tap to review';
+  }
+
+  @override
+  String get inboxEmptyTitle => 'You\'re all caught up';
+
+  @override
+  String get inboxEmptyBody =>
+      'Invitations and join requests show up here. Payment and reminder notifications arrive in a later update.';
+
+  @override
+  String get signInErrNotConfigured =>
+      'This build isn\'t connected to the Kameti service.';
+
+  @override
+  String get signInErrMisconfigured =>
+      'Sign-in isn\'t set up correctly for this build.';
+
+  @override
+  String get signInErrInterrupted =>
+      'Sign-in was interrupted. Please try again.';
+
+  @override
+  String get signInErrUnavailable =>
+      'Sign-in isn\'t available on this device right now.';
+
+  @override
+  String get signInErrRejected => 'We couldn\'t sign you in. Please try again.';
+
+  @override
+  String get signInNoBackend =>
+      'This build isn\'t connected to the Kameti service, so sign-in is turned off.';
+
+  @override
+  String get signInNoBackendHint =>
+      'Developers: run the app with --dart-define-from-file=env/dev.json (or prod.json).';
 
   @override
   String joinInviteFrom(String owner) {
@@ -722,9 +777,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTitle => 'Profile';
-
-  @override
-  String get profileOpen => 'Profile';
 
   @override
   String get profileAccount => 'Account';

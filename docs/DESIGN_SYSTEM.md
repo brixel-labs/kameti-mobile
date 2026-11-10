@@ -158,7 +158,7 @@ Naming: `K` + PascalCase. One public widget per file, `snake_case` file name (`k
 |---|---|
 | `KScaffold` | `body`, `appBar?`, `banner?` (offline slot), `fab?`, `bottomBar?`, `padded` (gutter) |
 | `KAppBar` | `title`, `subtitle?`, `actions`, `leading: KAppBarLeading{auto, back, close, none}`, `onLeading?`, `large`, `bottom?` |
-| `KBottomNav` | Home · Inbox · Profile. `items: [KNavItem(icon, label, selectedIcon?, showDot)]`, `currentIndex`, `onTap` |
+| `KBottomNav` | Home · Inbox · Profile. `items: [KNavItem(icon, label, selectedIcon?, symbol?, selectedSymbol?, showDot)]`, `currentIndex`, `onTap`. **iOS 26+: the system tab bar** (a real `UITabBar` with Liquid Glass, via `cupertino_native_better`; selected colour = brand, `symbol` is the SF Symbol name, `showDot` is the system dot badge). Android and iOS < 26 draw the design-system bar |
 | `KTabBar` | Kameti detail tabs: Overview · Members · Schedule · Payments · Notes. `tabs: [String]`, `controller?` (else `DefaultTabController`), `onTap?`; use as `KAppBar.bottom` |
 | `KSliverList` | Virtualised list with pull-to-refresh (E51) |
 | `KPageHeader` | Big number + caption (e.g. "You owe Rs 2,50,000 this month") |

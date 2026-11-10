@@ -1,3 +1,6 @@
+import 'package:cupertino_native_better/cupertino_native_better.dart'
+    show CNSymbol, CNTabBar, CNTabBarItem, PlatformVersion;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kameti/design_system/theme/k_theme_x.dart';
 import 'package:kameti/design_system/tokens/k_dimens.dart';
@@ -9,6 +12,8 @@ class KNavItem {
     required this.icon,
     required this.label,
     this.selectedIcon,
+    this.symbol,
+    this.selectedSymbol,
     this.showDot = false,
   });
 
@@ -18,11 +23,24 @@ class KNavItem {
   /// Caller-localised label.
   final String label;
 
+  /// The SF Symbol name for the native iOS 26+ bar (`'house'`). Without
+  /// it the native bar draws [icon] as an image instead.
+  final String? symbol;
+
+  /// SF Symbol shown while selected (`'house.fill'`); [symbol] otherwise.
+  final String? selectedSymbol;
+
   /// Small unread dot on the icon (e.g. Inbox).
   final bool showDot;
 }
 
 /// App bottom navigation: Home · Inbox · Profile.
+///
+/// On iOS 26 and later this is the system tab bar (a real `UITabBar`, so
+/// it has Liquid Glass, the floating pill and the system's own animations);
+/// its selected colour is the brand colour and the labels, symbols and dot
+/// come from [items]. Everywhere else (Android, older iOS) it is the
+/// design-system bar drawn below.
 ///
 /// ```dart
 /// KBottomNav(
@@ -43,8 +61,35 @@ class KBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
+  /// Whether the system's Liquid Glass tab bar is available here.
+  static bool get usesNativeBar =>
+      !kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.iOS &&
+      PlatformVersion.isIOS26OrLater;
+
+  Widget _nativeBar(BuildContext context) => CNTabBar(
+    currentIndex: currentIndex,
+    onTap: onTap,
+    tint: context.k.colors.brand,
+    items: [
+      for (final item in items)
+        CNTabBarItem(
+          label: item.label,
+          icon: item.symbol == null ? null : CNSymbol(item.symbol!),
+          activeIcon: item.selectedSymbol == null
+              ? null
+              : CNSymbol(item.selectedSymbol!),
+          // No symbol given: the native bar draws the Flutter icon.
+          customIcon: item.symbol == null ? item.icon : null,
+          activeCustomIcon: item.symbol == null ? item.selectedIcon : null,
+          badge: item.showDot ? CNTabBarItem.dotBadge : null,
+        ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
+    if (usesNativeBar) return _nativeBar(context);
     final k = context.k;
     final c = k.colors;
     return DecoratedBox(
