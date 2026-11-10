@@ -44,16 +44,18 @@ public struct ProfileView: View {
                     confirmingSignOut = true
                 } label: {
                     Label(String(localized: "Sign out", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right")
+                        .foregroundStyle(KColors.negative)
                 }
             }
         }
         .scrollContentBackground(.hidden)
         .background(KColors.background)
         .navigationTitle(String(localized: "Profile", bundle: .module))
-        .confirmationDialog(
+        .alert(
             String(localized: "Sign out of Kameti?", bundle: .module),
-            isPresented: $confirmingSignOut, titleVisibility: .visible
+            isPresented: $confirmingSignOut
         ) {
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
             Button(String(localized: "Sign out", bundle: .module), role: .destructive) {
                 Task { await model.signOut() }
             }

@@ -43,7 +43,7 @@ public struct SignInView: View {
             Button {
                 Task { await model.signIn(with: .apple) }
             } label: {
-                SignInLabel(busy: model.busyProvider == .apple) {
+                SignInLabel(busy: model.busyProvider == .apple, color: KColors.textOnBrand) {
                     Image(systemName: "apple.logo")
                     Text("Continue with Apple", bundle: .module)
                 }
@@ -59,7 +59,8 @@ public struct SignInView: View {
                     Text("Continue with Google", bundle: .module)
                 }
             }
-            .buttonStyle(.glass)
+            .buttonStyle(.glassProminent)
+            .tint(KColors.surface)
 
             if model.showsDevSignIn {
                 Divider().padding(.vertical, KSpace.xs)
@@ -75,27 +76,28 @@ public struct SignInView: View {
                 }
             }
         }
-        .controlSize(.extraLarge)
-        .disabled(model.isBusy)
+        .controlSize(.large)
+        .allowsHitTesting(!model.isBusy)
     }
 }
 
 private struct SignInLabel<Content: View>: View {
     let busy: Bool
+    var color: Color = .primary
     @ViewBuilder let content: Content
 
     var body: some View {
-        HStack(spacing: KSpace.sm) {
-            if busy { ProgressView() } else { content }
-        }
-        .kText(KTextToken.bodyStrong, color: .primary)
+        // The content stays in the layout (hidden) while busy, so the button
+        // keeps its height and the spinner is drawn on top of it.
+        HStack(spacing: KSpace.sm) { content }
+            .opacity(busy ? 0 : 1)
+            .overlay { if busy { ProgressView().controlSize(.small).tint(color) } }
+        .kText(KTextToken.bodyStrong, color: color)
         .frame(maxWidth: .infinity)
-        .frame(minHeight: KSize.buttonHeight - KSpace.lg)
     }
 }
 
-/// The reason a sign-in failed. Debug builds add the raw cause, so a setup
-/// mistake (an unregistered client ID, say) is visible.
+/// The reason a sign-in failed, in plain words. Raw causes never reach the screen.
 private struct FailureBanner: View {
     let failure: Failure
 
@@ -103,11 +105,6 @@ private struct FailureBanner: View {
         VStack(alignment: .leading, spacing: KSpace.xs) {
             Label(failure.userMessage, systemImage: "exclamationmark.triangle")
                 .kText(KTextToken.bodySm, color: KColors.negative)
-            #if DEBUG
-            if case .signIn(_, let detail?) = failure {
-                Text(detail).kText(KTextToken.caption, color: KColors.textSecondary).textSelection(.enabled)
-            }
-            #endif
         }
         .padding(KSpace.md)
         .frame(maxWidth: .infinity, alignment: .leading)
