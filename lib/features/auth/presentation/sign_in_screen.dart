@@ -1,13 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kameti/app/router.dart';
+import 'package:kameti/core/env/env.dart';
+import 'package:kameti/core/result/failure_message.dart';
+import 'package:kameti/core/result/result.dart';
 import 'package:kameti/design_system/design_system.dart';
+import 'package:kameti/features/auth/data/auth_repository.dart';
+import 'package:kameti/features/auth/data/dev_accounts.dart';
+import 'package:kameti/features/auth/presentation/widgets/google_logo.dart';
 import 'package:kameti/l10n/gen/app_localizations.dart';
 
-/// Sign-in screen (board: AF-Sign-In). Google/Apple sign-in arrives in
-/// Phase 2; for now both buttons go to Home.
-class SignInScreen extends StatelessWidget {
+/// Sign-in screen (board: AF-Sign-In).
+///
+/// Continue with Apple (Apple platforms only) and Google, both native
+/// flows that end in `signInWithIdToken`. In the dev flavor with a local
+/// backend, two extra buttons sign in as the seeded test accounts.
+class SignInScreen extends ConsumerStatefulWidget {
   const new({super.key});
+
+  @override
+  ConsumerState<SignInScreen> createState() => _SignInScreenState();
+}
+
+enum _Provider { apple, google }
+
+class _SignInScreenState extends ConsumerState<SignInScreen> {
+  String? _busyEmail;
+  _Provider? _busyProvider;
+
+  bool get _devSignIn => Env.flavor == Flavor.dev && Env.hasBackend;
+
+  Future<void> _signInAs(String email) async {
+    setState(() => _busyEmail = email);
+    final result = await ref
+        .read(authRepositoryProvider)
+        .signInWithPassword(email, DevAccounts.password);
+    if (!mounted) return;
+    setState(() => _busyEmail = null);
+    if (result case Err(:final failure)) {
+      context.showToast(
+        failureMessage(AppLocalizations.of(context), failure),
+        tone: KToastTone.negative,
+      );
+    }
+    // On success the router redirect moves to Home.
+  }
+
+  Future<void> _providerSignIn(_Provider provider) async {
+    if (!Env.hasBackend) {
+      // UI-only build, no backend to sign in to.
+      context.go(Routes.home);
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    if (provider == _Provider.google && !AuthRepository.googleConfigured) {
+      context.showToast(l10n.signInNotConfigured, tone: KToastTone.negative);
+      return;
+    }
+    final auth = ref.read(authRepositoryProvider);
+    setState(() => _busyProvider = provider);
+    final result = switch (provider) {
+      _Provider.apple => await auth.signInWithApple(),
+      _Provider.google => await auth.signInWithGoogle(),
+    };
+    if (!mounted) return;
+    setState(() => _busyProvider = null);
+    // Ok(false) = closed the sheet: nothing to say. On success the router
+    // redirect moves on.
+    if (result case Err(:final failure)) {
+      context.showToast(
+        failureMessage(l10n, failure),
+        tone: KToastTone.negative,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,18 +116,47 @@ class SignInScreen extends StatelessWidget {
                 style: k.text.body.copyWith(color: k.colors.textSecondary),
               ),
               const Spacer(),
-              KButton.primary(
-                label: l10n.continueWithApple,
-                icon: Icons.apple,
-                expand: true,
-                onPressed: () => context.go(Routes.home),
-              ),
-              const KGap.sm(),
+              if (AuthRepository.supportsApple) ...[
+                KButton.primary(
+                  label: l10n.continueWithApple,
+                  icon: Icons.apple,
+                  expand: true,
+                  isLoading: _busyProvider == _Provider.apple,
+                  onPressed: _busyProvider == null
+                      ? () => _providerSignIn(_Provider.apple)
+                      : null,
+                ),
+                const KGap.sm(),
+              ],
               KButton.secondary(
                 label: l10n.continueWithGoogle,
+                leading: const GoogleLogo(),
                 expand: true,
-                onPressed: () => context.go(Routes.home),
+                isLoading: _busyProvider == _Provider.google,
+                onPressed: _busyProvider == null
+                    ? () => _providerSignIn(_Provider.google)
+                    : null,
               ),
+              if (_devSignIn) ...[
+                const KGap.lg(),
+                KButton.secondary(
+                  label: l10n.devSignInOwner,
+                  expand: true,
+                  isLoading: _busyEmail == DevAccounts.owner,
+                  onPressed: _busyEmail == null
+                      ? () => _signInAs(DevAccounts.owner)
+                      : null,
+                ),
+                const KGap.sm(),
+                KButton.secondary(
+                  label: l10n.devSignInMember,
+                  expand: true,
+                  isLoading: _busyEmail == DevAccounts.member,
+                  onPressed: _busyEmail == null
+                      ? () => _signInAs(DevAccounts.member)
+                      : null,
+                ),
+              ],
               const KGap.xl(),
             ],
           ),

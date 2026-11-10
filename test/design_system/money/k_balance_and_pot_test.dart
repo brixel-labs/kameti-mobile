@@ -42,6 +42,34 @@ void main() {
       expect(find.text('of 50,00,000 · 47%'), findsOneWidget);
     });
 
+    testWidgets('bar fills in proportion to collected and marked', (
+      tester,
+    ) async {
+      await pumpK(
+        tester,
+        const KPotProgress(
+          collected: Money(2500000),
+          marked: Money(1000000),
+          target: Money(5000000),
+        ),
+        scrollable: true,
+      );
+      final bar = find.descendant(
+        of: find.byType(KPotProgress),
+        matching: find.byType(Row),
+      );
+      final segments = find.descendant(
+        of: bar.first,
+        matching: find.byType(Expanded),
+      );
+      final total = tester.getSize(bar.first).width;
+      expect(segments, findsNWidgets(3));
+      // 50% collected, 20% marked, 30% left: segments used to collapse to 0.
+      expect(tester.getSize(segments.at(0)).width, closeTo(total * 0.5, 1));
+      expect(tester.getSize(segments.at(1)).width, closeTo(total * 0.2, 1));
+      expect(tester.getSize(segments.at(2)).width, closeTo(total * 0.3, 1));
+    });
+
     testWidgets('marked amount adds a lighter segment', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpK(
@@ -57,10 +85,10 @@ void main() {
       expect(find.text('Rs 29,75,000'), findsOneWidget);
       expect(find.text('of 50,00,000 · 59%'), findsOneWidget);
       final segments = tester
-          .widgetList<Flexible>(
+          .widgetList<Expanded>(
             find.descendant(
               of: find.byType(KPotProgress),
-              matching: find.byType(Flexible),
+              matching: find.byType(Expanded),
             ),
           )
           .map((f) => f.flex)

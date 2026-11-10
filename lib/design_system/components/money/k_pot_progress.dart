@@ -68,17 +68,17 @@ class KPotProgress extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (collectedPm > 0)
-                Flexible(
+                Expanded(
                   flex: collectedPm,
                   child: ColoredBox(color: c.brand),
                 ),
               if (markedPm > 0)
-                Flexible(
+                Expanded(
                   flex: markedPm,
                   child: ColoredBox(color: c.brand.withValues(alpha: 0.5)),
                 ),
               if (restPm > 0)
-                Flexible(flex: restPm, child: const SizedBox.expand()),
+                Expanded(flex: restPm, child: const SizedBox.expand()),
             ],
           ),
         ),
