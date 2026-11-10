@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kameti/app/app_shell.dart';
 import 'package:kameti/core/env/env.dart';
 import 'package:kameti/features/audit/presentation/activity_screen.dart';
 import 'package:kameti/features/auth/data/auth_repository.dart';
 import 'package:kameti/features/auth/presentation/sign_in_screen.dart';
 import 'package:kameti/features/home/presentation/home_screen.dart';
+import 'package:kameti/features/inbox/presentation/inbox_screen.dart';
 import 'package:kameti/features/invites/presentation/join_screen.dart';
 import 'package:kameti/features/kameti/presentation/create/create_kameti_screen.dart';
 import 'package:kameti/features/kameti/presentation/detail/kameti_detail_screen.dart';
@@ -27,6 +29,7 @@ abstract final class Routes {
   static const join = '/kameti/join/:token';
 
   static const createKameti = '/kameti/new';
+  static const inbox = '/inbox';
   static const profile = '/profile';
   static const kametiDetail = '/kameti/:kametiId';
   static const setupKameti = '/kameti/:kametiId/setup';
@@ -97,13 +100,36 @@ GoRouter router(Ref ref) {
         path: Routes.signIn,
         builder: (context, state) => const SignInScreen(),
       ),
-      GoRoute(
-        path: Routes.home,
-        builder: (context, state) => const HomeScreen(),
-      ),
-      GoRoute(
-        path: Routes.profile,
-        builder: (context, state) => const ProfileScreen(),
+      // The three tabs share the bottom navigation; every other route opens
+      // over it, full screen.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => AppShell(shell: shell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.home,
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.inbox,
+                builder: (context, state) => const InboxScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.profile,
+                builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.join,

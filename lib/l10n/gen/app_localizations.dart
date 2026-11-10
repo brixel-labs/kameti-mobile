@@ -628,6 +628,60 @@ abstract class AppLocalizations {
   /// **'Ask the person running it to add you.'**
   String get detailNotAMemberBody;
 
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get navInbox;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get navProfile;
+
+  /// No description provided for @inboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get inboxTitle;
+
+  /// No description provided for @inboxApprovals.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your approval'**
+  String get inboxApprovals;
+
+  /// No description provided for @inboxWantsToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} wants to join'**
+  String inboxWantsToJoin(String name);
+
+  /// No description provided for @inboxWantsToJoinBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{kameti} · tap to review'**
+  String inboxWantsToJoinBody(String kameti);
+
+  /// No description provided for @inboxEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get inboxEmptyTitle;
+
+  /// No description provided for @inboxEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitations and join requests show up here. Payment and reminder notifications arrive in a later update.'**
+  String get inboxEmptyBody;
+
   /// No description provided for @signInErrNotConfigured.
   ///
   /// In en, this message translates to:
@@ -1317,12 +1371,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile'**
   String get profileTitle;
-
-  /// No description provided for @profileOpen.
-  ///
-  /// In en, this message translates to:
-  /// **'Profile'**
-  String get profileOpen;
 
   /// No description provided for @profileAccount.
   ///

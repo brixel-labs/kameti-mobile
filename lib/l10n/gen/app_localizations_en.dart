@@ -338,6 +338,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailNotAMemberBody => 'Ask the person running it to add you.';
 
   @override
+  String get navHome => 'Home';
+
+  @override
+  String get navInbox => 'Inbox';
+
+  @override
+  String get navProfile => 'Profile';
+
+  @override
+  String get inboxTitle => 'Inbox';
+
+  @override
+  String get inboxApprovals => 'Waiting for your approval';
+
+  @override
+  String inboxWantsToJoin(String name) {
+    return '$name wants to join';
+  }
+
+  @override
+  String inboxWantsToJoinBody(String kameti) {
+    return '$kameti · tap to review';
+  }
+
+  @override
+  String get inboxEmptyTitle => 'You\'re all caught up';
+
+  @override
+  String get inboxEmptyBody =>
+      'Invitations and join requests show up here. Payment and reminder notifications arrive in a later update.';
+
+  @override
   String get signInErrNotConfigured =>
       'This build isn\'t connected to the Kameti service.';
 
@@ -745,9 +777,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTitle => 'Profile';
-
-  @override
-  String get profileOpen => 'Profile';
 
   @override
   String get profileAccount => 'Account';
