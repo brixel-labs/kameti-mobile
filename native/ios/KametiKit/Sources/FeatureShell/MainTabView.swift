@@ -1,3 +1,4 @@
+import FeatureHome
 import KametiDomain
 import KametiNavigation
 import KametiUI
@@ -10,20 +11,21 @@ struct MainTabView: View {
     let userId: String
     let dependencies: KametiDependencies
     @State private var profileModel: ProfileViewModel
+    @State private var homeModel: HomeViewModel
 
     init(router: AppRouter, userId: String, dependencies: KametiDependencies) {
         self.router = router
         self.userId = userId
         self.dependencies = dependencies
         _profileModel = State(initialValue: ProfileViewModel(userId: userId, dependencies: dependencies))
+        _homeModel = State(initialValue: HomeViewModel(userId: userId, dependencies: dependencies))
     }
 
     var body: some View {
         TabView(selection: $router.tab) {
             Tab(value: AppTab.home) {
                 NavigationStack(path: $router.homePath) {
-                    ComingNextView(title: String(localized: "Home", bundle: .module), symbol: "house",
-                                   message: String(localized: "Your kametis are coming next.", bundle: .module))
+                    HomeView(model: homeModel) { router.push(.kametiDetail(id: $0)) }
                         .navigationDestination(for: Route.self) { RouteDestination(route: $0) }
                 }
             } label: {

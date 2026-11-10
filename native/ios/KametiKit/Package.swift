@@ -21,6 +21,7 @@ let package = Package(
         .library(name: "KametiNavigation", targets: ["KametiNavigation"]),
         .library(name: "KametiTestSupport", targets: ["KametiTestSupport"]),
         .library(name: "FeatureAuth", targets: ["FeatureAuth"]),
+        .library(name: "FeatureHome", targets: ["FeatureHome"]),
         .library(name: "FeatureShell", targets: ["FeatureShell"]),
     ],
     dependencies: [
@@ -56,8 +57,13 @@ let package = Package(
             resources: [.process("Resources")]
         ),
         .target(
+            name: "FeatureHome",
+            dependencies: ["KametiCore", "KametiDomain", "KametiUI"],
+            resources: [.process("Resources")]
+        ),
+        .target(
             name: "FeatureShell",
-            dependencies: ["KametiCore", "KametiDomain", "KametiUI", "KametiNavigation", "FeatureAuth"],
+            dependencies: ["KametiCore", "KametiDomain", "KametiUI", "KametiNavigation", "FeatureAuth", "FeatureHome"],
             resources: [.process("Resources")]
         ),
         .testTarget(name: "KametiCoreTests", dependencies: ["KametiCore"]),
@@ -65,6 +71,10 @@ let package = Package(
         .testTarget(
             name: "FeatureAuthTests",
             dependencies: ["FeatureAuth", "KametiTestSupport", "KametiDomain", "KametiCore"]
+        ),
+        .testTarget(
+            name: "FeatureHomeTests",
+            dependencies: ["FeatureHome", "KametiTestSupport", "KametiDomain", "KametiCore"]
         ),
         .testTarget(
             name: "FeatureShellTests",
