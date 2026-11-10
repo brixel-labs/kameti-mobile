@@ -185,8 +185,14 @@ struct MembersStep: View {
         VStack(spacing: KSpace.sm) {
             Text(title).kText(KTextToken.bodyStrong)
             Text(message).kText(KTextToken.bodySm, color: KColors.textSecondary).multilineTextAlignment(.center)
-            Button(String(localized: "Add new person", bundle: .module)) { chosenMode = true; mode = .newPerson }
-                .buttonStyle(.glass)
+            Button { chosenMode = true; mode = .newPerson } label: {
+                Label(String(localized: "Add new person", bundle: .module), systemImage: "person.badge.plus")
+                    .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                    .padding(.horizontal, KSpace.md)
+            }
+            .buttonStyle(.glassProminent)
+            .tint(KColors.brand)
+            .controlSize(.large)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, KSpace.md)
