@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kameti/core/env/env.dart';
+import 'package:kameti/core/result/failure.dart';
 import 'package:kameti/core/result/failure_message.dart';
 import 'package:kameti/core/result/result.dart';
 import 'package:kameti/design_system/design_system.dart';
@@ -30,6 +31,20 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   bool get _devSignIn => Env.flavor == Flavor.dev && Env.hasBackend;
 
+  /// The message for [failure]. Debug builds add the raw cause (for example
+  /// "Unacceptable audience in id_token") so a setup mistake is visible.
+  void _showFailure(Failure failure) {
+    final message = failureMessage(AppLocalizations.of(context), failure);
+    final detail = kDebugMode && failure is SignInFailure
+        ? failure.detail
+        : null;
+    context.showToast(
+      detail == null ? message : '$message\n$detail',
+      tone: KToastTone.negative,
+      duration: Duration(seconds: detail == null ? 4 : 15),
+    );
+  }
+
   Future<void> _signInAs(String email) async {
     setState(() => _busyEmail = email);
     final result = await ref
@@ -37,17 +52,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         .signInWithPassword(email, DevAccounts.password);
     if (!mounted) return;
     setState(() => _busyEmail = null);
-    if (result case Err(:final failure)) {
-      context.showToast(
-        failureMessage(AppLocalizations.of(context), failure),
-        tone: KToastTone.negative,
-      );
-    }
+    if (result case Err(:final failure)) _showFailure(failure);
     // On success the router redirect moves to Home.
   }
 
   Future<void> _providerSignIn(_Provider provider) async {
-    final l10n = AppLocalizations.of(context);
     final auth = ref.read(authRepositoryProvider);
     setState(() => _busyProvider = provider);
     final result = switch (provider) {
@@ -58,12 +67,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     setState(() => _busyProvider = null);
     // Ok(false) = closed the sheet: nothing to say. On success the router
     // redirect moves on. Every failure has a message the user can act on.
-    if (result case Err(:final failure)) {
-      context.showToast(
-        failureMessage(l10n, failure),
-        tone: KToastTone.negative,
-      );
-    }
+    if (result case Err(:final failure)) _showFailure(failure);
   }
 
   @override
