@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:kameti/app/router.dart';
 import 'package:kameti/design_system/design_system.dart';
 import 'package:kameti/features/auth/data/auth_repository.dart';
+import 'package:kameti/features/home/presentation/widgets/home_invitations.dart';
 import 'package:kameti/features/home/presentation/widgets/home_kameti_card.dart';
+import 'package:kameti/features/invites/data/invites_providers.dart';
 import 'package:kameti/features/kameti/data/kameti_providers.dart';
 import 'package:kameti/features/kameti/domain/kameti_models.dart';
 import 'package:kameti/features/kameti/presentation/detail/widgets/async_gate.dart';
@@ -16,7 +18,9 @@ class HomeScreen extends ConsumerWidget {
   const new({super.key});
 
   Future<void> _refresh(WidgetRef ref) async {
-    ref.invalidate(myKametisProvider);
+    ref
+      ..invalidate(myKametisProvider)
+      ..invalidate(myInvitationsProvider);
     try {
       await ref.read(myKametisProvider.future);
     } on Object {
@@ -105,7 +109,8 @@ class _HomeList extends StatelessWidget {
       ),
       children: [
         if (offline != null) ...[offline!, const KGap.md()],
-        if (kametis.isEmpty)
+        const HomeInvitations(),
+        if (kametis.isEmpty) ...[
           KCard(
             child: KEmptyState(
               icon: Icons.donut_large_outlined,
@@ -115,6 +120,9 @@ class _HomeList extends StatelessWidget {
               onAction: create,
             ),
           ),
+          const KGap.md(),
+          const InviteCodeCard(),
+        ],
         if (mine.isNotEmpty || joined.isEmpty && kametis.isNotEmpty) ...[
           KSectionHeader(
             title: l10n.homeRunningByMe,

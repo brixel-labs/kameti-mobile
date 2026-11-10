@@ -37,6 +37,10 @@ abstract final class Routes {
 
   static String kameti(String id) => '/kameti/$id';
 
+  /// An invite link token, or the 6-character code typed by hand.
+  static String joinFor(String tokenOrCode) =>
+      '/kameti/join/${Uri.encodeComponent(tokenOrCode)}';
+
   /// Reopens a draft in the create wizard.
   static String setup(String kametiId) => '/kameti/$kametiId/setup';
   static String activityFor(String kametiId) => '/kameti/$kametiId/activity';
@@ -64,8 +68,24 @@ GoRouter router(Ref ref) {
       if (auth == null) return null;
       final signedIn = auth.currentUserId != null;
       final atSignIn = state.matchedLocation == Routes.signIn;
-      if (!signedIn && !atSignIn) return Routes.signIn;
-      if (signedIn && atSignIn) return Routes.home;
+      if (!signedIn && !atSignIn) {
+        // Remember where they were going (an invite link, say) so sign-in
+        // can carry on there.
+        final target = state.uri.toString();
+        return target == Routes.home
+            ? Routes.signIn
+            : Uri(
+                path: Routes.signIn,
+                queryParameters: {'from': target},
+              ).toString();
+      }
+      if (signedIn && atSignIn) {
+        final from = state.uri.queryParameters['from'];
+        // Only paths inside the app, never another site.
+        final inApp =
+            from != null && from.startsWith('/') && !from.startsWith('//');
+        return inApp ? from : Routes.home;
+      }
       return null;
     },
     routes: [

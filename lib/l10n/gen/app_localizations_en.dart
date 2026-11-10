@@ -338,6 +338,293 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailNotAMemberBody => 'Ask the person running it to add you.';
 
   @override
+  String joinInviteFrom(String owner) {
+    return '$owner invited you to join';
+  }
+
+  @override
+  String joinInvitedAs(String member) {
+    return 'Invited as $member';
+  }
+
+  @override
+  String get joinYourShares => 'Your shares';
+
+  @override
+  String joinShareLine(int month, String amount) {
+    return 'Payout month $month · $amount a month';
+  }
+
+  @override
+  String get joinAccept => 'Accept and join';
+
+  @override
+  String get joinDecline => 'Decline';
+
+  @override
+  String get joinExpiredTitle => 'This invite has expired';
+
+  @override
+  String get joinExpiredBody =>
+      'Ask the person running the kameti to send you a new one.';
+
+  @override
+  String get joinNotOpenTitle => 'This invite is no longer active';
+
+  @override
+  String get joinNotOpenBody =>
+      'It was already used, declined or replaced. Ask for a new one if you still want to join.';
+
+  @override
+  String joinEmailMismatch(String owner) {
+    return 'This invite was sent to a different email address. If you accept, $owner will need to approve you.';
+  }
+
+  @override
+  String get joinPendingTitle => 'Waiting for approval';
+
+  @override
+  String joinPendingBody(String owner) {
+    return '$owner needs to approve you before you can see this kameti. It will show on your home screen once they do.';
+  }
+
+  @override
+  String get joinDeclinedTitle => 'Invite declined';
+
+  @override
+  String get joinOpenKameti => 'Open kameti';
+
+  @override
+  String get joinGoHome => 'Go to Home';
+
+  @override
+  String get joinEnterCode => 'Enter an invite code';
+
+  @override
+  String get homeInvitations => 'Invitations';
+
+  @override
+  String homeInvitationBody(String owner, String kameti) {
+    return '$owner invited you to $kameti';
+  }
+
+  @override
+  String homeInvitationExpires(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get homeInvitationAccept => 'Accept';
+
+  @override
+  String get homeInvitationDecline => 'Decline';
+
+  @override
+  String homeInvitationPending(String owner) {
+    return 'Waiting for $owner to approve you';
+  }
+
+  @override
+  String homeInvitationAccepted(String kameti) {
+    return 'You joined $kameti';
+  }
+
+  @override
+  String get homeInvitationDeclined => 'Invitation declined';
+
+  @override
+  String get homeHaveCode => 'Have an invite code?';
+
+  @override
+  String get homeHaveCodeBody =>
+      'It\'s in the email from the person running your kameti.';
+
+  @override
+  String get homeCodeHint => 'e.g. K7Q2MX';
+
+  @override
+  String get homeCodeLabel => 'Invite code';
+
+  @override
+  String get homeCodeJoin => 'Join';
+
+  @override
+  String get homeInvitesNote =>
+      'Invites sent to your email show up here automatically.';
+
+  @override
+  String get accessEditDetails => 'Edit details';
+
+  @override
+  String get accessSendInvite => 'Send invite';
+
+  @override
+  String get accessSendInviteHint => 'Emails them a link to join';
+
+  @override
+  String get accessResendInvite => 'Resend invite';
+
+  @override
+  String get accessResendInviteHint =>
+      'Sends a new link and cancels the old one';
+
+  @override
+  String get accessRevokeInvite => 'Revoke invite';
+
+  @override
+  String get accessRevokeInviteHint => 'Cancels the link they were sent';
+
+  @override
+  String get accessApprove => 'Approve';
+
+  @override
+  String get accessDeclineRequest => 'Decline request';
+
+  @override
+  String get accessUnlink => 'Unlink from account';
+
+  @override
+  String get accessUnlinkHint => 'They lose access. Payments and shares stay.';
+
+  @override
+  String accessPendingTitle(String email, String name) {
+    return '$email wants to join as $name';
+  }
+
+  @override
+  String get accessPendingBody => 'Approve only if you know this is them.';
+
+  @override
+  String get accessInviteSent => 'Invite sent';
+
+  @override
+  String get accessLinkTitle => 'Invite created';
+
+  @override
+  String get accessLinkBody =>
+      'Email isn\'t set up yet, so share this link with them yourself.';
+
+  @override
+  String get accessCopyLink => 'Copy link';
+
+  @override
+  String get accessLinkCopied => 'Link copied';
+
+  @override
+  String accessCodeLine(String code) {
+    return 'Or they can enter the code $code';
+  }
+
+  @override
+  String accessApproved(String name) {
+    return '$name approved';
+  }
+
+  @override
+  String get accessDeclined => 'Request declined';
+
+  @override
+  String get accessRevoked => 'Invite revoked';
+
+  @override
+  String accessUnlinked(String name) {
+    return '$name unlinked';
+  }
+
+  @override
+  String accessUnlinkTitle(String name) {
+    return 'Unlink $name?';
+  }
+
+  @override
+  String get accessUnlinkBody =>
+      'They lose access to this kameti right away. Their payments and shares stay on the record, and you can invite them again later.';
+
+  @override
+  String get accessRevokeTitle => 'Revoke this invite?';
+
+  @override
+  String get accessRevokeBody => 'The link they were sent stops working.';
+
+  @override
+  String accessDeclineTitle(String name) {
+    return 'Decline $name\'s request?';
+  }
+
+  @override
+  String get accessDeclineBody =>
+      'They won\'t see this kameti. You can invite them again later.';
+
+  @override
+  String membersPendingBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people are waiting for your approval',
+      one: '1 person is waiting for your approval',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get errMemberHasNoEmail =>
+      'Add an email address for this person first.';
+
+  @override
+  String get errInviteAlreadyPending => 'They already have an open invite.';
+
+  @override
+  String get errMemberAlreadyJoined => 'This person has already joined.';
+
+  @override
+  String get errApprovalPending => 'This person is waiting for your approval.';
+
+  @override
+  String get errInviteRateLimited =>
+      'Too many invites sent. Try again in an hour.';
+
+  @override
+  String get errNoInvite => 'There\'s no invite to resend yet.';
+
+  @override
+  String get errResendTooSoon =>
+      'You just sent one. Wait about 10 minutes before resending.';
+
+  @override
+  String get errNoPendingInvite => 'There\'s no open invite to revoke.';
+
+  @override
+  String get errNotPendingApproval => 'This request was already handled.';
+
+  @override
+  String get errMemberNotLinked => 'This person isn\'t linked to an account.';
+
+  @override
+  String get errCannotUnlinkOwner =>
+      'You can\'t unlink the person running the kameti.';
+
+  @override
+  String get errInviteNotFound =>
+      'We couldn\'t find that invite. Check the link or code.';
+
+  @override
+  String get errInviteNotActive => 'This invite is no longer active.';
+
+  @override
+  String get errInviteExpired => 'This invite has expired.';
+
+  @override
+  String get errKametiNotJoinable => 'This kameti isn\'t open for joining.';
+
+  @override
+  String get errOwnerCannotJoin =>
+      'You run this kameti, so you can\'t join it as a member.';
+
+  @override
+  String get errMemberAlreadyLinked =>
+      'Your account is already linked to this kameti.';
+
+  @override
   String get kametiEditTitle => 'Edit kameti';
 
   @override

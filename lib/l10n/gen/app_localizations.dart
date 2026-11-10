@@ -628,6 +628,474 @@ abstract class AppLocalizations {
   /// **'Ask the person running it to add you.'**
   String get detailNotAMemberBody;
 
+  /// No description provided for @joinInviteFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'{owner} invited you to join'**
+  String joinInviteFrom(String owner);
+
+  /// No description provided for @joinInvitedAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited as {member}'**
+  String joinInvitedAs(String member);
+
+  /// No description provided for @joinYourShares.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shares'**
+  String get joinYourShares;
+
+  /// No description provided for @joinShareLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout month {month} · {amount} a month'**
+  String joinShareLine(int month, String amount);
+
+  /// No description provided for @joinAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept and join'**
+  String get joinAccept;
+
+  /// No description provided for @joinDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get joinDecline;
+
+  /// No description provided for @joinExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite has expired'**
+  String get joinExpiredTitle;
+
+  /// No description provided for @joinExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the person running the kameti to send you a new one.'**
+  String get joinExpiredBody;
+
+  /// No description provided for @joinNotOpenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite is no longer active'**
+  String get joinNotOpenTitle;
+
+  /// No description provided for @joinNotOpenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It was already used, declined or replaced. Ask for a new one if you still want to join.'**
+  String get joinNotOpenBody;
+
+  /// No description provided for @joinEmailMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite was sent to a different email address. If you accept, {owner} will need to approve you.'**
+  String joinEmailMismatch(String owner);
+
+  /// No description provided for @joinPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get joinPendingTitle;
+
+  /// No description provided for @joinPendingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{owner} needs to approve you before you can see this kameti. It will show on your home screen once they do.'**
+  String joinPendingBody(String owner);
+
+  /// No description provided for @joinDeclinedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite declined'**
+  String get joinDeclinedTitle;
+
+  /// No description provided for @joinOpenKameti.
+  ///
+  /// In en, this message translates to:
+  /// **'Open kameti'**
+  String get joinOpenKameti;
+
+  /// No description provided for @joinGoHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Home'**
+  String get joinGoHome;
+
+  /// No description provided for @joinEnterCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an invite code'**
+  String get joinEnterCode;
+
+  /// No description provided for @homeInvitations.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitations'**
+  String get homeInvitations;
+
+  /// No description provided for @homeInvitationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{owner} invited you to {kameti}'**
+  String homeInvitationBody(String owner, String kameti);
+
+  /// No description provided for @homeInvitationExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String homeInvitationExpires(String date);
+
+  /// No description provided for @homeInvitationAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get homeInvitationAccept;
+
+  /// No description provided for @homeInvitationDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get homeInvitationDecline;
+
+  /// No description provided for @homeInvitationPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {owner} to approve you'**
+  String homeInvitationPending(String owner);
+
+  /// No description provided for @homeInvitationAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'You joined {kameti}'**
+  String homeInvitationAccepted(String kameti);
+
+  /// No description provided for @homeInvitationDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation declined'**
+  String get homeInvitationDeclined;
+
+  /// No description provided for @homeHaveCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Have an invite code?'**
+  String get homeHaveCode;
+
+  /// No description provided for @homeHaveCodeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s in the email from the person running your kameti.'**
+  String get homeHaveCodeBody;
+
+  /// No description provided for @homeCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. K7Q2MX'**
+  String get homeCodeHint;
+
+  /// No description provided for @homeCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite code'**
+  String get homeCodeLabel;
+
+  /// No description provided for @homeCodeJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get homeCodeJoin;
+
+  /// No description provided for @homeInvitesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Invites sent to your email show up here automatically.'**
+  String get homeInvitesNote;
+
+  /// No description provided for @accessEditDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit details'**
+  String get accessEditDetails;
+
+  /// No description provided for @accessSendInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Send invite'**
+  String get accessSendInvite;
+
+  /// No description provided for @accessSendInviteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Emails them a link to join'**
+  String get accessSendInviteHint;
+
+  /// No description provided for @accessResendInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend invite'**
+  String get accessResendInvite;
+
+  /// No description provided for @accessResendInviteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends a new link and cancels the old one'**
+  String get accessResendInviteHint;
+
+  /// No description provided for @accessRevokeInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke invite'**
+  String get accessRevokeInvite;
+
+  /// No description provided for @accessRevokeInviteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancels the link they were sent'**
+  String get accessRevokeInviteHint;
+
+  /// No description provided for @accessApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get accessApprove;
+
+  /// No description provided for @accessDeclineRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline request'**
+  String get accessDeclineRequest;
+
+  /// No description provided for @accessUnlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink from account'**
+  String get accessUnlink;
+
+  /// No description provided for @accessUnlinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'They lose access. Payments and shares stay.'**
+  String get accessUnlinkHint;
+
+  /// No description provided for @accessPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{email} wants to join as {name}'**
+  String accessPendingTitle(String email, String name);
+
+  /// No description provided for @accessPendingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve only if you know this is them.'**
+  String get accessPendingBody;
+
+  /// No description provided for @accessInviteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite sent'**
+  String get accessInviteSent;
+
+  /// No description provided for @accessLinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite created'**
+  String get accessLinkTitle;
+
+  /// No description provided for @accessLinkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Email isn\'t set up yet, so share this link with them yourself.'**
+  String get accessLinkBody;
+
+  /// No description provided for @accessCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get accessCopyLink;
+
+  /// No description provided for @accessLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get accessLinkCopied;
+
+  /// No description provided for @accessCodeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Or they can enter the code {code}'**
+  String accessCodeLine(String code);
+
+  /// No description provided for @accessApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} approved'**
+  String accessApproved(String name);
+
+  /// No description provided for @accessDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Request declined'**
+  String get accessDeclined;
+
+  /// No description provided for @accessRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite revoked'**
+  String get accessRevoked;
+
+  /// No description provided for @accessUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} unlinked'**
+  String accessUnlinked(String name);
+
+  /// No description provided for @accessUnlinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink {name}?'**
+  String accessUnlinkTitle(String name);
+
+  /// No description provided for @accessUnlinkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They lose access to this kameti right away. Their payments and shares stay on the record, and you can invite them again later.'**
+  String get accessUnlinkBody;
+
+  /// No description provided for @accessRevokeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke this invite?'**
+  String get accessRevokeTitle;
+
+  /// No description provided for @accessRevokeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The link they were sent stops working.'**
+  String get accessRevokeBody;
+
+  /// No description provided for @accessDeclineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline {name}\'s request?'**
+  String accessDeclineTitle(String name);
+
+  /// No description provided for @accessDeclineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They won\'t see this kameti. You can invite them again later.'**
+  String get accessDeclineBody;
+
+  /// No description provided for @membersPendingBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person is waiting for your approval} other{{count} people are waiting for your approval}}'**
+  String membersPendingBanner(int count);
+
+  /// No description provided for @errMemberHasNoEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an email address for this person first.'**
+  String get errMemberHasNoEmail;
+
+  /// No description provided for @errInviteAlreadyPending.
+  ///
+  /// In en, this message translates to:
+  /// **'They already have an open invite.'**
+  String get errInviteAlreadyPending;
+
+  /// No description provided for @errMemberAlreadyJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'This person has already joined.'**
+  String get errMemberAlreadyJoined;
+
+  /// No description provided for @errApprovalPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This person is waiting for your approval.'**
+  String get errApprovalPending;
+
+  /// No description provided for @errInviteRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many invites sent. Try again in an hour.'**
+  String get errInviteRateLimited;
+
+  /// No description provided for @errNoInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s no invite to resend yet.'**
+  String get errNoInvite;
+
+  /// No description provided for @errResendTooSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'You just sent one. Wait about 10 minutes before resending.'**
+  String get errResendTooSoon;
+
+  /// No description provided for @errNoPendingInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s no open invite to revoke.'**
+  String get errNoPendingInvite;
+
+  /// No description provided for @errNotPendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'This request was already handled.'**
+  String get errNotPendingApproval;
+
+  /// No description provided for @errMemberNotLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'This person isn\'t linked to an account.'**
+  String get errMemberNotLinked;
+
+  /// No description provided for @errCannotUnlinkOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t unlink the person running the kameti.'**
+  String get errCannotUnlinkOwner;
+
+  /// No description provided for @errInviteNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find that invite. Check the link or code.'**
+  String get errInviteNotFound;
+
+  /// No description provided for @errInviteNotActive.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite is no longer active.'**
+  String get errInviteNotActive;
+
+  /// No description provided for @errInviteExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite has expired.'**
+  String get errInviteExpired;
+
+  /// No description provided for @errKametiNotJoinable.
+  ///
+  /// In en, this message translates to:
+  /// **'This kameti isn\'t open for joining.'**
+  String get errKametiNotJoinable;
+
+  /// No description provided for @errOwnerCannotJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'You run this kameti, so you can\'t join it as a member.'**
+  String get errOwnerCannotJoin;
+
+  /// No description provided for @errMemberAlreadyLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is already linked to this kameti.'**
+  String get errMemberAlreadyLinked;
+
   /// No description provided for @kametiEditTitle.
   ///
   /// In en, this message translates to:
