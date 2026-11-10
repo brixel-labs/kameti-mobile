@@ -338,6 +338,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailNotAMemberBody => 'Ask the person running it to add you.';
 
   @override
+  String get signInNotConfigured =>
+      'Google sign-in isn\'t set up in this build.';
+
+  @override
   String joinInviteFrom(String owner) {
     return '$owner invited you to join';
   }

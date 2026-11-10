@@ -628,6 +628,12 @@ abstract class AppLocalizations {
   /// **'Ask the person running it to add you.'**
   String get detailNotAMemberBody;
 
+  /// No description provided for @signInNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in isn\'t set up in this build.'**
+  String get signInNotConfigured;
+
   /// No description provided for @joinInviteFrom.
   ///
   /// In en, this message translates to:

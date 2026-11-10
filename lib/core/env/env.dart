@@ -13,6 +13,18 @@ class Env {
   static const supabasePublishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
   );
+
+  /// Google OAuth client IDs (public, not secrets). The web client is the
+  /// "server client ID" the ID token is issued for; the iOS client is used
+  /// on iOS only. Android needs neither besides the web one: Google matches
+  /// the app by package name and signing key.
+  static const googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+  );
+  static const googleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+  );
+
   static const inviteBaseUrl = String.fromEnvironment(
     'INVITE_BASE_URL',
     defaultValue: 'https://www.fhbtechservices.com/kameti/join',

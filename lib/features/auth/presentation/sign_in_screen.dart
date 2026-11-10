@@ -8,13 +8,14 @@ import 'package:kameti/core/result/result.dart';
 import 'package:kameti/design_system/design_system.dart';
 import 'package:kameti/features/auth/data/auth_repository.dart';
 import 'package:kameti/features/auth/data/dev_accounts.dart';
+import 'package:kameti/features/auth/presentation/widgets/google_logo.dart';
 import 'package:kameti/l10n/gen/app_localizations.dart';
 
 /// Sign-in screen (board: AF-Sign-In).
 ///
-/// Apple and Google sign-in arrive once their credentials exist. In the dev
-/// flavor with a local backend, two extra buttons sign in as the seeded
-/// test accounts.
+/// Continue with Apple (Apple platforms only) and Google, both native
+/// flows that end in `signInWithIdToken`. In the dev flavor with a local
+/// backend, two extra buttons sign in as the seeded test accounts.
 class SignInScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -22,8 +23,11 @@ class SignInScreen extends ConsumerStatefulWidget {
   ConsumerState<SignInScreen> createState() => _SignInScreenState();
 }
 
+enum _Provider { apple, google }
+
 class _SignInScreenState extends ConsumerState<SignInScreen> {
   String? _busyEmail;
+  _Provider? _busyProvider;
 
   bool get _devSignIn => Env.flavor == Flavor.dev && Env.hasBackend;
 
@@ -43,11 +47,32 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     // On success the router redirect moves to Home.
   }
 
-  void _providerSignIn() {
-    if (Env.hasBackend) {
-      context.showToast(AppLocalizations.of(context).comingSoon);
-    } else {
+  Future<void> _providerSignIn(_Provider provider) async {
+    if (!Env.hasBackend) {
+      // UI-only build, no backend to sign in to.
       context.go(Routes.home);
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    if (provider == _Provider.google && !AuthRepository.googleConfigured) {
+      context.showToast(l10n.signInNotConfigured, tone: KToastTone.negative);
+      return;
+    }
+    final auth = ref.read(authRepositoryProvider);
+    setState(() => _busyProvider = provider);
+    final result = switch (provider) {
+      _Provider.apple => await auth.signInWithApple(),
+      _Provider.google => await auth.signInWithGoogle(),
+    };
+    if (!mounted) return;
+    setState(() => _busyProvider = null);
+    // Ok(false) = closed the sheet: nothing to say. On success the router
+    // redirect moves on.
+    if (result case Err(:final failure)) {
+      context.showToast(
+        failureMessage(l10n, failure),
+        tone: KToastTone.negative,
+      );
     }
   }
 
@@ -91,17 +116,26 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 style: k.text.body.copyWith(color: k.colors.textSecondary),
               ),
               const Spacer(),
-              KButton.primary(
-                label: l10n.continueWithApple,
-                icon: Icons.apple,
-                expand: true,
-                onPressed: _providerSignIn,
-              ),
-              const KGap.sm(),
+              if (AuthRepository.supportsApple) ...[
+                KButton.primary(
+                  label: l10n.continueWithApple,
+                  icon: Icons.apple,
+                  expand: true,
+                  isLoading: _busyProvider == _Provider.apple,
+                  onPressed: _busyProvider == null
+                      ? () => _providerSignIn(_Provider.apple)
+                      : null,
+                ),
+                const KGap.sm(),
+              ],
               KButton.secondary(
                 label: l10n.continueWithGoogle,
+                leading: const GoogleLogo(),
                 expand: true,
-                onPressed: _providerSignIn,
+                isLoading: _busyProvider == _Provider.google,
+                onPressed: _busyProvider == null
+                    ? () => _providerSignIn(_Provider.google)
+                    : null,
               ),
               if (_devSignIn) ...[
                 const KGap.lg(),

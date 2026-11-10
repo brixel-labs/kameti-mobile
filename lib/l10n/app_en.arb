@@ -113,6 +113,7 @@
   "detailNoYourPayments": "No payments recorded yet",
   "detailNotAMemberTitle": "You're not in this kameti",
   "detailNotAMemberBody": "Ask the person running it to add you.",
+  "signInNotConfigured": "Google sign-in isn't set up in this build.",
   "joinInviteFrom": "{owner} invited you to join",
   "@joinInviteFrom": {"placeholders": {"owner": {"type": "String", "example": "Hassan"}}},
   "joinInvitedAs": "Invited as {member}",
