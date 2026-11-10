@@ -338,8 +338,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailNotAMemberBody => 'Ask the person running it to add you.';
 
   @override
-  String get signInNotConfigured =>
-      'Google sign-in isn\'t set up in this build.';
+  String get signInErrNotConfigured =>
+      'This build isn\'t connected to the Kameti service.';
+
+  @override
+  String get signInErrMisconfigured =>
+      'Sign-in isn\'t set up correctly for this build.';
+
+  @override
+  String get signInErrInterrupted =>
+      'Sign-in was interrupted. Please try again.';
+
+  @override
+  String get signInErrUnavailable =>
+      'Sign-in isn\'t available on this device right now.';
+
+  @override
+  String get signInErrRejected => 'We couldn\'t sign you in. Please try again.';
+
+  @override
+  String get signInNoBackend =>
+      'This build isn\'t connected to the Kameti service, so sign-in is turned off.';
+
+  @override
+  String get signInNoBackendHint =>
+      'Developers: run the app with --dart-define-from-file=env/dev.json (or prod.json).';
 
   @override
   String joinInviteFrom(String owner) {

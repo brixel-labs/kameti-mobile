@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kameti/core/env/env.dart';
+import 'package:kameti/core/result/failure.dart';
 import 'package:kameti/core/result/result.dart';
 import 'package:kameti/core/supabase/supabase_client_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -30,9 +31,15 @@ class AuthRepository {
 
   /// Local development only: email + password for seeded test users.
   Future<Result<void>> signInWithPassword(String email, String password) =>
-      Result.guard(
-        () => _db.auth.signInWithPassword(email: email, password: password),
-      );
+      Result.guard(() async {
+        try {
+          await _db.auth.signInWithPassword(email: email, password: password);
+        } on AuthRetryableFetchException {
+          throw const NetworkFailure();
+        } on AuthException catch (e) {
+          throw _signInFailure(e);
+        }
+      });
 
   Future<Result<void>> signOut() => Result.guard(() async {
     await _db.auth.signOut();
@@ -64,10 +71,18 @@ class AuthRepository {
       );
 
   /// Native Google sign-in, then `signInWithIdToken`. Ok(false) means the
-  /// user closed the sheet: not an error, so show nothing.
+  /// user closed the sheet: not an error, so show nothing. Problems come
+  /// back as a [SignInFailure] the screen can explain.
   Future<Result<bool>> signInWithGoogle() => Result.guard(() async {
-    await _initGoogle();
+    if (!Env.hasBackend) throw const SignInFailure(SignInProblem.notConfigured);
+    if (!googleConfigured) {
+      throw const SignInFailure(
+        SignInProblem.misconfigured,
+        'GOOGLE_WEB_CLIENT_ID / GOOGLE_IOS_CLIENT_ID missing from the env file',
+      );
+    }
     try {
+      await _initGoogle();
       final account = await GoogleSignIn.instance.authenticate();
       final idToken = account.authentication.idToken;
       if (idToken == null) throw const AuthException('No ID token from Google');
@@ -84,13 +99,18 @@ class AuthRepository {
       return true;
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) return false;
-      rethrow;
+      throw _signInFailure(e);
+    } on AuthRetryableFetchException {
+      throw const NetworkFailure();
+    } on AuthException catch (e) {
+      throw _signInFailure(e);
     }
   });
 
   /// Native Sign in with Apple, then `signInWithIdToken`. Ok(false) means
   /// the user cancelled.
   Future<Result<bool>> signInWithApple() => Result.guard(() async {
+    if (!Env.hasBackend) throw const SignInFailure(SignInProblem.notConfigured);
     // Apple gets the hash of a random nonce, Supabase the nonce itself.
     final random = Random.secure();
     final nonce = base64UrlEncode([
@@ -123,9 +143,39 @@ class AuthRepository {
       return true;
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) return false;
-      rethrow;
+      throw _signInFailure(e);
+    } on SignInWithAppleNotSupportedException catch (e) {
+      throw _signInFailure(e);
+    } on AuthRetryableFetchException {
+      throw const NetworkFailure();
+    } on AuthException catch (e) {
+      throw _signInFailure(e);
     }
   });
+}
+
+/// Turns a provider or Supabase error into a [SignInFailure] the screen can
+/// explain. The raw error goes to the debug console for developers.
+SignInFailure _signInFailure(Object error) {
+  debugPrint('Kameti sign-in failed: $error');
+  final problem = switch (error) {
+    GoogleSignInException(:final code) => switch (code) {
+      GoogleSignInExceptionCode.clientConfigurationError ||
+      GoogleSignInExceptionCode.providerConfigurationError =>
+        SignInProblem.misconfigured,
+      GoogleSignInExceptionCode.interrupted => SignInProblem.interrupted,
+      GoogleSignInExceptionCode.uiUnavailable => SignInProblem.unavailable,
+      _ => SignInProblem.rejected,
+    },
+    SignInWithAppleAuthorizationException(:final code) => switch (code) {
+      AuthorizationErrorCode.notHandled ||
+      AuthorizationErrorCode.notInteractive => SignInProblem.unavailable,
+      _ => SignInProblem.rejected,
+    },
+    SignInWithAppleNotSupportedException() => SignInProblem.unavailable,
+    _ => SignInProblem.rejected,
+  };
+  return SignInFailure(problem, error);
 }
 
 @Riverpod(keepAlive: true)

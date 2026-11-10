@@ -628,11 +628,47 @@ abstract class AppLocalizations {
   /// **'Ask the person running it to add you.'**
   String get detailNotAMemberBody;
 
-  /// No description provided for @signInNotConfigured.
+  /// No description provided for @signInErrNotConfigured.
   ///
   /// In en, this message translates to:
-  /// **'Google sign-in isn\'t set up in this build.'**
-  String get signInNotConfigured;
+  /// **'This build isn\'t connected to the Kameti service.'**
+  String get signInErrNotConfigured;
+
+  /// No description provided for @signInErrMisconfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in isn\'t set up correctly for this build.'**
+  String get signInErrMisconfigured;
+
+  /// No description provided for @signInErrInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in was interrupted. Please try again.'**
+  String get signInErrInterrupted;
+
+  /// No description provided for @signInErrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in isn\'t available on this device right now.'**
+  String get signInErrUnavailable;
+
+  /// No description provided for @signInErrRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t sign you in. Please try again.'**
+  String get signInErrRejected;
+
+  /// No description provided for @signInNoBackend.
+  ///
+  /// In en, this message translates to:
+  /// **'This build isn\'t connected to the Kameti service, so sign-in is turned off.'**
+  String get signInNoBackend;
+
+  /// No description provided for @signInNoBackendHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Developers: run the app with --dart-define-from-file=env/dev.json (or prod.json).'**
+  String get signInNoBackendHint;
 
   /// No description provided for @joinInviteFrom.
   ///

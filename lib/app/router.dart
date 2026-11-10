@@ -65,7 +65,11 @@ GoRouter router(Ref ref) {
     initialLocation: auth == null ? Routes.signIn : Routes.home,
     refreshListenable: refresh,
     redirect: (context, state) {
-      if (auth == null) return null;
+      // No backend settings: only the sign-in screen (which explains why)
+      // is reachable, never a Home that can't load anything.
+      if (auth == null) {
+        return state.matchedLocation == Routes.signIn ? null : Routes.signIn;
+      }
       final signedIn = auth.currentUserId != null;
       final atSignIn = state.matchedLocation == Routes.signIn;
       if (!signedIn && !atSignIn) {
