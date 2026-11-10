@@ -16,7 +16,7 @@ public struct ConfigurationMissingView: View {
                 .kText(KTextToken.title)
             #if DEBUG
             Text("Developers: run native/ios/scripts/use-env.sh dev (or prod), then build again.", bundle: .module)
-                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .kText(KTextToken.subtitle, color: KColors.textSubtitle)
             #endif
         }
         .padding(KSpace.xl)

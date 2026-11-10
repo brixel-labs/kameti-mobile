@@ -27,7 +27,7 @@ public struct CreateKametiView: View {
             VStack(alignment: .trailing, spacing: KSpace.xs) {
                 WizardProgress(step: model.step)
                 Text("Step \(model.step.rawValue + 1) of \(WizardStep.allCases.count)", bundle: .module)
-                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                     .monospacedDigit()
                     .contentTransition(.numericText(value: Double(model.step.rawValue)))
                     .animation(.smooth(duration: 0.35), value: model.step)

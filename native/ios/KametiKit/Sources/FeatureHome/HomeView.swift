@@ -235,7 +235,7 @@ struct InviteCodeCard: View {
                 VStack(alignment: .leading, spacing: KSpace.xs) {
                     Text("Have an invite code?", bundle: .module).kText(KTextToken.bodyStrong)
                     Text("It's in the email from the person running your kameti.", bundle: .module)
-                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 }
                 HStack(spacing: KSpace.sm) {
                     TextField(String(localized: "e.g. K7Q2MX", bundle: .module), text: $code)

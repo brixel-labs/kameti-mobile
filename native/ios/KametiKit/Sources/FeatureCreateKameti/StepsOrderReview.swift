@@ -52,7 +52,7 @@ struct OrderStep: View {
                 .overlay(Circle().stroke(KColors.border).opacity(mine ? 0 : 1))
             VStack(alignment: .leading, spacing: 1) {
                 Text(names(of: slotId)).kText(KTextToken.bodyStrong).lineLimit(1)
-                Text(shortMonthLabel(date)).kText(KTextToken.caption, color: KColors.textSecondary)
+                Text(shortMonthLabel(date)).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
             }
             Spacer(minLength: KSpace.sm)
             KGripHandle(boxed: false)
@@ -106,7 +106,7 @@ struct ReviewStep: View {
                         Toggle(isOn: $emailInvites) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Email invites to \(withEmail) people now", bundle: .module).kText(KTextToken.bodyStrong)
-                                Text("You can also send them later from Members", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                                Text("You can also send them later from Members", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
                             }
                         }
                         .toggleStyle(KCheckboxStyle())
@@ -115,7 +115,7 @@ struct ReviewStep: View {
                         .background(KColors.brandSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
                     }
                     Text("Once started, the slot amount and number of months can't change. You can still edit members, notes and future payout months.", bundle: .module)
-                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                     if !checks.passes {
                         Label(String(localized: "Fix the checks above before starting.", bundle: .module), systemImage: "exclamationmark.triangle")
                             .kText(KTextToken.bodySm, color: KColors.warning)

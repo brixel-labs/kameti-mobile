@@ -83,6 +83,11 @@ public final class HomeViewModel {
         return result
     }
 
+    /// A kameti Home already loaded, by id.
+    public func kameti(id: String) -> Kameti? {
+        (sections.mine + sections.joined + sections.past).first { $0.id == id }?.kameti
+    }
+
     public func load() async {
         guard !isLoading else { return }
         isLoading = true

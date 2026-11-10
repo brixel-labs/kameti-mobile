@@ -98,7 +98,7 @@ struct MemberView: View {
                     Text(others.isEmpty
                          ? String(localized: "Whole slot · month \(monthIndex)", bundle: .module)
                          : String(localized: "Shared with \(others.formatted(.list(type: .and))) · month \(monthIndex)", bundle: .module))
-                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 }
             }
         }
@@ -135,7 +135,7 @@ struct MemberView: View {
             }
             .frame(height: 8)
             Text("\(current.paidCount) of \(current.memberCount) members have paid", bundle: .module)
-                .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                .kText(KTextToken.subtitle, color: KColors.textSubtitle)
         }
     }
 
@@ -147,7 +147,7 @@ struct MemberView: View {
         let rows = data.months.filter { $0.memberId == me.id && $0.monthIndex <= upTo }.sorted { $0.monthIndex < $1.monthIndex }
         return card(title: String(localized: "Your payments", bundle: .module)) {
             if rows.isEmpty {
-                Text("You haven't made any payments yet.", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                Text("You haven't made any payments yet.", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.monthIndex) { index, row in

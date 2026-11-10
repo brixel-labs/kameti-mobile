@@ -123,7 +123,7 @@ struct WizardField: View {
             if let error {
                 Text(error).kText(KTextToken.caption, color: KColors.negative)
             } else if let helper {
-                Text(helper).kText(KTextToken.caption, color: KColors.textSecondary)
+                Text(helper).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
             }
         }
     }

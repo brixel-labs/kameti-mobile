@@ -41,3 +41,16 @@ extension KColors {
         avatars[((index % avatars.count) + avatars.count) % avatars.count]
     }
 }
+
+public extension KColors {
+    /// Secondary text one step stronger than `textSecondary`, for subtitles
+    /// and captions under titles, so they stay readable at small sizes.
+    static let textSubtitle = KDynamicColor(light: 0x33413B, lightAlpha: 1.0, dark: 0xBCC8C3, darkAlpha: 1.0).color
+}
+
+public extension KTextToken {
+    /// 13 pt medium, for a subtitle under a title.
+    static let subtitle = KTextStyle(size: 13, weight: .medium, tracking: 0, tabular: false)
+    /// 12 pt medium, for a small caption under a title.
+    static let subtitleSmall = KTextStyle(size: 12, weight: .medium, tracking: 0, tabular: false)
+}

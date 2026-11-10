@@ -33,7 +33,7 @@ struct MainTabView: View {
                         onCreate: { router.push(.createKameti) },
                         onJoin: { router.push(.join(token: $0)) }
                     )
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
                 }
             } label: {
                 Label(String(localized: "Home", bundle: .module), systemImage: "house")
@@ -43,7 +43,7 @@ struct MainTabView: View {
                 NavigationStack(path: $router.inboxPath) {
                     ComingNextView(title: String(localized: "Inbox", bundle: .module), symbol: "tray",
                                    message: String(localized: "Invitations and join requests will show here.", bundle: .module))
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
                 }
             } label: {
                 Label(String(localized: "Inbox", bundle: .module), systemImage: "tray")
@@ -52,7 +52,7 @@ struct MainTabView: View {
             Tab(value: AppTab.profile) {
                 NavigationStack(path: $router.profilePath) {
                     ProfileView(model: profileModel)
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
                 }
             } label: {
                 Label(String(localized: "Profile", bundle: .module), systemImage: "person")
@@ -82,11 +82,12 @@ private struct RouteDestination: View {
     let dependencies: KametiDependencies
     let router: AppRouter
     let onFinished: () -> Void
+    let knownKameti: (String) -> Kameti?
 
     var body: some View {
         switch route {
         case .kametiDetail(let id):
-            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies)
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id))
         case .createKameti:
             CreateKametiScreen(userId: userId, dependencies: dependencies, router: router, onFinished: onFinished)
         case .activity, .join:
@@ -102,8 +103,8 @@ private struct RouteDestination: View {
 private struct KametiDetailScreen: View {
     @State private var model: KametiDetailViewModel
 
-    init(kametiId: String, userId: String, dependencies: KametiDependencies) {
-        _model = State(initialValue: KametiDetailViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies))
+    init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?) {
+        _model = State(initialValue: KametiDetailViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies, preview: preview))
     }
 
     var body: some View { KametiDetailView(model: model) }

@@ -10,7 +10,15 @@ struct OwnerTabs: View {
     enum Tab: Hashable, CaseIterable { case overview, members, schedule, payments }
 
     let data: KametiDetailData
+    let model: KametiDetailViewModel
     @State private var tab = Tab.overview
+    @State private var recording: RecordTarget?
+    @State private var voiding: Payment?
+
+    struct RecordTarget: Identifiable {
+        let id = UUID()
+        let memberId: String?
+    }
 
     private var titles: [(tab: Tab, title: String)] {
         [
@@ -44,7 +52,7 @@ struct OwnerTabs: View {
             .animation(.smooth(duration: 0.28), value: tab)
             .overlay(alignment: .bottomTrailing) {
                 if tab == .overview, data.current != nil {
-                    Button {} label: {
+                    Button { recording = RecordTarget(memberId: nil) } label: {
                         Label(String(localized: "Record payment", bundle: .module), systemImage: "plus")
                             .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
                             .padding(.horizontal, KSpace.lg)
@@ -59,15 +67,35 @@ struct OwnerTabs: View {
             }
         }
         .animation(.smooth(duration: 0.2), value: tab)
+        .kBottomSheet(
+            isPresented: Binding(get: { recording != nil }, set: { if !$0 { recording = nil } }),
+            title: String(localized: "Record payment", bundle: .module), detents: [.large]
+        ) {
+            if let target = recording {
+                RecordPaymentSheet(data: data, model: model, preselected: target.memberId) { recording = nil }
+                    .id(target.id)
+            }
+        }
+        .kBottomSheet(
+            isPresented: Binding(get: { voiding != nil }, set: { if !$0 { voiding = nil } }),
+            title: String(localized: "Void payment", bundle: .module), detents: [.medium]
+        ) {
+            if let payment = voiding {
+                VoidPaymentSheet(
+                    payment: payment, memberName: data.members.first { $0.id == payment.memberId }?.name ?? "",
+                    model: model
+                ) { voiding = nil }
+            }
+        }
     }
 
     @ViewBuilder
     private func content(for tab: Tab) -> some View {
         switch tab {
-        case .overview: OverviewTab(data: data)
+        case .overview: OverviewTab(data: data) { recording = RecordTarget(memberId: $0) }
         case .members: MembersTab(data: data)
         case .schedule: ScheduleSection(data: data)
-        case .payments: PaymentsTab(data: data)
+        case .payments: PaymentsTab(data: data) { voiding = $0 }
         }
     }
 }
@@ -76,6 +104,7 @@ struct OwnerTabs: View {
 /// (board A · Kameti overview).
 struct OverviewTab: View {
     let data: KametiDetailData
+    let onRecord: (String) -> Void
 
     var body: some View {
         if let current = data.current {
@@ -128,6 +157,8 @@ struct OverviewTab: View {
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element.memberId) { index, row in
                     if let member = byId[row.memberId] {
+                        let owes = row.remaining.isPositive
+                        Button { if owes { onRecord(member.id) } } label: {
                         DetailRow(
                             member: member, in: data.members,
                             subtitle: row.status == .advance
@@ -137,6 +168,8 @@ struct OverviewTab: View {
                         ) {
                             StatusTextPill(status: row.status)
                         }
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -163,10 +196,10 @@ struct OverviewTab: View {
                     Text(same
                          ? String(localized: "\(recipients[0].payout.format()) each · shared slot", bundle: .module)
                          : String(localized: "Shared slot", bundle: .module))
-                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 } else {
                     Text("Receives \(recipients[0].payout.format())", bundle: .module)
-                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 }
             }
             Spacer(minLength: 0)
@@ -271,10 +304,10 @@ struct MembersTab: View {
     @ViewBuilder
     private func joinCaption(_ status: JoinStatus) -> some View {
         switch status {
-        case .joined: Text("Joined", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
+        case .joined: Text("Joined", bundle: .module).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
         case .invited: Text("Invited", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.warning)
         case .pendingApproval: Text("Needs approval", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.info)
-        case .notInvited: Text("Not invited", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
+        case .notInvited: Text("Not invited", bundle: .module).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
         case .declined: Text("Declined", bundle: .module).kText(KTextToken.caption, color: KColors.negative)
         }
     }
@@ -301,6 +334,7 @@ struct PaymentsTab: View {
     enum Kind: Hashable { case received, paidOut }
 
     let data: KametiDetailData
+    let onVoid: (Payment) -> Void
     @State private var monthIndex: Int?
     @State private var kind = Kind.received
     @State private var pickingMonth = false
@@ -379,10 +413,15 @@ struct PaymentsTab: View {
                         .kText(KTextToken.label, color: KColors.textSecondary)
                         .padding(.top, KSpace.md).padding(.bottom, 2)
                     ForEach(Array(group.entries.enumerated()), id: \.element.id) { index, entry in
-                        PaymentRow(
-                            kind: entry.kind == .received ? .received : .paidOut, title: entry.title, subtitle: entry.subtitle,
-                            amount: entry.amount, isVoided: entry.isVoided, showsDivider: index < group.entries.count - 1
-                        )
+                        let payment = entry.kind == .received && !entry.isVoided ? data.payments.first { $0.id == entry.id } : nil
+                        Button { if let payment { onVoid(payment) } } label: {
+                            PaymentRow(
+                                kind: entry.kind == .received ? .received : .paidOut, title: entry.title, subtitle: entry.subtitle,
+                                amount: entry.amount, isVoided: entry.isVoided, showsDivider: index < group.entries.count - 1
+                            )
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -431,9 +470,9 @@ struct PaymentsTab: View {
 
     private func summaryCard(_ title: String, amount: Money, note: String, tone: KMoneyText.Tone) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title).kText(KTextToken.caption, color: KColors.textSecondary)
+            Text(title).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
             KMoneyText(amount, style: .title, tone: tone)
-            Text(note).kText(KTextToken.caption, color: KColors.textSecondary)
+            Text(note).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
         }
         .padding(KSpace.md)
         .frame(maxWidth: .infinity, alignment: .leading)

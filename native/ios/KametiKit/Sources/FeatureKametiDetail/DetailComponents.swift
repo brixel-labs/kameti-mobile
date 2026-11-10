@@ -18,7 +18,7 @@ struct DetailRow<Leading: View, Trailing: View>: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).kText(KTextToken.bodyStrong)
                     if let subtitle {
-                        Text(subtitle).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        Text(subtitle).kText(KTextToken.subtitle, color: KColors.textSubtitle)
                     }
                 }
                 Spacer(minLength: KSpace.sm)
@@ -27,6 +27,9 @@ struct DetailRow<Leading: View, Trailing: View>: View {
             .padding(.vertical, KSpace.md)
             if showsDivider { Divider() }
         }
+        // The whole row is tappable, including the empty space between the
+        // name and the status.
+        .contentShape(Rectangle())
     }
 }
 
@@ -141,7 +144,7 @@ struct PaymentRow: View {
                     .background(isVoided ? KColors.surfaceSunken : (kind == .received ? KColors.positiveSubtle : KColors.warningSubtle), in: Circle())
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).kText(KTextToken.bodyStrong, color: isVoided ? KColors.textSecondary : KColors.textPrimary)
-                    Text(subtitle).kText(KTextToken.caption, color: KColors.textSecondary)
+                    Text(subtitle).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
                 }
                 Spacer(minLength: KSpace.sm)
                 KMoneyText(amount, style: .title, tone: .neutral)
@@ -151,6 +154,7 @@ struct PaymentRow: View {
             .padding(.vertical, KSpace.sm + 2)
             if showsDivider { Divider() }
         }
+        .contentShape(Rectangle())
     }
 }
 
@@ -193,7 +197,7 @@ struct ScheduleSection: View {
                     .transition(.opacity)
             } else {
                 Text("Pick a month to see who receives the pot.", bundle: .module)
-                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    .kText(KTextToken.subtitle, color: KColors.textSubtitle)
             }
         }
     }
@@ -206,7 +210,7 @@ struct ScheduleSection: View {
                 RoundedRectangle(cornerRadius: 3).fill(KColors.warningSubtle).overlay(RoundedRectangle(cornerRadius: 3).stroke(KColors.warning))
             }
         }
-        .kText(KTextToken.caption, color: KColors.textSecondary)
+        .kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
     }
 
     private func legendItem<Mark: View>(_ title: String, @ViewBuilder mark: () -> Mark) -> some View {
@@ -266,7 +270,7 @@ private struct MonthDetails: View {
                 }
                 if recipients.isEmpty {
                     Text("No one is paid out this month yet.", bundle: .module)
-                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
                 } else {
                     ForEach(recipients) { recipient in
                         HStack {

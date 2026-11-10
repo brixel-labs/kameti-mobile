@@ -1,11 +1,16 @@
 import FeatureAuth
 import FeatureShell
 import GoogleSignIn
+import KametiUI
 import SwiftUI
 
 @main
 struct KametiApp: App {
     @State private var container = AppConfig.load().map { AppContainer(config: $0) }
+
+    init() {
+        KNavigationBarStyle.apply()
+    }
 
     var body: some Scene {
         WindowGroup {
