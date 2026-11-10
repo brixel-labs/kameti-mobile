@@ -8,6 +8,8 @@ import 'package:kameti/features/kameti/presentation/detail/kameti_view_data.dart
 import 'package:kameti/features/kameti/presentation/detail/widgets/async_gate.dart';
 import 'package:kameti/features/kameti/presentation/detail/widgets/detail_list.dart';
 import 'package:kameti/features/ledger/data/ledger_providers.dart';
+import 'package:kameti/features/members/data/contacts_providers.dart';
+import 'package:kameti/features/members/presentation/member_sheets.dart';
 import 'package:kameti/l10n/gen/app_localizations.dart';
 
 /// Owner's Members tab (board A2-Members-Tab): monthly due, balance pill
@@ -23,17 +25,28 @@ class MembersTab extends ConsumerWidget {
     final id = kameti.id;
     final members = ref.watch(kametiMembersProvider(id));
     final balances = ref.watch(memberBalancesProvider(id));
+    // Loaded early so the edit sheet can pre-fill email and phone.
+    ref.watch(myContactsProvider);
     return AsyncGate(
       values: [members, balances],
       onRetry: () => refreshKameti(ref, id),
       builder: (context, offline) {
         final list = members.requireValue;
         final byMember = {for (final b in balances.requireValue) b.memberId: b};
+        final addButton = KButton.secondary(
+          label: l10n.membersAdd,
+          icon: Icons.person_add_alt,
+          expand: true,
+          onPressed: () =>
+              showAddMemberSheet(context, kametiId: id, members: list),
+        );
         if (list.isEmpty) {
           return DetailList(
             kametiId: id,
             offline: offline,
             children: [
+              addButton,
+              const KGap.lg(),
               KEmptyState(
                 icon: Icons.group_outlined,
                 title: l10n.detailNoMembersTitle,
@@ -46,6 +59,8 @@ class MembersTab extends ConsumerWidget {
           kametiId: id,
           offline: offline,
           children: [
+            addButton,
+            const KGap.md(),
             for (final (i, m) in list.indexed)
               KListTile(
                 leading: KAvatar(
@@ -68,6 +83,7 @@ class MembersTab extends ConsumerWidget {
                   ],
                 ),
                 showDivider: i < list.length - 1,
+                onTap: () => showEditMemberSheet(context, member: m),
               ),
           ],
         );
