@@ -30,7 +30,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Record payout | Built, with the shortfall | Checked in the demo only |
 | Members management | Built (board AM-1a/1b: sheets) | Checked in the demo only |
 | Invites, join, approve | Built (boards AI-1a/1b, AF-Join-Invite, AF-Approve-Join) | Universal links; checked in the demo only |
-| Activity log | Not started | Everything |
+| Activity log | Built (AL-1 feed with AL-2 before → after; ••• menu; members see their own) | Activity in the Inbox feed |
 | Edit kameti, draft screen, Notes | Built: drafts reopen in the wizard; Notes tab (A2-Notes-Tab, swipe actions); edit a running kameti (AE-1, ••• menu) | Notes on payment and payout screens |
 | Offline and error states | Basic messages | Canvas design |
 | Dark mode | Colours switch | No screen checked against the dark artboards |

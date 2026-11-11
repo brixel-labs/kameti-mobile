@@ -17,11 +17,13 @@ final class SampleInvitesRepository: InvitesRepository {
 
     private let kametis: SampleKametiRepository
     private let contacts: SampleContactStore
+    private let log: SampleAuditLog
     private let state: Mutex<State>
 
-    init(kametis: SampleKametiRepository, contacts: SampleContactStore) {
+    init(kametis: SampleKametiRepository, contacts: SampleContactStore, log: SampleAuditLog = SampleAuditLog()) {
         self.kametis = kametis
         self.contacts = contacts
+        self.log = log
         let day: TimeInterval = 86_400
         let now = SampleData.now
         state = Mutex(State(
@@ -78,18 +80,24 @@ final class SampleInvitesRepository: InvitesRepository {
             return true
         }
         guard found else { throw Failure.server(code: "no_pending_invite", detail: nil) }
-        return try required(kametis.setJoin(memberId: memberId, status: .notInvited, profileId: nil))
+        let member = try required(kametis.setJoin(memberId: memberId, status: .notInvited, profileId: nil))
+        log.record(member.kametiId, "invite.revoke", entity: "invite", entityId: nil, member: memberId)
+        return member
     }
 
     func approveJoin(memberId: String) async throws(Failure) -> Member {
         guard kametis.memberRow(memberId)?.joinStatus == .pendingApproval else { throw Failure.server(code: "not_pending_approval", detail: nil) }
         let profile = kametis.memberRow(memberId)?.profileId
-        return try required(kametis.setJoin(memberId: memberId, status: .joined, profileId: profile))
+        let member = try required(kametis.setJoin(memberId: memberId, status: .joined, profileId: profile))
+        log.record(member.kametiId, "member.approve_join", entity: "member", entityId: memberId, member: memberId)
+        return member
     }
 
     func declineJoin(memberId: String) async throws(Failure) -> Member {
         guard kametis.memberRow(memberId)?.joinStatus == .pendingApproval else { throw Failure.server(code: "not_pending_approval", detail: nil) }
-        return try required(kametis.setJoin(memberId: memberId, status: .declined, profileId: nil))
+        let member = try required(kametis.setJoin(memberId: memberId, status: .declined, profileId: nil))
+        log.record(member.kametiId, "member.decline_join", entity: "member", entityId: memberId, member: memberId)
+        return member
     }
 
     func unlinkMember(memberId: String) async throws(Failure) -> Member {
@@ -179,6 +187,8 @@ final class SampleInvitesRepository: InvitesRepository {
             return (invite, secret)
         }
         kametis.setJoin(memberId: member.id, status: .invited, profileId: nil)
+        log.record(member.kametiId, "invite.create", entity: "invite", entityId: created.0.id, member: member.id,
+                   after: .object(["member_id": .string(member.id), "email": .string(email)]))
         return InviteLink(
             inviteId: created.0.id, memberId: member.id, token: created.1.token, code: created.1.code,
             link: Self.base + created.1.token, expiresAt: created.0.expiresAt, email: email

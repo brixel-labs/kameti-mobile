@@ -96,13 +96,21 @@ private struct RouteDestination: View {
             JoinInviteScreen(token: token, inviteId: nil, dependencies: dependencies, router: router, onFinished: onFinished)
         case .invitation(let id):
             JoinInviteScreen(token: nil, inviteId: id, dependencies: dependencies, router: router, onFinished: onFinished)
-        case .activity:
-            ContentUnavailableView(
-                String(localized: "This screen is coming next.", bundle: .module),
-                systemImage: "hammer"
-            )
+        case .activity(let id):
+            ActivityScreen(kametiId: id, userId: userId, dependencies: dependencies)
         }
     }
+}
+
+/// Owns the activity model for as long as the screen is pushed.
+private struct ActivityScreen: View {
+    @State private var model: ActivityViewModel
+
+    init(kametiId: String, userId: String, dependencies: KametiDependencies) {
+        _model = State(initialValue: ActivityViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies))
+    }
+
+    var body: some View { ActivityView(model: model) }
 }
 
 /// Owns the accept-invite model. Joining opens the kameti on Home.
@@ -147,7 +155,11 @@ private struct KametiDetailScreen: View {
     }
 
     var body: some View {
-        KametiDetailView(model: model) { router.push(.resumeDraft(id: $0)) }
+        KametiDetailView(
+            model: model,
+            onResumeDraft: { router.push(.resumeDraft(id: $0)) },
+            onOpenActivity: { router.push(.activity(kametiId: $0)) }
+        )
     }
 }
 

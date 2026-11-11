@@ -11,13 +11,14 @@ public enum SampleData {
     public static func dependencies() -> KametiDependencies {
         let store = SamplePaymentStore()
         let people = SampleContactStore()
-        let kametis = SampleKametiRepository(payments: store, contacts: people)
+        let log = SampleAuditLog()
+        let kametis = SampleKametiRepository(payments: store, contacts: people, log: log)
         return KametiDependencies(
-            kametis: kametis, ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store),
-            invites: SampleInvitesRepository(kametis: kametis, contacts: people), audit: UnusedRepositories(),
+            kametis: kametis, ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store, log: log),
+            invites: SampleInvitesRepository(kametis: kametis, contacts: people, log: log), audit: SampleAuditRepository(log: log, kametis: kametis),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
             contacts: SampleContactsRepository(store: people), auth: FakeAuthRepository(userId: userId),
-            notes: SampleNotesRepository(kametis: kametis, payments: store),
+            notes: SampleNotesRepository(kametis: kametis, payments: store, log: log),
             // The sample data is set in November 2026, so "today" is fixed there
             // whatever the phone's date is.
             clock: KametiClock(nowUTC: { now })
@@ -310,10 +311,12 @@ final class SampleKametiRepository: KametiRepository {
     private let state = Mutex(State())
     private let payments: SamplePaymentStore
     private let contacts: SampleContactStore
+    private let log: SampleAuditLog
 
-    init(payments: SamplePaymentStore, contacts: SampleContactStore) {
+    init(payments: SamplePaymentStore, contacts: SampleContactStore, log: SampleAuditLog = SampleAuditLog()) {
         self.payments = payments
         self.contacts = contacts
+        self.log = log
     }
 
     /// Like RLS: kametis I run, or where a member is linked to my account.
@@ -415,6 +418,8 @@ final class SampleKametiRepository: KametiRepository {
                 maxSlotsPerMember: changes.maxSlotsPerMember ?? old.maxSlotsPerMember, status: old.status, startedAt: old.startedAt
             )
             s.kametis[index] = updated
+            log.record(id, "kameti.update", entity: "kameti", entityId: id, member: nil,
+                       before: SampleAuditLog.kameti(old), after: SampleAuditLog.kameti(updated))
             if old.status == .draft, months != (s.slots[id] ?? []).count {
                 s.slots[id] = (1...months).map { Slot(id: "\(id)-s\($0)", kametiId: id, payoutMonthIndex: $0) }
                 s.shares[id] = []
@@ -473,6 +478,7 @@ final class SampleKametiRepository: KametiRepository {
                 contactId: contact?.id, profileId: new.isSelf ? SampleData.userId : nil, nickname: trimmed(new.nickname)
             )
             s.members[kametiId, default: []].append(member)
+            log.record(kametiId, "member.add", entity: "member", entityId: member.id, member: member.id, after: SampleAuditLog.member(member))
             return member
         }
     }
@@ -502,6 +508,8 @@ final class SampleKametiRepository: KametiRepository {
         state.withLock { s in
             if let index = s.members[old.kametiId]?.firstIndex(where: { $0.id == id }) { s.members[old.kametiId]?[index] = updated }
         }
+        log.record(old.kametiId, "member.update", entity: "member", entityId: id, member: id,
+                   before: SampleAuditLog.member(old), after: SampleAuditLog.member(updated))
         return updated
     }
 
@@ -520,6 +528,7 @@ final class SampleKametiRepository: KametiRepository {
             s.members[old.kametiId]?.removeAll { $0.id == id }
             s.shares[old.kametiId]?.removeAll { $0.memberId == id }
         }
+        log.record(old.kametiId, "member.remove", entity: "member", entityId: id, member: id, before: SampleAuditLog.member(old))
     }
 
     private func member(_ id: String) -> Member? {
@@ -709,6 +718,7 @@ struct SampleLedgerRepository: LedgerRepository {
 
 struct SamplePaymentsRepository: PaymentsRepository {
     let store: SamplePaymentStore
+    var log = SampleAuditLog()
 
     func payments(kametiId: String) async throws(Failure) -> [Payment] { store.all(kametiId) }
     func payouts(kametiId: String) async throws(Failure) -> [Payout] { store.payouts(kametiId) }
@@ -721,6 +731,7 @@ struct SamplePaymentsRepository: PaymentsRepository {
             method: new.method, createdAt: Date(), reference: new.reference, note: new.note, paidByName: new.paidByName
         )
         store.add(payment)
+        log.record(kametiId, "payment.record", entity: "payment", entityId: payment.id, member: payment.memberId, after: SampleAuditLog.payment(payment))
         return payment
     }
 
@@ -732,6 +743,7 @@ struct SamplePaymentsRepository: PaymentsRepository {
                 method: method, createdAt: Date()
             )
             store.add(payment)
+            log.record(kametiId, "payment.record", entity: "payment", entityId: payment.id, member: payment.memberId, after: SampleAuditLog.payment(payment))
             created.append(payment)
         }
         return created
@@ -739,6 +751,7 @@ struct SamplePaymentsRepository: PaymentsRepository {
 
     func voidPayment(id: String, reason: String) async throws(Failure) -> Payment {
         guard let voided = store.void(id: id, reason: reason) else { throw notFound }
+        log.record(voided.kametiId, "payment.void", entity: "payment", entityId: id, member: voided.memberId, after: SampleAuditLog.payment(voided))
         return voided
     }
 
@@ -749,11 +762,13 @@ struct SamplePaymentsRepository: PaymentsRepository {
             memberId: new.memberId, amount: new.amount, paidOn: new.paidOn, method: new.method, reference: new.reference, note: new.note
         )
         store.add(payout)
+        log.record(payout.kametiId, "payout.record", entity: "payout", entityId: payout.id, member: payout.memberId, after: SampleAuditLog.payout(payout))
         return payout
     }
 
     func voidPayout(id: String, reason: String) async throws(Failure) -> Payout {
         guard let voided = store.voidPayout(id: id, reason: reason) else { throw notFound }
+        log.record(voided.kametiId, "payout.void", entity: "payout", entityId: id, member: voided.memberId, after: SampleAuditLog.payout(voided))
         return voided
     }
 }

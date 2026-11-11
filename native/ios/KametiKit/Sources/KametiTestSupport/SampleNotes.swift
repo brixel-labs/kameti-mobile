@@ -10,11 +10,13 @@ import Synchronization
 final class SampleNotesRepository: NotesRepository {
     private let kametis: SampleKametiRepository
     private let payments: SamplePaymentStore
+    private let log: SampleAuditLog
     private let state: Mutex<(notes: [Note], counter: Int)>
 
-    init(kametis: SampleKametiRepository, payments: SamplePaymentStore) {
+    init(kametis: SampleKametiRepository, payments: SamplePaymentStore, log: SampleAuditLog = SampleAuditLog()) {
         self.kametis = kametis
         self.payments = payments
+        self.log = log
         let day: TimeInterval = 86_400
         let now = SampleData.now
         func note(_ id: String, _ kameti: String, _ target: NoteTarget, _ targetId: String?, _ visibility: NoteVisibility, _ author: String, _ ago: TimeInterval, _ body: String) -> Note {
@@ -64,6 +66,7 @@ final class SampleNotesRepository: NotesRepository {
                 createdAt: SampleData.now + TimeInterval(s.counter)
             )
             s.notes.append(created)
+            log.record(kametiId, "note.add", entity: "note", entityId: created.id, member: nil, after: .object(["body": .string(body)]))
             return created
         }
     }
@@ -78,12 +81,15 @@ final class SampleNotesRepository: NotesRepository {
             createdAt: old.createdAt, updatedAt: max(old.createdAt + 1, SampleData.now)
         )
         state.withLock { s in if let index = s.notes.firstIndex(where: { $0.id == id }) { s.notes[index] = new } }
+        log.record(old.kametiId, "note.update", entity: "note", entityId: id, member: nil,
+                   before: .object(["body": .string(old.body)]), after: .object(["body": .string(new.body)]))
         return new
     }
 
     func deleteNote(id: String) async throws(Failure) {
-        _ = try ownedNote(id)
+        let old = try ownedNote(id)
         state.withLock { $0.notes.removeAll { $0.id == id } }
+        log.record(old.kametiId, "note.delete", entity: "note", entityId: id, member: nil, before: .object(["body": .string(old.body)]))
     }
 
     // MARK: Helpers
