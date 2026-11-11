@@ -294,6 +294,16 @@ public final class KametiDetailViewModel {
         return nil
     }
 
+    // MARK: Kameti
+
+    /// Saves the owner's edits to a running kameti (name, description, due
+    /// day, reminders), then reloads.
+    public func updateKameti(_ changes: KametiChanges) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.kametis.updateKameti(id: kametiId, changes: changes) } catch { return error }
+        await load()
+        return nil
+    }
+
     // MARK: Notes
 
     public func addNote(_ new: NewNote) async -> Failure? {
