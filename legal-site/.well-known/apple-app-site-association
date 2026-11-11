@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["77XZANJHWG.com.brixel.kameti"],
+        "components": [
+          { "/": "/join/*", "comment": "Kameti invite links" }
+        ]
+      }
+    ]
+  }
+}

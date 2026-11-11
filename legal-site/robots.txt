@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+# Invite links carry a one-time token: never crawl them.
+Disallow: /join/
