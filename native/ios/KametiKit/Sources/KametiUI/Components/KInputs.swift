@@ -284,6 +284,8 @@ public extension View {
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         sheet(isPresented: isPresented) {
+            // A navigation context (bar hidden) so a keyboard toolbar can show in a sheet.
+            NavigationStack {
             VStack(spacing: 0) {
                 HStack {
                     Text(title).kText(KTextToken.title)
@@ -303,6 +305,8 @@ public extension View {
                 .padding(.top, 35)
                 .padding(.bottom, KSpace.md)
                 content()
+            }
+            .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxHeight: .infinity, alignment: .top)
             .overlay(alignment: .top) {

@@ -1,6 +1,7 @@
 import FeatureCreateKameti
 import FeatureHome
 import FeatureKametiDetail
+import KametiCore
 import KametiDomain
 import KametiNavigation
 import KametiUI
@@ -30,6 +31,7 @@ struct MainTabView: View {
                     HomeView(
                         model: homeModel,
                         onOpen: { router.push(.kametiDetail(id: $0)) },
+                        onRecord: { router.push(.kametiAction(id: $0, action: $1)) },
                         onCreate: { router.push(.createKameti) },
                         onJoin: { router.push(.join(token: $0)) }
                     )
@@ -88,6 +90,8 @@ private struct RouteDestination: View {
         switch route {
         case .kametiDetail(let id):
             KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id))
+        case .kametiAction(let id, let action):
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), action: action)
         case .createKameti:
             CreateKametiScreen(userId: userId, dependencies: dependencies, router: router, onFinished: onFinished)
         case .activity, .join:
@@ -103,8 +107,10 @@ private struct RouteDestination: View {
 private struct KametiDetailScreen: View {
     @State private var model: KametiDetailViewModel
 
-    init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?) {
-        _model = State(initialValue: KametiDetailViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies, preview: preview))
+    init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?, action: RecordAction? = nil) {
+        let model = KametiDetailViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies, preview: preview)
+        model.pendingAction = action
+        _model = State(initialValue: model)
     }
 
     var body: some View { KametiDetailView(model: model) }

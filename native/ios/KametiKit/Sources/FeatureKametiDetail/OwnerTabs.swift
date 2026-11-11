@@ -14,11 +14,23 @@ struct OwnerTabs: View {
     @State private var tab = Tab.overview
     @State private var recording: RecordTarget?
     @State private var collecting = false
-    @State private var voiding: Payment?
+    @State private var voiding: VoidTarget?
+    @State private var payingOut: Int?
 
     struct RecordTarget: Identifiable {
         let id = UUID()
         let memberId: String?
+    }
+
+    private var payingOutMonthName: String {
+        guard let month = payingOut else { return "" }
+        return DetailLogic.monthTitle(DetailLogic.monthStart(of: data.kameti, monthIndex: month)).split(separator: " ").first.map(String.init) ?? ""
+    }
+
+    /// A payout can be recorded once the month has recipients and isn't paid out.
+    private func canPayOut(_ row: MonthCollectionRow) -> Bool {
+        !CollectionStatePill.isPaidOut(row.state)
+            && !DetailLogic.recipients(kameti: data.kameti, monthIndex: row.monthIndex, slots: data.slots, shares: data.shares, members: data.members).isEmpty
     }
 
     private var monthName: String {
@@ -58,6 +70,11 @@ struct OwnerTabs: View {
             .overlay(alignment: .bottomTrailing) {
                 if tab == .overview, data.current != nil {
                     Menu {
+                        if let current = data.current, canPayOut(current) {
+                            Button { payingOut = current.monthIndex } label: {
+                                Label(String(localized: "Pay out \(monthName)", bundle: .module), systemImage: "arrow.up.right")
+                            }
+                        }
                         Button { recording = RecordTarget(memberId: nil) } label: {
                             Label(String(localized: "Record one payment", bundle: .module), systemImage: "plus")
                         }
@@ -78,6 +95,7 @@ struct OwnerTabs: View {
             }
         }
         .animation(.smooth(duration: 0.2), value: tab)
+        .task { await startPendingAction() }
         .kBottomSheet(
             isPresented: Binding(get: { recording != nil }, set: { if !$0 { recording = nil } }),
             title: String(localized: "Record payment", bundle: .module), detents: [.large]
@@ -87,20 +105,34 @@ struct OwnerTabs: View {
                     .id(target.id)
             }
         }
-        .kBottomSheet(isPresented: $collecting, title: String(localized: "Collect \(monthName)", bundle: .module), detents: [.large]) {
+        .kBottomSheet(isPresented: $collecting, title: String(localized: "Collect \(monthName) Kameti", bundle: .module), detents: [.large]) {
             // No condition here: the sheet is only built while it is presented.
             CollectMonthSheet(data: data, model: model) { collecting = false }
         }
         .kBottomSheet(
             isPresented: Binding(get: { voiding != nil }, set: { if !$0 { voiding = nil } }),
-            title: String(localized: "Void payment", bundle: .module), detents: [.medium]
+            title: voiding?.isPayout == true ? String(localized: "Void payout", bundle: .module) : String(localized: "Void payment", bundle: .module),
+            detents: [.medium]
         ) {
-            if let payment = voiding {
-                VoidPaymentSheet(
-                    payment: payment, memberName: data.members.first { $0.id == payment.memberId }?.name ?? "",
-                    model: model
-                ) { voiding = nil }
-            }
+            if let target = voiding { VoidSheet(target: target, model: model) { voiding = nil } }
+        }
+        .kBottomSheet(
+            isPresented: Binding(get: { payingOut != nil }, set: { if !$0 { payingOut = nil } }),
+            title: String(localized: "Pay out \(payingOutMonthName) Kameti", bundle: .module), detents: [.large]
+        ) {
+            if let month = payingOut { PayoutSheet(data: data, model: model, monthIndex: month) { payingOut = nil }.id(month) }
+        }
+    }
+
+    /// Home's Record payment opens the kameti and starts the chosen action.
+    private func startPendingAction() async {
+        guard let action = model.pendingAction else { return }
+        model.pendingAction = nil
+        try? await Task.sleep(for: .milliseconds(450))
+        switch action {
+        case .payOut: if let current = data.current, canPayOut(current) { payingOut = current.monthIndex }
+        case .recordOne: recording = RecordTarget(memberId: nil)
+        case .collect: collecting = true
         }
     }
 
@@ -109,7 +141,7 @@ struct OwnerTabs: View {
         switch tab {
         case .overview: OverviewTab(data: data) { recording = RecordTarget(memberId: $0) }
         case .members: MembersTab(data: data)
-        case .schedule: ScheduleSection(data: data)
+        case .schedule: ScheduleSection(data: data) { payingOut = $0 }
         case .payments: PaymentsTab(data: data) { voiding = $0 }
         }
     }
@@ -154,7 +186,13 @@ struct OverviewTab: View {
                         KStatusChip(.partial, label: String(localized: "\(counts.partial) partial", bundle: .module))
                         KStatusChip(.unpaid, label: String(localized: "\(counts.unpaid) unpaid", bundle: .module))
                     }
-                    if !recipients.isEmpty { recipientsBox(recipients) }
+                    if !recipients.isEmpty {
+                        if CollectionStatePill.isPaidOut(current.state) {
+                            paidOutStrip(current, recipients)
+                        } else {
+                            recipientsBox(recipients)
+                        }
+                    }
                 }
             }
 
@@ -196,6 +234,25 @@ struct OverviewTab: View {
                 description: Text("Collections begin when the kameti starts.", bundle: .module)
             )
         }
+    }
+
+    private func colorIndex(_ member: Member) -> Int {
+        Int(member.color ?? "") ?? max(data.members.firstIndex(of: member) ?? 0, 0)
+    }
+
+    private func paidOutStrip(_ current: MonthCollectionRow, _ recipients: [DetailLogic.Recipient]) -> some View {
+        let short = current.state == .paidOutShort && current.paidOutShortBy.isPositive
+        let names = recipients.map { $0.member.id == data.me?.id ? String(localized: "You", bundle: .module) : $0.member.name }.joined(separator: " + ")
+        let slotIds = Set(data.slots.filter { $0.payoutMonthIndex == current.monthIndex }.map(\.id))
+        let paidOn = data.payouts.filter { $0.voidedAt == nil && slotIds.contains($0.slotId) }.map(\.paidOn).max()
+        return KPaidOutStrip(
+            people: recipients.map { ($0.member.name, colorIndex($0.member)) },
+            title: short
+                ? String(localized: "Paid out · \(current.paidOut.format()) · short \(current.paidOutShortBy.format())", bundle: .module)
+                : String(localized: "Paid out · \(current.paidOut.format())", bundle: .module),
+            subtitle: paidOn.map { "\(names) · \(DetailLogic.dayMonth($0))" } ?? names,
+            isShort: short
+        )
     }
 
     private func recipientsBox(_ recipients: [DetailLogic.Recipient]) -> some View {
@@ -349,7 +406,7 @@ struct PaymentsTab: View {
     enum Kind: Hashable { case received, paidOut }
 
     let data: KametiDetailData
-    let onVoid: (Payment) -> Void
+    let onVoid: (VoidTarget) -> Void
     @State private var monthIndex: Int?
     @State private var kind = Kind.received
     @State private var pickingMonth = false
@@ -401,7 +458,7 @@ struct PaymentsTab: View {
                     subtitle: payment.voidedAt != nil
                         ? String(localized: "Voided · \(payment.voidReason ?? "")", bundle: .module)
                         : DetailLogic.paymentSubtitle(payment, methodLabel: payment.method.label) { String(localized: "paid by \($0)", bundle: .module) },
-                    amount: payment.amount, isVoided: payment.voidedAt != nil
+                    amount: payment.amount, methodLabel: payment.method.label, isVoided: payment.voidedAt != nil
                 )
             }
             : payouts.map { payout in
@@ -411,7 +468,7 @@ struct PaymentsTab: View {
                     subtitle: payout.voidedAt != nil
                         ? String(localized: "Voided · \(payout.voidReason ?? "")", bundle: .module)
                         : [payout.method.label, payout.reference].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "),
-                    amount: payout.amount, isVoided: payout.voidedAt != nil
+                    amount: payout.amount, methodLabel: payout.method.label, isVoided: payout.voidedAt != nil
                 )
             }
 
@@ -428,8 +485,11 @@ struct PaymentsTab: View {
                         .kText(KTextToken.label, color: KColors.textSecondary)
                         .padding(.top, KSpace.md).padding(.bottom, 2)
                     ForEach(Array(group.entries.enumerated()), id: \.element.id) { index, entry in
-                        let payment = entry.kind == .received && !entry.isVoided ? data.payments.first { $0.id == entry.id } : nil
-                        Button { if let payment { onVoid(payment) } } label: {
+                        Button {
+                            if !entry.isVoided {
+                                onVoid(VoidTarget(id: entry.id, name: entry.title, amount: entry.amount, subtitle: "\(DetailLogic.dayMonth(entry.date)) · \(entry.methodLabel)", isPayout: entry.kind == .paidOut))
+                            }
+                        } label: {
                             PaymentRow(
                                 kind: entry.kind == .received ? .received : .paidOut, title: entry.title, subtitle: entry.subtitle,
                                 amount: entry.amount, isVoided: entry.isVoided, showsDivider: index < group.entries.count - 1
@@ -452,6 +512,7 @@ struct PaymentsTab: View {
         let title: String
         let subtitle: String
         let amount: Money
+        let methodLabel: String
         let isVoided: Bool
     }
 

@@ -1,3 +1,4 @@
+import KametiCore
 import Foundation
 
 /// The three tabs of the signed-in app.
@@ -9,6 +10,8 @@ public enum AppTab: Hashable, Sendable, CaseIterable {
 /// which feature draws them; FeatureShell maps each route to its view.
 public enum Route: Hashable, Sendable {
     case kametiDetail(id: String)
+    /// A kameti opened straight into a recording action (Home's Record payment).
+    case kametiAction(id: String, action: RecordAction)
     /// The create-kameti wizard.
     case createKameti
     case activity(kametiId: String)

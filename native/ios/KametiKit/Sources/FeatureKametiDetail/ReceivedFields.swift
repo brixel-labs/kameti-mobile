@@ -86,3 +86,68 @@ struct MethodChooser: View {
         }
     }
 }
+
+/// "Received [Today ⌄] by [Cash ⌄]": the date opens a calendar (tap a day and it
+/// closes), the method opens a menu; a bank transfer shows a reference field.
+struct DateMethodBar: View {
+    /// "Received" or "Paid".
+    let prefix: String
+    @Binding var date: Date
+    @Binding var method: PaymentMethod
+    @Binding var reference: String
+    let today: Date
+    let earliest: Date
+    @State private var picking = false
+
+    private var utcDay: Date { RecordPaymentSheet.utcDate(from: date) }
+    private var dateLabel: String { utcDay == today ? String(localized: "Today", bundle: .module) : DetailLogic.dayMonth(utcDay) }
+
+    var body: some View {
+        VStack(spacing: KSpace.md) {
+            HStack(spacing: KSpace.sm) {
+                Spacer(minLength: 0)
+                Text(prefix).kText(KTextToken.subtitle, color: KColors.textSubtitle)
+                Button { kDismissKeyboard(); picking = true } label: { pill(dateLabel, symbol: "calendar") }
+                    .buttonStyle(.plain)
+                Text("by", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
+                Menu {
+                    Picker(String(localized: "Method", bundle: .module), selection: $method) {
+                        Label(String(localized: "Cash", bundle: .module), systemImage: "banknote").tag(PaymentMethod.cash)
+                        Label(String(localized: "Bank transfer", bundle: .module), systemImage: "building.columns").tag(PaymentMethod.bankTransfer)
+                        Text("Other", bundle: .module).tag(PaymentMethod.other)
+                    }
+                } label: {
+                    pill(method.label, symbol: method == .cash ? "banknote" : (method == .bankTransfer ? "building.columns" : nil))
+                }
+                // Keep Cash, Bank transfer, Other in this order even when the menu opens upward.
+                .menuOrder(.fixed)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity)
+            if method == .bankTransfer {
+                TextField(String(localized: "Reference no. (optional)", bundle: .module), text: $reference)
+                    .padding(.horizontal, KSpace.md)
+                    .frame(minHeight: 44)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+        }
+        .animation(.smooth(duration: 0.25), value: method)
+        .kBottomSheet(isPresented: $picking, title: String(localized: "Date received", bundle: .module), detents: [.medium]) {
+            // One level: tap a day and the sheet closes, even for the day already shown.
+            KCalendarPicker(selection: $date, in: RecordPaymentSheet.pickableRange(from: earliest, to: today)) { _ in picking = false }
+        }
+    }
+
+    private func pill(_ title: String, symbol: String?) -> some View {
+        HStack(spacing: 6) {
+            if let symbol { Image(systemName: symbol).font(.system(size: 13, weight: .semibold)) }
+            Text(title)
+            Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
+        }
+        .kText(KTextStyle(size: 14, weight: .semibold))
+        .padding(.horizontal, 14).frame(height: 38)
+        .background(KColors.surface, in: Capsule())
+        .overlay(Capsule().stroke(KColors.border))
+    }
+}
