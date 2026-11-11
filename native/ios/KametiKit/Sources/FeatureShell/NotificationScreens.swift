@@ -66,6 +66,7 @@ struct NotificationSettingsView: View {
     @State private var preferences: NotificationPreferences?
     @State private var failure: Failure?
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
     private var push: PushCenter { .shared }
 
     var body: some View {
@@ -85,10 +86,14 @@ struct NotificationSettingsView: View {
                 }
                 .padding(.horizontal, KSpace.lg)
                 .background(KColors.surface, in: RoundedRectangle(cornerRadius: 16))
+                // Off for this iPhone: the switches can't do anything until it's on.
+                .disabled(!push.isAllowed)
+                .opacity(push.isAllowed ? 1 : 0.45)
                 if let failure {
                     Label(failure.userMessage, systemImage: "exclamationmark.triangle").kText(KTextToken.bodySm, color: KColors.negative)
                 }
-                Text("Everything also shows in your Inbox, even when it's off here. The owner's \"remind everyone\" message always comes through unless you turn notifications off for Kameti in iPhone Settings.", bundle: .module)
+                Text(push.isAllowed ? String(localized: "Everything also shows in your Inbox, even when it's off here. The owner's \"remind everyone\" message always comes through unless you turn notifications off for Kameti in iPhone Settings.", bundle: .module)
+                     : String(localized: "Turn notifications on for this iPhone to choose what you get. Everything still shows in your Inbox.", bundle: .module))
                     .kText(KTextToken.bodySm, color: KColors.textSecondary)
                     .padding(.horizontal, KSpace.xxs)
             }
@@ -98,6 +103,10 @@ struct NotificationSettingsView: View {
         .background(KColors.background)
         .navigationTitle(String(localized: "Notifications", bundle: .module))
         .navigationBarTitleDisplayMode(.inline)
+        // Back from iPhone Settings: show the new state.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await push.registerIfAllowed() } }
+        }
         .task {
             await push.refreshStatus()
             do throws(Failure) { preferences = try await dependencies.notifications.preferences(userId: userId) } catch { failure = error }

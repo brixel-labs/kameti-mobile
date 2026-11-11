@@ -95,10 +95,6 @@ struct MainTabView: View {
             if new == .active, old == .background { KLiveUpdates.shared.refreshAll() }
         }
         .onChange(of: inboxModel.badgeCount) { _, count in push.setBadge(count) }
-        // Ask once, after the first kameti shows up (board AN-4).
-        .onChange(of: homeModel.sections.isEmpty) { _, empty in
-            if !empty, !push.hasAsked, push.status == .notDetermined { askingPush = true }
-        }
         .onChange(of: push.pendingTap) { _, tap in if let tap { open(tap) } }
         .kBottomSheet(isPresented: $askingPush, title: "", detents: [.large]) {
             PushPermissionSheet(
@@ -119,6 +115,12 @@ struct MainTabView: View {
         if let token = push.fcmToken { try? await notifications.registerDevice(token: token, platform: "ios") }
         await push.registerIfAllowed()
         if let tap = push.pendingTap { open(tap) }
+        // Ask once, soon after signing in (board AN-4): members need it as much as
+        // owners, and many join before they have any kameti of their own.
+        if push.status == .notDetermined, !push.hasAsked {
+            try? await Task.sleep(for: .seconds(1))
+            askingPush = true
+        }
     }
 
     /// A tapped notification: requests and invitations open the Inbox, the

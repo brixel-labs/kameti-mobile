@@ -136,6 +136,9 @@
         }
       }
     },
+    "Everyone you picked already had a reminder from you today. Try again tomorrow." : {
+
+    },
     "Fill every slot and payout month before starting." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -187,6 +190,9 @@
           }
         }
       }
+    },
+    "Nobody with the app owes anything right now." : {
+
     },
     "of %@" : {
 
@@ -635,6 +641,9 @@
       }
     },
     "You still run a kameti. Archive it or hand it over before deleting your account." : {
+
+    },
+    "You're already a member of this kameti." : {
 
     },
     "You're not in this kameti." : {

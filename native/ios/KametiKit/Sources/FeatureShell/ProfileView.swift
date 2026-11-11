@@ -123,6 +123,14 @@ public struct ProfileView: View {
             KAvatar(name: profile.displayName, colorIndex: 0, size: .large)
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName).kText(KTextToken.titleLg)
+                // The account's email (from its sign-in method), so it's clear
+                // which account this is, and which email invites must go to.
+                if let email = model.signInMethods.compactMap(\.email).first {
+                    Text(verbatim: email)
+                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
                 Text("\(model.runningCount) kametis run · \(model.memberCount) joined", bundle: .module)
                     .kText(KTextToken.subtitle, color: KColors.textSubtitle)
             }

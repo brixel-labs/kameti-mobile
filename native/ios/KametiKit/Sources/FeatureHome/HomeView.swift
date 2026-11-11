@@ -78,6 +78,7 @@ public struct HomeView: View {
                 .padding(.top, KSpace.xxs)
             }
             .scrollBounceBehavior(.basedOnSize)
+            .kDismissesKeyboard()
         }
         .alert(
             String(localized: "Decline this invite?", bundle: .module),
