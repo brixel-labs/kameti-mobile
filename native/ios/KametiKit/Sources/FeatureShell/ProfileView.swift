@@ -21,8 +21,7 @@ public struct ProfileView: View {
     @AppStorage(KAppearance.storageKey) private var appearance = KAppearance.system.rawValue
     // Stored on the phone for now; push notifications arrive with the
     // notifications backend, which reads these later.
-    @AppStorage("kameti.notify.reminders") private var remindersOn = true
-    @AppStorage("kameti.notify.updates") private var updatesOn = true
+    @State private var showingNotifications = false
 
     public init(model: ProfileViewModel, onOpenKameti: @escaping (String) -> Void = { _ in }, onOpenPast: @escaping () -> Void = {}) {
         self.onOpenPast = onOpenPast
@@ -51,8 +50,8 @@ public struct ProfileView: View {
                     ProgressView().frame(maxWidth: .infinity).padding(.vertical, KSpace.xl)
                 }
                 group {
-                    toggleRow(String(localized: "Payment reminders", bundle: .module), symbol: "bell", tint: .amber, isOn: $remindersOn)
-                    toggleRow(String(localized: "Updates", bundle: .module), symbol: "megaphone", tint: .blue, isOn: $updatesOn)
+                    row(String(localized: "Notifications", bundle: .module), symbol: "bell", tint: .amber,
+                        value: PushCenter.shared.isAllowed ? String(localized: "On", bundle: .module) : String(localized: "Off", bundle: .module)) { showingNotifications = true }
                     row(String(localized: "Appearance", bundle: .module), symbol: "moon", tint: .purple,
                         value: (KAppearance(rawValue: appearance) ?? .system).title, isLast: true) { choosingAppearance = true }
                 }
@@ -110,6 +109,9 @@ public struct ProfileView: View {
             DeleteAccountSheet(model: model) { deletingAccount = false }
         }
         .navigationDestination(isPresented: $showingPeople) { PeopleListView(people: model.people) }
+        .navigationDestination(isPresented: $showingNotifications) {
+            NotificationSettingsView(userId: model.userId, dependencies: model.dependencies)
+        }
         .task { await model.load() }
         .refreshable { await model.load() }
     }

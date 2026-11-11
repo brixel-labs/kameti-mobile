@@ -14,6 +14,8 @@ public struct HomeKametiSummary: Identifiable, Equatable, Sendable {
     public var currentMonth: MonthCollectionRow?
     /// What I owe so far (member view only).
     public var owes: Money?
+    /// What I pay a month (member view); zero means I hold no share yet.
+    public var monthlyDue: Money?
     /// When this month's payment is due.
     public var dueDate: Date?
     /// Who receives the pot this month.
@@ -22,6 +24,14 @@ public struct HomeKametiSummary: Identifiable, Equatable, Sendable {
     public var nextTurn: NextTurn?
     /// When this month's payout was made (the latest payout of its slot).
     public var payoutDate: Date?
+
+    /// The same card's details on a freshly loaded kameti row.
+    func replacing(_ kameti: Kameti) -> HomeKametiSummary {
+        var copy = HomeKametiSummary(kameti: kameti, isOwner: isOwner)
+        copy.currentMonth = currentMonth; copy.owes = owes; copy.monthlyDue = monthlyDue; copy.dueDate = dueDate
+        copy.recipients = recipients; copy.nextTurn = nextTurn; copy.payoutDate = payoutDate
+        return copy
+    }
 
     public struct Person: Equatable, Sendable {
         public let name: String
@@ -115,8 +125,14 @@ public final class HomeViewModel {
         invitations = (try? await dependencies.invites.myInvitations()) ?? []
         do throws(Failure) {
             let all = try await dependencies.kametis.listKametis()
-            var summaries = all.map {
-                HomeKametiSummary(kameti: $0, isOwner: $0.isOwned(by: userId))
+            // Cards already on screen keep their details while they refresh,
+            // so pull to refresh never flashes a card back to "Not started yet".
+            let shown = Dictionary(
+                (sections.mine + sections.joined + sections.past + sections.archived).map { ($0.id, $0) },
+                uniquingKeysWith: { first, _ in first }
+            )
+            var summaries = all.map { kameti in
+                shown[kameti.id].map { $0.replacing(kameti) } ?? HomeKametiSummary(kameti: kameti, isOwner: kameti.isOwned(by: userId))
             }
             // Show the list right away, then fill in each card.
             sections = Self.sections(of: summaries)
@@ -143,16 +159,21 @@ public final class HomeViewModel {
         return nil
     }
 
-    private func detail(for item: HomeKametiSummary) async -> HomeKametiSummary {
-        var item = item
+    /// Fills in a card. If a request fails (offline, or a refresh that was
+    /// cancelled), the card keeps what it already showed.
+    private func detail(for original: HomeKametiSummary) async -> HomeKametiSummary {
+        var item = original
         let kameti = item.kameti
         let id = kameti.id
-        if let months = try? await dependencies.ledger.monthCollections(kametiId: id) {
-            item.currentMonth = months.first(where: \.isCurrent)
+        let members: [Member], slots: [Slot], shares: [Share]
+        do throws(Failure) {
+            item.currentMonth = try await dependencies.ledger.monthCollections(kametiId: id).first(where: \.isCurrent)
+            members = try await dependencies.kametis.members(kametiId: id)
+            slots = try await dependencies.kametis.slots(kametiId: id)
+            shares = try await dependencies.kametis.shares(kametiId: id)
+        } catch {
+            return original
         }
-        let members = (try? await dependencies.kametis.members(kametiId: id)) ?? []
-        let slots = (try? await dependencies.kametis.slots(kametiId: id)) ?? []
-        let shares = (try? await dependencies.kametis.shares(kametiId: id)) ?? []
         let me = DetailLogic.myMember(in: members, userId: userId)
         if let month = item.currentMonth {
             item.dueDate = DetailLogic.dueDate(of: kameti, monthIndex: month.monthIndex)
@@ -169,7 +190,9 @@ public final class HomeViewModel {
         }
         if !item.isOwner, let me {
             if let balances = try? await dependencies.ledger.memberBalances(kametiId: id) {
-                item.owes = balances.first(where: { $0.memberId == me.id })?.owes
+                let mine = balances.first(where: { $0.memberId == me.id })
+                item.owes = mine?.owes
+                item.monthlyDue = mine?.monthlyDue
             }
             if let turn = DetailLogic.nextTurn(for: me, kameti: kameti, from: item.currentMonth?.monthIndex ?? 1, slots: slots, shares: shares) {
                 item.nextTurn = HomeKametiSummary.NextTurn(month: DetailLogic.monthStart(of: kameti, monthIndex: turn.monthIndex), payout: turn.payout)

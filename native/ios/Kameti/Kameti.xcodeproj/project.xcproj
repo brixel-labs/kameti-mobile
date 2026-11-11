@@ -17,7 +17,15 @@
     }, {
       "kind": "remote",
       "repository": "https://github.com/google/GoogleSignIn-iOS",
-      "version": { "up-to-next-major-version": "10.1.0" },
+      "version": {
+        "up-to-next-major-version": "10.1.0",
+      },
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/firebase/firebase-ios-sdk",
+      "version": {
+        "up-to-next-major-version": "13.1.0",
+      },
     },
   ],
   "files": [
@@ -46,17 +54,17 @@
           "package": "GoogleSignIn-iOS",
           "product-name": "GoogleSignIn",
           "build-phase": { "build-phase": "frameworks" },
-        },         {
+        }, {
+          "package": "firebase-ios-sdk",
+          "product-name": "FirebaseMessaging",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
           "package": "KametiKit",
           "product-name": "FeatureAuth",
           "build-phase": { "build-phase": "frameworks" },
-        },         {
+        }, {
           "package": "KametiKit",
           "product-name": "FeatureShell",
-          "build-phase": { "build-phase": "frameworks" },
-        },         {
-          "package": "KametiKit",
-          "product-name": "KametiNavigation",
           "build-phase": { "build-phase": "frameworks" },
         }, {
           "package": "KametiKit",
@@ -72,12 +80,15 @@
           "build-phase": { "build-phase": "frameworks" },
         }, {
           "package": "KametiKit",
-          "product-name": "KametiUI",
+          "product-name": "KametiNavigation",
           "build-phase": { "build-phase": "frameworks" },
-        },
-        {
+        }, {
           "package": "KametiKit",
           "product-name": "KametiTestSupport",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "KametiKit",
+          "product-name": "KametiUI",
           "build-phase": { "build-phase": "frameworks" },
         },
       ],

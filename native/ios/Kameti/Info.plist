@@ -15,6 +15,13 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Firebase: the app delegate hands over the APNs token itself (no swizzling). -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>GIDClientID</key>
 	<string>49896499675-e3dda5vd7njt8pacuqs00rnieurh37rq.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>

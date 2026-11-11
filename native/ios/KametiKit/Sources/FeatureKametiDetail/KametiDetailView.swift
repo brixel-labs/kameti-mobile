@@ -95,17 +95,12 @@ public struct KametiDetailView: View {
                     .accessibilityLabel(Text("More", bundle: .module))
                 }
             }
-            if case .loaded(let data) = model.state, !data.isOwner {
-                // A label, not a button: the same "View only" pill as the Home
-                // card, without the toolbar's glass button behind it.
-                ToolbarItem(placement: .topBarTrailing) {
-                    KPill(String(localized: "View only", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)
-                        .accessibilityLabel(Text("View only: only the owner can make changes", bundle: .module))
-                }
-                .sharedBackgroundVisibility(.hidden)
-            }
         }
         .task { await model.load() }
+        // Live: reload quietly when this kameti changes on the server.
+        .onChange(of: KLiveUpdates.shared.revision) {
+            if KLiveUpdates.shared.affects(model.kametiId) { Task { await model.load() } }
+        }
         .alert(
             String(localized: "Archive \(title)?", bundle: .module),
             isPresented: $confirmingArchive

@@ -18,8 +18,8 @@ public final class ProfileViewModel {
     public private(set) var failure: Failure?
     public private(set) var isLoading = false
 
-    private let userId: String
-    private let dependencies: KametiDependencies
+    let userId: String
+    let dependencies: KametiDependencies
 
     public init(userId: String, dependencies: KametiDependencies) {
         self.userId = userId
@@ -85,6 +85,10 @@ public final class ProfileViewModel {
 
     /// The session store notices the signed-out state and the root view moves on.
     public func signOut() async {
+        // This phone stops getting this account's pushes.
+        if let token = PushCenter.shared.fcmToken {
+            try? await dependencies.notifications.unregisterDevice(token: token)
+        }
         do throws(Failure) {
             try await dependencies.auth.signOut()
         } catch {

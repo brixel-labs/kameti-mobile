@@ -21,6 +21,7 @@ public enum SampleData {
             contacts: SampleContactsRepository(store: people), auth: auth,
             notes: SampleNotesRepository(kametis: kametis, payments: store, log: log),
             account: SampleAccountRepository(kametis: kametis, contacts: people, auth: auth),
+            notifications: SampleNotificationsRepository(now: now),
             // The sample data is set in November 2026, so "today" is fixed there
             // whatever the phone's date is.
             clock: KametiClock(nowUTC: { now })

@@ -57,6 +57,10 @@ struct MemberView: View {
                 .kText(KTextToken.label, color: KColors.textOnBrand.opacity(0.85))
             if owes.isPositive {
                 KMoneyText(owes, style: .displayLg, tone: .onBrand)
+            } else if balance?.monthlyDue.isPositive == false {
+                Text("No share yet", bundle: .module).kText(KTextToken.displayLg, color: KColors.textOnBrand)
+                Text("You'll owe something once the owner gives you a share of a slot.", bundle: .module)
+                    .kText(KTextToken.bodySm, color: KColors.textOnBrand.opacity(0.85))
             } else {
                 Text("Paid up", bundle: .module).kText(KTextToken.displayLg, color: KColors.textOnBrand)
             }

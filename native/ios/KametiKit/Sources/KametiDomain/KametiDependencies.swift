@@ -13,6 +13,8 @@ public struct KametiDependencies: Sendable {
     public var contacts: any ContactsRepository
     public var notes: any NotesRepository
     public var account: any AccountRepository
+    public var notifications: any NotificationsRepository
+    public var live: any LiveUpdatesRepository
     public var auth: any AuthRepository
     public var clock: KametiClock
     /// One key per user action, reused on retry, so a double tap never
@@ -26,12 +28,14 @@ public struct KametiDependencies: Sendable {
         contacts: any ContactsRepository, auth: any AuthRepository,
         notes: any NotesRepository = UnavailableNotesRepository(),
         account: any AccountRepository = UnavailableAccountRepository(),
+        notifications: any NotificationsRepository = UnavailableNotificationsRepository(),
+        live: any LiveUpdatesRepository = UnavailableLiveUpdates(),
         clock: KametiClock = KametiClock(),
         makeIdempotencyKey: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() }
     ) {
         self.kametis = kametis; self.ledger = ledger; self.payments = payments
         self.invites = invites; self.audit = audit; self.profiles = profiles
-        self.contacts = contacts; self.auth = auth; self.notes = notes; self.account = account; self.clock = clock
+        self.contacts = contacts; self.auth = auth; self.notes = notes; self.account = account; self.notifications = notifications; self.live = live; self.clock = clock
         self.makeIdempotencyKey = makeIdempotencyKey
     }
 }
