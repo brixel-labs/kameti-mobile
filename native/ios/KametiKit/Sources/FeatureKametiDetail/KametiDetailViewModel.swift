@@ -302,6 +302,33 @@ public final class KametiDetailViewModel {
         return nil
     }
 
+    /// Who takes over a share: someone in the kameti, or a new person added first.
+    public enum TransferTarget: Equatable, Sendable {
+        case member(String)
+        case newPerson(name: String)
+    }
+
+    /// FR-33: moves a share to `target` from `fromMonth`, adding the new person first if needed.
+    public func transferShare(shareId: String, to target: TransferTarget, fromMonth: Int, note: String?) async -> Failure? {
+        do throws(Failure) {
+            let memberId: String
+            switch target {
+            case .member(let id): memberId = id
+            case .newPerson(let name):
+                memberId = try await dependencies.kametis.addMember(kametiId: kametiId, NewMember(name: name)).id
+            }
+            let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+            _ = try await dependencies.kametis.transferShare(
+                shareId: shareId, toMemberId: memberId, fromMonth: fromMonth, note: trimmed?.isEmpty == false ? trimmed : nil
+            )
+        } catch {
+            await load()
+            return error
+        }
+        await load()
+        return nil
+    }
+
     public func declineJoin(memberId: String) async -> Failure? {
         do throws(Failure) { _ = try await dependencies.invites.declineJoin(memberId: memberId) } catch { return error }
         await load()

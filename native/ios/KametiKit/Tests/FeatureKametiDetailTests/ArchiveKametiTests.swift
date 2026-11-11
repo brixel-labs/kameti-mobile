@@ -122,3 +122,55 @@ struct DuplicateKametiTests {
         #expect(DuplicateLogic.name(for: long, attempt: 3).hasSuffix("(copy 3)"))
     }
 }
+
+/// Transferring a share (FR-33) against the demo store.
+@MainActor
+@Suite("Transfer share")
+struct TransferShareTests {
+    private func loaded() async -> (KametiDetailViewModel, () -> KametiDetailData?) {
+        let model = KametiDetailViewModel(kametiId: "family", userId: SampleData.userId, dependencies: SampleData.dependencies())
+        await model.load()
+        return (model, { if case .loaded(let data) = model.state { return data }; return nil })
+    }
+
+    @Test func movesTheShareFromThisMonth() async throws {
+        let (model, data) = await loaded()
+        let before = try #require(data())
+        let ali = try #require(before.members.first { $0.id == "f1" })
+        let share = try #require(TransferLogic.movableShares(of: ali, in: before).first)
+        let from = try #require(TransferLogic.firstMonth(for: share, in: before))
+        let to = try #require(TransferLogic.candidates(for: share, in: before).first)
+
+        #expect(await model.transferShare(shareId: share.id, to: .member(to.id), fromMonth: from, note: "Cash settled") == nil)
+        let after = try #require(data())
+        let ended = try #require(after.shares.first { $0.id == share.id })
+        let moved = try #require(after.shares.first { $0.slotId == share.slotId && $0.memberId == to.id && $0.effectiveToMonth == nil })
+        #expect(moved.monthlyAmount == share.monthlyAmount)
+        if from > share.effectiveFromMonth {
+            #expect(ended.effectiveToMonth == from - 1)
+            #expect(moved.effectiveFromMonth == from)
+        }
+    }
+
+    @Test func aNewPersonIsAddedFirst() async throws {
+        let (model, data) = await loaded()
+        let before = try #require(data())
+        let ali = try #require(before.members.first { $0.id == "f1" })
+        let share = try #require(TransferLogic.movableShares(of: ali, in: before).first)
+        let from = try #require(TransferLogic.firstMonth(for: share, in: before))
+        #expect(await model.transferShare(shareId: share.id, to: .newPerson(name: "Zoya Ahmed"), fromMonth: from, note: nil) == nil)
+        let after = try #require(data())
+        let zoya = try #require(after.members.first { $0.name == "Zoya Ahmed" })
+        #expect(after.shares.contains { $0.memberId == zoya.id && $0.slotId == share.slotId })
+    }
+
+    @Test func pastMonthsAreRefused() async throws {
+        let (model, data) = await loaded()
+        let before = try #require(data())
+        let ali = try #require(before.members.first { $0.id == "f1" })
+        let share = try #require(TransferLogic.movableShares(of: ali, in: before).first)
+        let to = try #require(TransferLogic.candidates(for: share, in: before).first)
+        #expect(await model.transferShare(shareId: share.id, to: .member(to.id), fromMonth: 99, note: nil)
+            == .server(code: "invalid_transfer_month", detail: nil))
+    }
+}

@@ -185,6 +185,7 @@ struct EditMemberSheet: View {
     @State private var confirmingRemove = false
     @State private var isRemoving = false
     @State private var failure: Failure?
+    @State private var transferring = false
 
     init(data: KametiDetailData, model: KametiDetailViewModel, member: Member, onDone: @escaping () -> Void) {
         self.data = data
@@ -231,6 +232,9 @@ struct EditMemberSheet: View {
                 }
                 PrimaryButton(title: String(localized: "Save changes", bundle: .module), isBusy: isBusy, action: save)
                     .disabled(changes == nil || isRemoving)
+                if !TransferLogic.movableShares(of: currentMember, in: data).isEmpty {
+                    transferButton
+                }
                 removeSection
             }
             .padding(.horizontal, KSpace.xl)
@@ -246,6 +250,25 @@ struct EditMemberSheet: View {
         } message: {
             Text("They have no shares or payments, so nothing on the ledger changes. This can't be undone.", bundle: .module)
         }
+        .kBottomSheet(
+            isPresented: $transferring,
+            title: String(localized: "Transfer \(MemberLogic.firstName(member.name))'s share", bundle: .module), detents: [.large]
+        ) {
+            TransferShareSheet(data: data, model: model, member: currentMember) { transferring = false }
+        }
+    }
+
+    /// FR-33: hand a share to someone else from a month onward.
+    private var transferButton: some View {
+        Button { transferring = true } label: {
+            Label(String(localized: "Transfer share", bundle: .module), systemImage: "arrow.left.arrow.right")
+                .kText(KTextToken.bodyStrong, color: KColors.brand)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .overlay(Capsule().stroke(KColors.brand, lineWidth: 1.5))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isBusy || isRemoving)
     }
 
     private var identity: some View {
@@ -311,7 +334,7 @@ struct EditMemberSheet: View {
             ? String(localized: "1 payment", bundle: .module)
             : String(localized: "\(block.payments) payments", bundle: .module)
         if block.payments == 0 {
-            return String(localized: "\(first) can't be removed while holding \(slots). Move the shares to someone else in Schedule first.", bundle: .module)
+            return String(localized: "\(first) can't be removed while holding \(slots). Transfer the shares to someone else first.", bundle: .module)
         }
         if block.slots == 0 {
             return String(localized: "\(first) can't be removed: \(payments) on the ledger stay with them so the record is complete.", bundle: .module)

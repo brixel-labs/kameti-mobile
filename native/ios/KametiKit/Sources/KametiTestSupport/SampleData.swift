@@ -674,6 +674,43 @@ final class SampleKametiRepository: KametiRepository {
         }
     }
 
+    /// Mirrors `transfer_share` (FR-33): A's share ends the month before,
+    /// B gets the same amount in the same slot from `fromMonth`.
+    func transferShare(shareId: String, toMemberId: String, fromMonth: Int, note: String?) async throws(Failure) -> Share {
+        try state.withLock { s throws(Failure) in
+            guard let kametiId = s.shares.first(where: { $0.value.contains { $0.id == shareId } })?.key,
+                  let kameti = s.kametis.first(where: { $0.id == kametiId }),
+                  let old = s.shares[kametiId]?.first(where: { $0.id == shareId }) else { throw notFound }
+            guard kameti.status == .active else { throw Failure.server(code: "kameti_not_active", detail: nil) }
+            guard old.effectiveToMonth == nil else { throw Failure.server(code: "share_not_active", detail: nil) }
+            guard (s.members[kametiId] ?? []).contains(where: { $0.id == toMemberId }) else { throw Failure.server(code: "member_not_in_kameti", detail: nil) }
+            guard toMemberId != old.memberId else { throw Failure.server(code: "same_member", detail: nil) }
+            guard (old.effectiveFromMonth...kameti.monthsN).contains(fromMonth) else { throw Failure.server(code: "invalid_transfer_month", detail: nil) }
+            let shares = s.shares[kametiId] ?? []
+            if shares.contains(where: { $0.slotId == old.slotId && $0.memberId == toMemberId && ($0.effectiveToMonth ?? .max) >= fromMonth }) {
+                throw Failure.server(code: "already_in_slot", detail: nil)
+            }
+            if Set(shares.filter { $0.memberId == toMemberId && $0.effectiveToMonth == nil }.map(\.slotId)).count + 1 > kameti.maxSlotsPerMember {
+                throw Failure.server(code: "member_slot_limit_exceeded", detail: nil)
+            }
+            let index = shares.firstIndex { $0.id == shareId }!
+            let moved: Share
+            if fromMonth == old.effectiveFromMonth {
+                moved = Share(id: old.id, kametiId: kametiId, slotId: old.slotId, memberId: toMemberId, monthlyAmount: old.monthlyAmount, effectiveFromMonth: fromMonth)
+                s.shares[kametiId]?[index] = moved
+            } else {
+                s.shares[kametiId]?[index] = Share(
+                    id: old.id, kametiId: kametiId, slotId: old.slotId, memberId: old.memberId, monthlyAmount: old.monthlyAmount,
+                    effectiveFromMonth: old.effectiveFromMonth, effectiveToMonth: fromMonth - 1
+                )
+                s.counter += 1
+                moved = Share(id: "\(old.id)-t\(s.counter)", kametiId: kametiId, slotId: old.slotId, memberId: toMemberId, monthlyAmount: old.monthlyAmount, effectiveFromMonth: fromMonth)
+                s.shares[kametiId]?.append(moved)
+            }
+            return moved
+        }
+    }
+
     func reorderSlots(kametiId: String, slotIdsInOrder: [String]) async throws(Failure) -> [Slot] {
         state.withLock { s in
             let reordered = slotIdsInOrder.enumerated().map { Slot(id: $0.element, kametiId: kametiId, payoutMonthIndex: $0.offset + 1) }
