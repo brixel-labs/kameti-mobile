@@ -92,3 +92,27 @@ struct InviteAccessTests {
         #expect(AccessState.of(me, in: data) == .owner)
     }
 }
+
+@MainActor
+@Suite("Invite delivery")
+struct InviteDeliveryTests {
+    @Test func aBouncedEmailShowsOnTheInvite() async throws {
+        let model = KametiDetailViewModel(kametiId: "family", userId: SampleData.userId, dependencies: SampleData.dependencies())
+        await model.load()
+        guard case .loaded(let data) = model.state else { Issue.record("not loaded"); return }
+        let faisal = try #require(data.members.first { $0.id == "f6" })
+        guard case .invited(let invite) = AccessState.of(faisal, in: data) else { Issue.record("should be invited"); return }
+        #expect(invite.deliveryStatus == .bounced)
+        #expect(invite.deliveryStatus?.didNotArrive == true)
+    }
+
+    @Test func theDeliveryStatusDecodesAndTheQueryNamesColumns() throws {
+        let json = #"{"id":"i1","kameti_id":"k","member_id":"m","status":"pending","expires_at":"2026-11-24T08:00:00Z","send_count":1,"email":"a@b.co","delivery_status":"complained"}"#
+        let invite = try KametiJSON.makeDecoder().decode(Invite.self, from: Data(json.utf8))
+        #expect(invite.deliveryStatus == .complained)
+        #expect(invite.deliveryStatus?.didNotArrive == true)
+        // The table hides the token and code hashes, so the app must name its columns.
+        #expect(!Invite.columns.contains("*") && !Invite.columns.contains("hash"))
+        #expect(Invite.columns.contains("delivery_status"))
+    }
+}
