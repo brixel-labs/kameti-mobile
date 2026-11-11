@@ -86,3 +86,39 @@ struct FinishedOverviewTests {
         #expect(DetailLogic.finalSummary(data) == nil)
     }
 }
+
+/// Duplicating a kameti as a new draft (FR-13) against the demo store.
+@MainActor
+@Suite("Duplicate kameti")
+struct DuplicateKametiTests {
+    @Test func copiesMembersAndSharesButNoPayments() async throws {
+        let dependencies = SampleData.dependencies()
+        let model = KametiDetailViewModel(kametiId: "family", userId: SampleData.userId, dependencies: dependencies)
+        await model.load()
+        guard case .loaded(let source) = model.state else { Issue.record("not loaded"); return }
+
+        let id = try await model.duplicate().get()
+        let copy = try await dependencies.kametis.kameti(id: id)
+        #expect(copy.status == .draft)
+        #expect(copy.name == "Family kameti (copy)")
+        #expect(copy.monthsN == source.kameti.monthsN && copy.slotAmountC == source.kameti.slotAmountC)
+        #expect(copy.startMonth == DuplicateLogic.startMonth(after: source.kameti, currentMonth: dependencies.clock.currentMonth()))
+
+        let members = try await dependencies.kametis.members(kametiId: id)
+        #expect(members.map(\.name) == source.members.map(\.name))
+        #expect(members.allSatisfy { $0.profileId == nil || $0.profileId == SampleData.userId })
+        let shares = try await dependencies.kametis.shares(kametiId: id)
+        #expect(shares.count == source.shares.filter { $0.effectiveToMonth == nil }.count)
+        #expect(try await dependencies.payments.payments(kametiId: id).isEmpty)
+
+        // A second copy gets the next free name.
+        let second = try await model.duplicate().get()
+        #expect(try await dependencies.kametis.kameti(id: second).name == "Family kameti (copy 2)")
+    }
+
+    @Test func namesStayWithinTheLimit() {
+        let long = String(repeating: "a", count: 40)
+        #expect(DuplicateLogic.name(for: long, attempt: 1).count <= 40)
+        #expect(DuplicateLogic.name(for: long, attempt: 3).hasSuffix("(copy 3)"))
+    }
+}

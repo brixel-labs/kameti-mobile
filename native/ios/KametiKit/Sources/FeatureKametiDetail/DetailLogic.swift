@@ -176,3 +176,19 @@ public enum DetailLogic {
         )
     }
 }
+
+/// Name and start month for a duplicated kameti (FR-13).
+public enum DuplicateLogic {
+    /// "Office Kameti (copy)", then "(copy 2)", … kept within the 40-character limit.
+    public static func name(for original: String, attempt: Int) -> String {
+        let suffix = attempt <= 1 ? String(localized: " (copy)", bundle: .module) : String(localized: " (copy \(attempt))", bundle: .module)
+        let base = original.trimmingCharacters(in: .whitespaces)
+        return String(base.prefix(max(40 - suffix.count, 3))).trimmingCharacters(in: .whitespaces) + suffix
+    }
+
+    /// The month after the original's last month, or `currentMonth` if that is later.
+    public static func startMonth(after kameti: Kameti, currentMonth: Date) -> Date {
+        let next = DetailLogic.monthStart(of: kameti, monthIndex: kameti.monthsN + 1)
+        return max(next, currentMonth)
+    }
+}

@@ -49,9 +49,9 @@ struct BasicsStep: View {
                                 onChange: { model.setMonths($0) }
                             )
                         }
-                        KSelectField(
+                        KMonthField(
                             String(localized: "First month", bundle: .module), selection: $model.startMonth,
-                            options: startOptions.map { (value: $0, label: monthLabel($0)) }
+                            months: startOptions, runLength: model.months
                         )
                     }
                     KCard {

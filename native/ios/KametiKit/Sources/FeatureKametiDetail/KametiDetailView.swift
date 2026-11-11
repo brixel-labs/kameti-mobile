@@ -12,6 +12,8 @@ public struct KametiDetailView: View {
     private let onOpenActivity: ((String) -> Void)?
     @State private var editing = false
     @State private var confirmingArchive = false
+    @State private var confirmingDuplicate = false
+    @State private var duplicating = false
     @State private var archiveFailure: Failure?
 
     public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil, onOpenActivity: ((String) -> Void)? = nil) {
@@ -67,6 +69,12 @@ public struct KametiDetailView: View {
                                 Label(data.isOwner ? String(localized: "Activity", bundle: .module) : String(localized: "Your activity", bundle: .module), systemImage: "clock.arrow.circlepath")
                             }
                         }
+                        if data.isOwner, onResumeDraft != nil {
+                            Button { confirmingDuplicate = true } label: {
+                                Label(String(localized: "Duplicate kameti", bundle: .module), systemImage: "plus.square.on.square")
+                            }
+                            .disabled(duplicating)
+                        }
                         if data.isOwner {
                             if data.kameti.status == .archived {
                                 Button { restore() } label: {
@@ -108,6 +116,15 @@ public struct KametiDetailView: View {
             Text("It becomes read-only for you and every member and moves to Archived, at the end of Past on Home. You can restore it any time.", bundle: .module)
         }
         .alert(
+            String(localized: "Duplicate \(title)?", bundle: .module),
+            isPresented: $confirmingDuplicate
+        ) {
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
+            Button(String(localized: "Duplicate", bundle: .module)) { duplicate() }
+        } message: {
+            Text("A new draft with the same members, shares and payout order, and no payments. You can change the name and dates before you start it.", bundle: .module)
+        }
+        .alert(
             String(localized: "Couldn't change this kameti", bundle: .module),
             isPresented: Binding(get: { archiveFailure != nil }, set: { if !$0 { archiveFailure = nil } })
         ) {
@@ -124,6 +141,17 @@ public struct KametiDetailView: View {
 
     private func archive() {
         Task { archiveFailure = await model.archive() }
+    }
+
+    private func duplicate() {
+        duplicating = true
+        Task {
+            defer { duplicating = false }
+            switch await model.duplicate() {
+            case .success(let id): onResumeDraft?(id)
+            case .failure(let failure): archiveFailure = failure
+            }
+        }
     }
 
     private func restore() {
