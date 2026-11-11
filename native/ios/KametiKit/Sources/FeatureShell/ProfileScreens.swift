@@ -174,7 +174,7 @@ struct PeopleListView: View {
     }
 }
 
-/// Completed, archived and cancelled kametis; each opens its read-only view.
+/// Completed and cancelled kametis; each opens its read-only view.
 struct PastKametisView: View {
     let kametis: [Kameti]
     let onOpen: (String) -> Void
@@ -184,7 +184,7 @@ struct PastKametisView: View {
             if kametis.isEmpty {
                 ContentUnavailableView(
                     String(localized: "No past kametis", bundle: .module), systemImage: "archivebox",
-                    description: Text("Kametis that finish or are archived move here.", bundle: .module)
+                    description: Text("Kametis that finish or are cancelled move here.", bundle: .module)
                 )
             } else {
                 List(kametis) { kameti in
@@ -232,6 +232,8 @@ struct DeleteAccountSheet: View {
     @State private var typed = ""
     @State private var isDeleting = false
     @State private var failure: Failure?
+    @State private var archiving: AccountDeletionCheck.KametiRef?
+    @State private var archiveFailure: Failure?
 
     private static let word = "DELETE"
 
@@ -256,6 +258,29 @@ struct DeleteAccountSheet: View {
         }
         .kDismissesKeyboard()
         .task { await load() }
+        .alert(
+            String(localized: "Archive \(archiving?.name ?? "")?", bundle: .module),
+            isPresented: Binding(get: { archiving != nil }, set: { if !$0 { archiving = nil } }),
+            presenting: archiving
+        ) { kameti in
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
+            Button(String(localized: "Archive", bundle: .module), role: .destructive) {
+                Task {
+                    archiveFailure = await model.archiveKameti(id: kameti.id)
+                    await load()
+                }
+            }
+        } message: { _ in
+            Text("It becomes read-only for you and every member and moves to Archived, at the end of Past on Home. You can restore it any time.", bundle: .module)
+        }
+        .alert(
+            String(localized: "Couldn't archive this kameti", bundle: .module),
+            isPresented: Binding(get: { archiveFailure != nil }, set: { if !$0 { archiveFailure = nil } })
+        ) {
+            Button(String(localized: "OK", bundle: .module)) {}
+        } message: {
+            Text(archiveFailure?.userMessage ?? "")
+        }
     }
 
     private func load() async {
@@ -269,14 +294,16 @@ struct DeleteAccountSheet: View {
         VStack(alignment: .leading, spacing: KSpace.lg) {
             Label(String(localized: "You still run a kameti", bundle: .module), systemImage: "lock.fill")
                 .kText(KTextToken.title, color: KColors.warning)
-            Text("Other people's money is still being recorded in these, so your account can't be deleted yet. Archive them or hand them over to someone else first.", bundle: .module)
+            Text("Other people's money is still being recorded in these, so your account can't be deleted yet. Archive them first: they stay readable for their members.", bundle: .module)
                 .kText(KTextToken.body, color: KColors.textSecondary)
             card {
                 ForEach(Array(check.blockingKametis.enumerated()), id: \.element.id) { index, kameti in
                     HStack {
                         Text(kameti.name).kText(KTextToken.bodyStrong)
                         Spacer()
-                        KPill(String(localized: "Running", bundle: .module), foreground: KColors.positive, background: KColors.positiveSubtle)
+                        Button(String(localized: "Archive", bundle: .module)) { archiving = kameti }
+                            .buttonStyle(.glass)
+                            .tint(KColors.negative)
                     }
                     .padding(.vertical, KSpace.md)
                     if index < check.blockingKametis.count - 1 { Divider() }

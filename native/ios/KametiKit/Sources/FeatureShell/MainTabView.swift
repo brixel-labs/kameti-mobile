@@ -40,9 +40,10 @@ struct MainTabView: View {
                         onRecord: { router.push(.kametiAction(id: $0, action: $1)) },
                         onCreate: { router.push(.createKameti) },
                         onJoin: { router.push(.join(token: $0)) },
-                        onOpenInvitation: { router.push(.invitation(id: $0)) }
+                        onOpenInvitation: { router.push(.invitation(id: $0)) },
+                        onOpenArchived: { router.push(.archivedKametis) }
                     )
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }, homeModel: homeModel, profileModel: profileModel) }
                 }
             } label: {
                 Label(String(localized: "Home", bundle: .module), systemImage: "house")
@@ -51,7 +52,7 @@ struct MainTabView: View {
             Tab(value: AppTab.inbox) {
                 NavigationStack(path: $router.inboxPath) {
                     InboxView(model: inboxModel) { router.push(.invitation(id: $0)) }
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }, homeModel: homeModel, profileModel: profileModel) }
                 }
             } label: {
                 Label(String(localized: "Inbox", bundle: .module), systemImage: "tray")
@@ -60,8 +61,8 @@ struct MainTabView: View {
 
             Tab(value: AppTab.profile) {
                 NavigationStack(path: $router.profilePath) {
-                    ProfileView(model: profileModel) { router.push(.kametiDetail(id: $0)) }
-                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
+                    ProfileView(model: profileModel, onOpenKameti: { router.push(.kametiDetail(id: $0)) }, onOpenPast: { router.push(.pastKametis) })
+                        .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }, homeModel: homeModel, profileModel: profileModel) }
                 }
             } label: {
                 Label(String(localized: "Profile", bundle: .module), systemImage: "person")
@@ -81,6 +82,8 @@ private struct RouteDestination: View {
     let router: AppRouter
     let onFinished: () -> Void
     let knownKameti: (String) -> Kameti?
+    let homeModel: HomeViewModel
+    let profileModel: ProfileViewModel
 
     var body: some View {
         switch route {
@@ -98,6 +101,11 @@ private struct RouteDestination: View {
             JoinInviteScreen(token: nil, inviteId: id, dependencies: dependencies, router: router, onFinished: onFinished)
         case .activity(let id):
             ActivityScreen(kametiId: id, userId: userId, dependencies: dependencies)
+        case .archivedKametis:
+            ArchivedKametisView(model: homeModel) { router.push(.kametiDetail(id: $0)) }
+        case .pastKametis:
+            PastKametisView(kametis: profileModel.pastKametis) { router.push(.kametiDetail(id: $0)) }
+                .task { await profileModel.load() }
         }
     }
 }

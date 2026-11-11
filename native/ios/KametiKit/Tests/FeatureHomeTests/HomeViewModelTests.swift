@@ -48,6 +48,18 @@ struct HomeGroupingTests {
         #expect(!HomeViewModel.isPast(.active))
     }
 
+    @Test func archivedGetsItsOwnList() {
+        let result = HomeViewModel.sections(of: [
+            summary("a", owner: true), summary("arch", owner: true, status: .archived),
+            summary("theirs", owner: false, status: .archived), summary("old", owner: true, status: .completed),
+        ])
+        #expect(result.mine.map(\.id) == ["a"])
+        #expect(result.joined.isEmpty)
+        #expect(result.past.map(\.id) == ["old"])
+        #expect(result.archived.map(\.id) == ["arch", "theirs"])
+        #expect(!HomeSections(archived: result.archived).isEmpty)
+    }
+
     @Test func emptyWhenNothing() {
         #expect(HomeViewModel.sections(of: []).isEmpty)
     }

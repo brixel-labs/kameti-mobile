@@ -21,6 +21,12 @@ public protocol KametiRepository: Sendable {
     func updateKameti(id: String, changes: KametiChanges) async throws(Failure) -> Kameti
     /// Validates FR-12 on the server; fails with `kameti_not_ready`.
     func startKameti(id: String) async throws(Failure) -> Kameti
+    /// Owner only (§6.11): hides it from the running lists and makes it
+    /// read-only for everyone. Fails with `kameti_already_archived`.
+    func archiveKameti(id: String) async throws(Failure) -> Kameti
+    /// Owner only: back to the state it was archived from. Fails with
+    /// `kameti_not_archived` or `kameti_name_taken`.
+    func restoreKameti(id: String) async throws(Failure) -> Kameti
 
     func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member
     func updateMember(id: String, changes: MemberChanges) async throws(Failure) -> Member

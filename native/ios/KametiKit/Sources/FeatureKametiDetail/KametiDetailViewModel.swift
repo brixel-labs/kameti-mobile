@@ -310,6 +310,20 @@ public final class KametiDetailViewModel {
         return nil
     }
 
+    // MARK: Archive (§6.11)
+
+    public func archive() async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.kametis.archiveKameti(id: kametiId) } catch { return error }
+        await load()
+        return nil
+    }
+
+    public func restore() async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.kametis.restoreKameti(id: kametiId) } catch { return error }
+        await load()
+        return nil
+    }
+
     // MARK: Notes
 
     public func addNote(_ new: NewNote) async -> Failure? {

@@ -37,7 +37,8 @@ public final class ProfileViewModel {
             self.profile = me
             runningCount = all.filter { $0.isOwned(by: userId) }.count
             memberCount = all.count - runningCount
-            pastKametis = all.filter { [.completed, .archived, .cancelled].contains($0.status) }
+            // Archived kametis live on Home (Past → Archived), not here.
+            pastKametis = all.filter { [.completed, .cancelled].contains($0.status) }
             pastCount = pastKametis.count
             people = ((try? await dependencies.contacts.contacts()) ?? [])
                 .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
@@ -61,6 +62,13 @@ public final class ProfileViewModel {
     /// What deleting the account would do (it may be blocked).
     public func deletionCheck() async -> Result<AccountDeletionCheck, Failure> {
         do throws(Failure) { return .success(try await dependencies.account.deletionCheck()) } catch { return .failure(error) }
+    }
+
+    /// Archives a kameti that blocks account deletion (§6.11, D5).
+    public func archiveKameti(id: String) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.kametis.archiveKameti(id: id) } catch { return error }
+        await load()
+        return nil
     }
 
     /// Deletes the account, then signs out; the root view moves on.

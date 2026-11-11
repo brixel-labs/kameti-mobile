@@ -11,7 +11,6 @@ public final class SupabaseKametiRepository: KametiRepository {
     public func listKametis() async throws(Failure) -> [Kameti] {
         try await run {
             try await client.from("kametis").select()
-                .neq("status", value: "archived")
                 .order("created_at", ascending: false)
                 .execute().value
         }
@@ -57,6 +56,18 @@ public final class SupabaseKametiRepository: KametiRepository {
     public func startKameti(id: String) async throws(Failure) -> Kameti {
         try await run {
             try await client.rpc("start_kameti", params: ["p_kameti_id": JSONValue.string(id)]).execute().value
+        }
+    }
+
+    public func archiveKameti(id: String) async throws(Failure) -> Kameti {
+        try await run {
+            try await client.rpc("archive_kameti", params: ["p_kameti_id": JSONValue.string(id)]).execute().value
+        }
+    }
+
+    public func restoreKameti(id: String) async throws(Failure) -> Kameti {
+        try await run {
+            try await client.rpc("restore_kameti", params: ["p_kameti_id": JSONValue.string(id)]).execute().value
         }
     }
 
