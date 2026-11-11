@@ -96,6 +96,16 @@ extension Failure {
             String(localized: "There's no open invite to revoke.", bundle: .module)
         case "not_pending_approval":
             String(localized: "This request was already handled.", bundle: .module)
+        case "share_not_active":
+            String(localized: "This share has already been transferred.", bundle: .module)
+        case "same_member":
+            String(localized: "Pick someone other than the current holder.", bundle: .module)
+        case "invalid_transfer_month":
+            String(localized: "Pick this month or a later one.", bundle: .module)
+        case "already_in_slot":
+            String(localized: "This person already has a share in this slot.", bundle: .module)
+        case "member_not_in_kameti":
+            String(localized: "This person isn't a member of this kameti.", bundle: .module)
         case "member_not_linked":
             String(localized: "This person isn't linked to an account.", bundle: .module)
         case "cannot_unlink_owner":

@@ -75,6 +75,7 @@ public struct StubKametiRepository: KametiRepository {
     public func updateMember(id: String, changes: MemberChanges) async throws(Failure) -> Member { throw notStubbed }
     public func removeMember(id: String) async throws(Failure) { throw notStubbed }
     public func setSlotShares(slotId: String, shares: [ShareInput]) async throws(Failure) -> [Share] { throw notStubbed }
+    public func transferShare(shareId: String, toMemberId: String, fromMonth: Int, note: String?) async throws(Failure) -> Share { throw notStubbed }
     public func reorderSlots(kametiId: String, slotIdsInOrder: [String]) async throws(Failure) -> [Slot] { throw notStubbed }
 }
 

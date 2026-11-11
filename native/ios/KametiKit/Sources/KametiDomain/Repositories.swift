@@ -38,6 +38,10 @@ public protocol KametiRepository: Sendable {
     /// Replaces a slot's shares. The server checks the sum equals C, the
     /// Rs 1,000 steps, at most 4 sharers and the member slot limit.
     func setSlotShares(slotId: String, shares: [ShareInput]) async throws(Failure) -> [Share]
+    /// FR-33: moves a running kameti's share to another member from
+    /// `fromMonth` on; returns the new holder's share. The note is the optional
+    /// settlement note, saved as a private note.
+    func transferShare(shareId: String, toMemberId: String, fromMonth: Int, note: String?) async throws(Failure) -> Share
     /// New payout order: slot ids in month order (1...N).
     func reorderSlots(kametiId: String, slotIdsInOrder: [String]) async throws(Failure) -> [Slot]
 }

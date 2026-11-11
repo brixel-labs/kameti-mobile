@@ -79,6 +79,15 @@ public final class SupabaseKametiRepository: KametiRepository {
         }
     }
 
+    public func transferShare(shareId: String, toMemberId: String, fromMonth: Int, note: String?) async throws(Failure) -> Share {
+        try await run {
+            try await client.rpc("transfer_share", params: [
+                "p_share_id": JSONValue.string(shareId), "p_to_member_id": .string(toMemberId),
+                "p_from_month": .int(fromMonth), "p_note": .opt(note),
+            ] as RPCParams).execute().value
+        }
+    }
+
     public func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member {
         try await run {
             try await client.rpc("add_member", params: Params.addMember(kametiId: kametiId, new)).execute().value
