@@ -16,6 +16,8 @@ struct OwnerTabs: View {
     @State private var collecting = false
     @State private var voiding: VoidTarget?
     @State private var payingOut: Int?
+    @State private var addingMember = false
+    @State private var editingMember: Member?
 
     struct RecordTarget: Identifiable {
         let id = UUID()
@@ -95,7 +97,28 @@ struct OwnerTabs: View {
             }
         }
         .animation(.smooth(duration: 0.2), value: tab)
+        .toolbar {
+            if tab == .members, [.draft, .active].contains(data.kameti.status) {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { addingMember = true } label: {
+                        Image(systemName: "person.badge.plus").foregroundStyle(KColors.brand)
+                    }
+                    .accessibilityLabel(Text("Add member", bundle: .module))
+                }
+            }
+        }
         .task { await startPendingAction() }
+        .kBottomSheet(isPresented: $addingMember, title: String(localized: "Add member", bundle: .module), detents: [.large]) {
+            AddMemberSheet(data: data, model: model) { addingMember = false }
+        }
+        .kBottomSheet(
+            isPresented: Binding(get: { editingMember != nil }, set: { if !$0 { editingMember = nil } }),
+            title: String(localized: "Edit member", bundle: .module), detents: [.large]
+        ) {
+            if let member = editingMember {
+                EditMemberSheet(data: data, model: model, member: member) { editingMember = nil }.id(member.id)
+            }
+        }
         .kBottomSheet(
             isPresented: Binding(get: { recording != nil }, set: { if !$0 { recording = nil } }),
             title: String(localized: "Record payment", bundle: .module), detents: [.large]
@@ -140,7 +163,7 @@ struct OwnerTabs: View {
     private func content(for tab: Tab) -> some View {
         switch tab {
         case .overview: OverviewTab(data: data) { recording = RecordTarget(memberId: $0) }
-        case .members: MembersTab(data: data)
+        case .members: MembersTab(data: data) { editingMember = $0 }
         case .schedule: ScheduleSection(data: data) { payingOut = $0 }
         case .payments: PaymentsTab(data: data) { voiding = $0 }
         }
@@ -306,6 +329,8 @@ struct StatusTextPill: View {
 /// joined, and one row per member with slots, balance and join state.
 struct MembersTab: View {
     let data: KametiDetailData
+    /// Opens the edit sheet for a member (owner only, so always set here).
+    var onSelect: ((Member) -> Void)?
     @State private var search = ""
 
     var body: some View {
@@ -354,9 +379,9 @@ struct MembersTab: View {
                 ForEach(Array(list.enumerated()), id: \.element.id) { index, member in
                     let balance = balances[member.id]
                     let slots = DetailLogic.slotCount(of: member, shares: data.shares)
-                    DetailRow(
+                    Button { onSelect?(member) } label: { DetailRow(
                         member: member, in: data.members,
-                        subtitle: balance.map {
+                        subtitle: slots == 0 ? String(localized: "No slot yet", bundle: .module) : balance.map {
                             slots == 1
                                 ? String(localized: "1 slot · \($0.monthlyDue.format())/mo", bundle: .module)
                                 : String(localized: "\(slots) slots · \($0.monthlyDue.format())/mo", bundle: .module)
@@ -367,7 +392,10 @@ struct MembersTab: View {
                             if let balance { BalanceChip(balance: balance) }
                             joinCaption(member.joinStatus)
                         }
-                    }
+                    } }
+                    .buttonStyle(.plain)
+                    .disabled(onSelect == nil)
+                    .accessibilityHint(Text("Edit or remove", bundle: .module))
                 }
             }
         }
