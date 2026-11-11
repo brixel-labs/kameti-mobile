@@ -6,6 +6,9 @@ separate from the app and from the company site (`fhbtechservices.com`).
 
 Production domain: `kameti.fhbtechservices.com`.
 
+Vercel project `kameti-site`: Root Directory `legal-site`, preset Other, production branch
+`develop`. Every push to `develop` that touches this folder redeploys it.
+
 ## Pages
 
 - `/` — landing page linking to the pages below
