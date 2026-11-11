@@ -331,7 +331,8 @@ enum InboxLogic {
         case "joined": Style(symbol: "person.fill", tint: KColors.brand, background: KColors.brandSubtle)
         case "join_request": Style(symbol: "person.badge.clock", tint: KColors.info, background: KColors.infoSubtle)
         case "invite": Style(symbol: "envelope", tint: KColors.brand, background: KColors.brandSubtle)
-        case "reminder": Style(symbol: "bell", tint: KColors.warning, background: KColors.warningSubtle)
+        case "reminder", "broadcast": Style(symbol: "bell", tint: KColors.warning, background: KColors.warningSubtle)
+        case "overdue", "owner_digest": Style(symbol: "exclamationmark.circle", tint: KColors.negative, background: KColors.negativeSubtle)
         default: Style(symbol: "arrow.left.arrow.right", tint: KColors.textSecondary, background: KColors.surfaceSunken)
         }
     }

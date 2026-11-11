@@ -186,6 +186,13 @@ struct EditMemberSheet: View {
     @State private var isRemoving = false
     @State private var failure: Failure?
     @State private var transferring = false
+    @State private var reminding = false
+
+    /// What this member owes now, if anything (running kameti only).
+    private var owes: Money? {
+        guard data.kameti.status == .active, let owes = data.balances.first(where: { $0.memberId == member.id })?.owes, owes.isPositive else { return nil }
+        return owes
+    }
 
     init(data: KametiDetailData, model: KametiDetailViewModel, member: Member, onDone: @escaping () -> Void) {
         self.data = data
@@ -210,6 +217,7 @@ struct EditMemberSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: KSpace.lg) {
                 identity
+                if let owes { remindCard(owes) }
                 AppAccessCard(data: data, model: model, member: currentMember)
                 MemberField(
                     title: String(localized: "Name", bundle: .module), text: $name,
@@ -250,12 +258,34 @@ struct EditMemberSheet: View {
         } message: {
             Text("They have no shares or payments, so nothing on the ledger changes. This can't be undone.", bundle: .module)
         }
+        .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind \(MemberLogic.firstName(member.name))", bundle: .module), detents: [.medium, .large]) {
+            RemindSheet(kameti: data.kameti, dependencies: model.dependencies, onlyMemberId: member.id) { reminding = false }
+        }
         .kBottomSheet(
             isPresented: $transferring,
             title: String(localized: "Transfer \(MemberLogic.firstName(member.name))'s share", bundle: .module), detents: [.large]
         ) {
             TransferShareSheet(data: data, model: model, member: currentMember) { transferring = false }
         }
+    }
+
+    /// Owes now: what, and a Remind button (FR-82, or WhatsApp without the app).
+    private func remindCard(_ owes: Money) -> some View {
+        HStack(spacing: KSpace.md) {
+            Label(String(localized: "Owes \(owes.format())", bundle: .module), systemImage: "clock")
+                .kText(KTextToken.bodyStrong, color: KColors.warning)
+            Spacer(minLength: KSpace.sm)
+            Button { reminding = true } label: {
+                Label(String(localized: "Remind", bundle: .module), systemImage: "bell")
+                    .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.textOnBrand)
+                    .padding(.horizontal, KSpace.md).frame(minHeight: 34)
+                    .background(KColors.warning, in: Capsule())
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(KSpace.md)
+        .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: 12))
     }
 
     /// FR-33: hand a share to someone else from a month onward.

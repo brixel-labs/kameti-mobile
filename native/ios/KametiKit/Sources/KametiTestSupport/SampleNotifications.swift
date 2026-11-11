@@ -10,6 +10,7 @@ final class SampleNotificationsRepository: NotificationsRepository {
         var items: [AppNotification]
         var preferences = NotificationPreferences()
         var tokens: Set<String> = []
+        var remindedToday: Set<String> = []
     }
 
     private let state: Mutex<State>
@@ -45,5 +46,28 @@ final class SampleNotificationsRepository: NotificationsRepository {
     func preferences(userId: String) async throws(Failure) -> NotificationPreferences { state.withLock { $0.preferences } }
     func updatePreferences(userId: String, _ preferences: NotificationPreferences) async throws(Failure) {
         state.withLock { $0.preferences = preferences }
+    }
+
+    /// The family kameti's members who owe in the demo; Hira has no app.
+    func reminderTargets(kametiId: String) async throws(Failure) -> ReminderTargets {
+        let reminded = state.withLock { $0.remindedToday }
+        return ReminderTargets(dueDay: 10, members: [
+            .init(memberId: "f4", name: "Omar Farooq", owed: Money(250_000), hasApp: true, remindedToday: reminded.contains("f4")),
+            .init(memberId: "f6", name: "Faisal Iqbal", owed: Money(250_000), hasApp: true, remindedToday: reminded.contains("f6")),
+            .init(memberId: "f5", name: "Hira Malik", owed: Money(125_000), hasApp: false, phone: "0300 1234567"),
+        ])
+    }
+
+    /// One owner reminder per member per day, like send_reminder_broadcast.
+    func sendReminder(kametiId: String, message: String?, memberIds: [String]?) async throws(Failure) -> ReminderResult {
+        let names = ["f4": "Omar Farooq", "f6": "Faisal Iqbal"]
+        return try state.withLock { s throws(Failure) in
+            let wanted = memberIds ?? ["f4", "f6"]
+            let skipped = wanted.filter { s.remindedToday.contains($0) }
+            let sending = wanted.filter { !s.remindedToday.contains($0) }
+            guard !sending.isEmpty else { throw Failure.server(code: skipped.isEmpty ? "nobody_to_remind" : "already_reminded_today", detail: nil) }
+            s.remindedToday.formUnion(sending)
+            return ReminderResult(sent: sending.count, skipped: skipped.compactMap { names[$0] })
+        }
     }
 }
