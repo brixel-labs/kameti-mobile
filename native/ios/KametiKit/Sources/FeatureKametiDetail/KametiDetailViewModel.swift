@@ -42,6 +42,8 @@ public final class KametiDetailViewModel {
     /// What the caller already knows (from Home), so the title and subtitle
     /// show the moment the screen opens, before the details load.
     public let preview: Kameti?
+    /// An action to start once the owner's tabs are on screen (from Home).
+    public var pendingAction: RecordAction?
 
     public init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti? = nil) {
         self.preview = preview
@@ -104,6 +106,61 @@ public final class KametiDetailViewModel {
     public func recordPayments(items: [BatchPaymentItem], receivedOn: Date, method: PaymentMethod) async -> Failure? {
         do throws(Failure) {
             _ = try await dependencies.payments.recordPayments(kametiId: kametiId, receivedOn: receivedOn, items: items, method: method)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
+    /// One recipient's payout, and any dues taken from it.
+    public struct PayoutEntry: Sendable {
+        public let slotId: String
+        public let memberId: String
+        public let amount: Money
+        public let deduction: Money?
+        public init(slotId: String, memberId: String, amount: Money, deduction: Money?) {
+            self.slotId = slotId; self.memberId = memberId; self.amount = amount; self.deduction = deduction
+        }
+    }
+
+    /// Records the payouts for a month, plus a payment for each deduction
+    /// (dues taken from a payout), then reloads. Keys are made once per sheet so
+    /// a retry never records anything twice. Stops at the first failure.
+    public func recordPayouts(
+        _ entries: [PayoutEntry], paidOn: Date, method: PaymentMethod, reference: String?, note: String?,
+        deductionNote: String, payoutKeys: [String: String], deductionKeys: [String: String]
+    ) async -> Failure? {
+        var failure: Failure?
+        loop: for entry in entries {
+            do throws(Failure) {
+                if let deduction = entry.deduction, deduction.isPositive {
+                    _ = try await dependencies.payments.recordPayment(NewPayment(
+                        memberId: entry.memberId, amount: deduction, receivedOn: paidOn,
+                        idempotencyKey: deductionKeys[entry.memberId] ?? UUID().uuidString.lowercased(),
+                        method: .other, note: deductionNote
+                    ))
+                }
+                if entry.amount.isPositive {
+                    _ = try await dependencies.payments.recordPayout(NewPayout(
+                        slotId: entry.slotId, memberId: entry.memberId, amount: entry.amount, paidOn: paidOn,
+                        idempotencyKey: payoutKeys[entry.memberId] ?? UUID().uuidString.lowercased(),
+                        method: method, reference: reference, note: note
+                    ))
+                }
+            } catch {
+                failure = error
+                break loop
+            }
+        }
+        await load()
+        return failure
+    }
+
+    /// Voids a payout with a reason.
+    public func voidPayout(id: String, reason: String) async -> Failure? {
+        do throws(Failure) {
+            _ = try await dependencies.payments.voidPayout(id: id, reason: reason)
         } catch {
             return error
         }

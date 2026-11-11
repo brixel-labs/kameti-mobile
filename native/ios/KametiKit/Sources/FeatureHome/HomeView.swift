@@ -11,15 +11,18 @@ public struct HomeView: View {
     private let onOpen: (String) -> Void
     private let onCreate: () -> Void
     private let onJoin: (String) -> Void
+    private let onRecord: (String, RecordAction) -> Void
 
     public init(
         model: HomeViewModel,
         onOpen: @escaping (String) -> Void,
+        onRecord: @escaping (String, RecordAction) -> Void = { _, _ in },
         onCreate: @escaping () -> Void,
         onJoin: @escaping (String) -> Void
     ) {
         self.model = model
         self.onOpen = onOpen
+        self.onRecord = onRecord
         self.onCreate = onCreate
         self.onJoin = onJoin
     }
@@ -39,6 +42,7 @@ public struct HomeView: View {
             }
         }
         .background(KColors.background)
+        .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) { recordButton }
         .navigationTitle(model.firstName ?? String(localized: "Kameti", bundle: .module))
         .task { await model.load() }
         .refreshable { await model.load() }
@@ -74,6 +78,45 @@ public struct HomeView: View {
             }
             .padding(.horizontal, KSpace.xl)
             .padding(.bottom, KSpace.xl)
+        }
+    }
+
+    /// Owner kametis that are collecting this month.
+    private var recordable: [HomeKametiSummary] {
+        model.sections.mine.filter { $0.currentMonth != nil }
+    }
+
+    /// Record payment: pick one of my kametis, then what to do on it.
+    @ViewBuilder private var recordButton: some View {
+        if !recordable.isEmpty {
+            Menu {
+                Section(String(localized: "Choose a kameti", bundle: .module)) {
+                  ForEach(recordable) { item in
+                    Menu(item.kameti.name) {
+                        let month = item.currentMonth.map { DetailLogic.monthTitle($0.monthStart).split(separator: " ").first.map(String.init) ?? "" } ?? ""
+                        if item.currentMonth != nil, !(item.currentMonth?.state == .paidOut || item.currentMonth?.state == .paidOutShort), !item.recipients.isEmpty {
+                            Button { onRecord(item.id, .payOut) } label: {
+                                Label(String(localized: "Pay out \(month)", bundle: .module), systemImage: "arrow.up.right")
+                            }
+                        }
+                        Button { onRecord(item.id, .recordOne) } label: {
+                            Label(String(localized: "Record one payment", bundle: .module), systemImage: "plus")
+                        }
+                        Button { onRecord(item.id, .collect) } label: {
+                            Label(String(localized: "Collect \(month) (tap to settle)", bundle: .module), systemImage: "checklist")
+                        }
+                    }
+                  }
+                }
+            } label: {
+                Label(String(localized: "Record payment", bundle: .module), systemImage: "plus")
+                    .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                    .padding(.horizontal, KSpace.lg)
+                    .frame(minHeight: 52)
+                    .background(KColors.brand, in: RoundedRectangle(cornerRadius: KRadius.card))
+                    .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+            }
+            .padding(KSpace.xl)
         }
     }
 
@@ -133,6 +176,11 @@ struct HomeKametiCard: View {
 
     // MARK: Owner
 
+    private var isPaidOut: Bool {
+        guard let state = item.currentMonth?.state else { return false }
+        return state == .paidOut || state == .paidOutShort
+    }
+
     @ViewBuilder private var ownerBody: some View {
         if let month = item.currentMonth {
             KPotProgress(
@@ -142,7 +190,9 @@ struct HomeKametiCard: View {
                 headline: .ofTarget
             )
         }
-        if !item.recipients.isEmpty {
+        if isPaidOut, let month = item.currentMonth {
+            paidOutStrip(month)
+        } else if !item.recipients.isEmpty {
             Divider()
             HStack(spacing: KSpace.md) {
                 KAvatarStack(item.recipients.map { ($0.name, $0.colorIndex) })
@@ -151,6 +201,21 @@ struct HomeKametiCard: View {
                     .kText(KTextToken.body)
             }
         }
+    }
+
+    /// After a payout: a green strip (amber when short) with who was paid, how
+    /// much and when.
+    private func paidOutStrip(_ month: MonthCollectionRow) -> some View {
+        let short = month.state == .paidOutShort && month.paidOutShortBy.isPositive
+        let people = item.recipients.map(\.name).joined(separator: " + ")
+        return KPaidOutStrip(
+            people: item.recipients.map { ($0.name, $0.colorIndex) },
+            title: short
+                ? String(localized: "Paid out · \(month.paidOut.format()) · short \(month.paidOutShortBy.format())", bundle: .module)
+                : String(localized: "Paid out · \(month.paidOut.format())", bundle: .module),
+            subtitle: item.payoutDate.map { "\(people) · \(DetailLogic.dayMonth($0))" } ?? people,
+            isShort: short
+        )
     }
 
     // MARK: Member
@@ -215,7 +280,13 @@ struct HomeKametiCard: View {
     }
 
     @ViewBuilder private var rolePill: some View {
-        if item.isOwner {
+        if item.isOwner, isPaidOut {
+            if item.currentMonth?.state == .paidOutShort {
+                KPill(String(localized: "Paid out short", bundle: .module), foreground: KColors.warning, background: KColors.warningSubtle)
+            } else {
+                KPill(String(localized: "Paid out", bundle: .module), foreground: KColors.positive, background: KColors.positiveSubtle)
+            }
+        } else if item.isOwner {
             KPill(String(localized: "Owner", bundle: .module), foreground: KColors.onBrandSubtle, background: KColors.brandSubtle)
         } else {
             KPill(String(localized: "View only", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)

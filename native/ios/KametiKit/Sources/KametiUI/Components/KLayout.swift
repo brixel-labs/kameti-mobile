@@ -72,17 +72,32 @@ public struct KAvatar: View {
     }
 }
 
-/// Overlapping avatars, for "who receives this month".
+/// Overlapping avatars, for "who receives this month". With `showsCheck`, each
+/// avatar gets a small green tick (already paid out).
 public struct KAvatarStack: View {
     private let people: [(name: String, colorIndex: Int)]
+    private let showsCheck: Bool
 
-    public init(_ people: [(name: String, colorIndex: Int)]) { self.people = people }
+    public init(_ people: [(name: String, colorIndex: Int)], showsCheck: Bool = false) {
+        self.people = people; self.showsCheck = showsCheck
+    }
 
     public var body: some View {
         HStack(spacing: -10) {
             ForEach(Array(people.prefix(3).enumerated()), id: \.offset) { index, person in
                 KAvatar(name: person.name, colorIndex: person.colorIndex, size: .medium)
                     .overlay(Circle().stroke(KColors.surface, lineWidth: 2))
+                    .overlay(alignment: .bottomTrailing) {
+                        if showsCheck {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 8, weight: .heavy))
+                                .foregroundStyle(KColors.textOnBrand)
+                                .frame(width: 16, height: 16)
+                                .background(KColors.brand, in: Circle())
+                                .overlay(Circle().stroke(KColors.surface, lineWidth: 2))
+                                .offset(x: 2, y: 2)
+                        }
+                    }
                     .zIndex(Double(-index))
             }
         }

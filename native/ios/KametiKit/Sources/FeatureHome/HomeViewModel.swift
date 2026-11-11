@@ -19,6 +19,8 @@ public struct HomeKametiSummary: Identifiable, Equatable, Sendable {
     public var recipients: [Person] = []
     /// My next payout (member view).
     public var nextTurn: NextTurn?
+    /// When this month's payout was made (the latest payout of its slot).
+    public var payoutDate: Date?
 
     public struct Person: Equatable, Sendable {
         public let name: String
@@ -130,6 +132,11 @@ public final class HomeViewModel {
                     let index = Int(recipient.member.color ?? "") ?? max(members.firstIndex(of: recipient.member) ?? 0, 0)
                     return HomeKametiSummary.Person(name: recipient.member.id == me?.id ? "You" : recipient.member.name, colorIndex: index)
                 }
+        }
+        if let month = item.currentMonth, month.state == .paidOut || month.state == .paidOutShort,
+           let payouts = try? await dependencies.payments.payouts(kametiId: id) {
+            let slotIds = Set(slots.filter { $0.payoutMonthIndex == month.monthIndex }.map(\.id))
+            item.payoutDate = payouts.filter { $0.voidedAt == nil && slotIds.contains($0.slotId) }.map(\.paidOn).max()
         }
         if !item.isOwner, let me {
             if let balances = try? await dependencies.ledger.memberBalances(kametiId: id) {

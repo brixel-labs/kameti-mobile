@@ -250,11 +250,19 @@ struct MemberPickerList: View {
     }
 }
 
-/// Void a payment (FR-4x): payments are never edited or deleted, so a mistake
+/// What is being voided: a payment or a payout.
+struct VoidTarget: Identifiable {
+    let id: String
+    let name: String
+    let amount: Money
+    let subtitle: String
+    let isPayout: Bool
+}
+
+/// Void a payment or payout: entries are never edited or deleted, so a mistake
 /// is voided with a reason and entered again.
-struct VoidPaymentSheet: View {
-    let payment: Payment
-    let memberName: String
+struct VoidSheet: View {
+    let target: VoidTarget
     let model: KametiDetailViewModel
     let onDone: () -> Void
 
@@ -269,12 +277,11 @@ struct VoidPaymentSheet: View {
             KCard {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(memberName).kText(KTextToken.bodyStrong)
-                        Text("\(DetailLogic.dayMonth(payment.receivedOn)) · \(payment.method.label)")
-                            .kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+                        Text(target.name).kText(KTextToken.bodyStrong)
+                        Text(target.subtitle).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
                     }
                     Spacer()
-                    KMoneyText(payment.amount, style: .title)
+                    KMoneyText(target.amount, style: .title)
                 }
             }
             VStack(alignment: .leading, spacing: 6) {
@@ -284,14 +291,14 @@ struct VoidPaymentSheet: View {
                     .frame(minHeight: 48)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
             }
-            Text("The payment stays in the history, struck through, and no longer counts.", bundle: .module)
-                .kText(KTextToken.subtitle, color: KColors.textSubtitle)
+            Text("It stays in the history, struck through, and no longer counts.", bundle: .module)
+                .kText(KTextToken.bodySm, color: KColors.textSubtitle)
             if let failure {
                 Label(failure.userMessage, systemImage: "exclamationmark.triangle").kText(KTextToken.bodySm, color: KColors.negative)
             }
             Button(action: submit) {
                 ZStack {
-                    Text("Void payment", bundle: .module).opacity(isBusy ? 0 : 1)
+                    Text(target.isPayout ? String(localized: "Void payout", bundle: .module) : String(localized: "Void payment", bundle: .module)).opacity(isBusy ? 0 : 1)
                     if isBusy { ProgressView().controlSize(.small).tint(KColors.textOnBrand) }
                 }
                 .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
@@ -312,7 +319,9 @@ struct VoidPaymentSheet: View {
         isBusy = true
         failure = nil
         Task {
-            let result = await model.voidPayment(id: payment.id, reason: trimmed)
+            let result = target.isPayout
+                ? await model.voidPayout(id: target.id, reason: trimmed)
+                : await model.voidPayment(id: target.id, reason: trimmed)
             isBusy = false
             if let result { failure = result } else { onDone() }
         }

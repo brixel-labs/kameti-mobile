@@ -40,9 +40,39 @@ public enum SampleData {
         Member(id: "f\($0.offset + 1)", kametiId: "family", name: $0.element, joinStatus: $0.offset == 5 ? .invited : .joined)
     }
     static let familySlots = (1...6).map { Slot(id: "fs\($0)", kametiId: "family", payoutMonthIndex: $0) }
-    static let familyShares = (1...6).map {
-        Share(id: "fh\($0)", kametiId: "family", slotId: "fs\($0)", memberId: "f\($0)", monthlyAmount: Money(250_000), effectiveFromMonth: 1)
+    /// Month 2's slot is shared between Sara and Ali, so the payout screen
+    /// shows two recipients (Ali also owes dues, to try "take it from the payout").
+    static let familyShares: [Share] = (1...6).flatMap { month -> [Share] in
+        if month == 2 {
+            return [
+                Share(id: "fh2a", kametiId: "family", slotId: "fs2", memberId: "f2", monthlyAmount: Money(125_000), effectiveFromMonth: 1),
+                Share(id: "fh2b", kametiId: "family", slotId: "fs2", memberId: "f1", monthlyAmount: Money(125_000), effectiveFromMonth: 1),
+            ]
+        }
+        return [Share(id: "fh\(month)", kametiId: "family", slotId: "fs\(month)", memberId: "f\(month)", monthlyAmount: Money(250_000), effectiveFromMonth: 1)]
     }
+
+    // MARK: Friends kameti (I run it; month 2 pays out to three people)
+
+    static let friends = Kameti(
+        id: "friends", ownerId: userId, name: "Friends kameti", startMonth: date(10), monthsN: 3,
+        slotAmountC: Money(300_000), dueDay: 12, reminderDays: [1, 5], maxSlotsPerMember: 3, status: .active
+    )
+    static let friendsMembers = [
+        Member(id: "fr1", kametiId: "friends", name: "Hamza Ali", joinStatus: .joined),
+        Member(id: "fr2", kametiId: "friends", name: "Zara Noor", joinStatus: .joined),
+        Member(id: "fr3", kametiId: "friends", name: "Bilal Khan", joinStatus: .joined),
+        Member(id: "fr4", kametiId: "friends", name: "Mehwish Raza", joinStatus: .joined),
+    ]
+    static let friendsSlots = (1...3).map { Slot(id: "frs\($0)", kametiId: "friends", payoutMonthIndex: $0) }
+    static let friendsShares = [
+        Share(id: "frh1", kametiId: "friends", slotId: "frs1", memberId: "fr1", monthlyAmount: Money(300_000), effectiveFromMonth: 1),
+        Share(id: "frh2a", kametiId: "friends", slotId: "frs2", memberId: "fr2", monthlyAmount: Money(150_000), effectiveFromMonth: 1),
+        Share(id: "frh2b", kametiId: "friends", slotId: "frs2", memberId: "fr3", monthlyAmount: Money(100_000), effectiveFromMonth: 1),
+        Share(id: "frh2c", kametiId: "friends", slotId: "frs2", memberId: "fr4", monthlyAmount: Money(50_000), effectiveFromMonth: 1),
+        Share(id: "frh3a", kametiId: "friends", slotId: "frs3", memberId: "fr1", monthlyAmount: Money(100_000), effectiveFromMonth: 1),
+        Share(id: "frh3b", kametiId: "friends", slotId: "frs3", memberId: "fr3", monthlyAmount: Money(200_000), effectiveFromMonth: 1),
+    ]
 
     // MARK: Office kameti (I'm a member)
 
@@ -137,6 +167,14 @@ public enum SampleData {
             payment("fp9", "family", "f3", 375_000, month: 11, day: 6, method: .bankTransfer, reference: "88990"),
             payment("fp10", "family", "f5", 125_000, month: 11, day: 8),
         ]
+    /// October fully paid; November short by Rs 1,00,000 (Zara and Mehwish owe).
+    static let friendsPayments = [
+        payment("frp1", "friends", "fr1", 400_000, month: 10, day: 3), payment("frp2", "friends", "fr2", 150_000, month: 10, day: 4),
+        payment("frp3", "friends", "fr3", 300_000, month: 10, day: 4), payment("frp4", "friends", "fr4", 50_000, month: 10, day: 6),
+        payment("frp5", "friends", "fr1", 400_000, month: 11, day: 2), payment("frp6", "friends", "fr3", 300_000, month: 11, day: 5),
+        payment("frp7", "friends", "fr2", 100_000, month: 11, day: 7),
+    ]
+
     static let officePayments = [
         payment("op1", "office", "o1", 100_000, month: 10, day: 2), payment("op2", "office", "o2", 100_000, month: 10, day: 3),
         payment("op3", "office", "o3", 100_000, month: 10, day: 3), payment("op4", "office", "o4", 100_000, month: 10, day: 4),
@@ -160,10 +198,10 @@ private let notFound = Failure.server(code: "not_found", detail: nil)
 /// wizard can be tried without a backend. Nothing is saved to disk.
 final class SampleKametiRepository: KametiRepository {
     private struct State {
-        var kametis = [SampleData.family, SampleData.office]
-        var members = ["family": SampleData.familyMembers, "office": SampleData.officeMembers]
-        var slots = ["family": SampleData.familySlots, "office": SampleData.officeSlots]
-        var shares = ["family": SampleData.familyShares, "office": SampleData.officeShares]
+        var kametis = [SampleData.family, SampleData.friends, SampleData.office]
+        var members = ["family": SampleData.familyMembers, "friends": SampleData.friendsMembers, "office": SampleData.officeMembers]
+        var slots = ["family": SampleData.familySlots, "friends": SampleData.friendsSlots, "office": SampleData.officeSlots]
+        var shares = ["family": SampleData.familyShares, "friends": SampleData.friendsShares, "office": SampleData.officeShares]
         var counter = 0
     }
 
@@ -291,10 +329,31 @@ private let readOnly = Failure.unknown(description: "sample data is read only")
 /// balances, statuses and collections too.
 final class SamplePaymentStore: Sendable {
     private let payments = Mutex([
-        "family": SampleData.familyPayments, "office": SampleData.officePayments,
+        "family": SampleData.familyPayments, "friends": SampleData.friendsPayments, "office": SampleData.officePayments,
     ])
 
+    private let payouts = Mutex([String: [Payout]]())
+
     func all(_ kametiId: String) -> [Payment] { payments.withLock { $0[kametiId] ?? [] } }
+
+    func payouts(_ kametiId: String) -> [Payout] { payouts.withLock { $0[kametiId] ?? [] } }
+
+    func add(_ payout: Payout) { payouts.withLock { $0[payout.kametiId, default: []].append(payout) } }
+
+    func voidPayout(id: String, reason: String) -> Payout? {
+        payouts.withLock { state in
+            for key in state.keys {
+                guard let index = state[key]?.firstIndex(where: { $0.id == id }), let old = state[key]?[index] else { continue }
+                let voided = Payout(
+                    id: old.id, kametiId: old.kametiId, slotId: old.slotId, memberId: old.memberId, amount: old.amount, paidOn: old.paidOn,
+                    method: old.method, reference: old.reference, note: old.note, voidedAt: Date(), voidReason: reason
+                )
+                state[key]?[index] = voided
+                return voided
+            }
+            return nil
+        }
+    }
 
     func add(_ payment: Payment) { payments.withLock { $0[payment.kametiId, default: []].append(payment) } }
 
@@ -330,7 +389,7 @@ enum SampleLedger {
         return calendar
     }()
 
-    static func compute(kameti: Kameti, members: [Member], shares: [Share], payments: [Payment], current: Int) -> Result {
+    static func compute(kameti: Kameti, members: [Member], shares: [Share], slots: [Slot], payments: [Payment], payouts: [Payout], current: Int) -> Result {
         var result = Result()
         let valid = payments.filter { $0.voidedAt == nil }
         func monthIndex(of date: Date) -> Int {
@@ -368,12 +427,16 @@ enum SampleLedger {
         let target = kameti.pot.rupees
         for month in 1...kameti.monthsN {
             let received = valid.filter { monthIndex(of: $0.receivedOn) == month }.reduce(0) { $0 + $1.amount.rupees }
-            let state: MonthCollectionState = month < current ? .paidOut : (month == current ? (received >= target ? .fullyCollected : .collecting) : .upcoming)
+            let slotIds = Set(slots.filter { $0.payoutMonthIndex == month }.map(\.id))
+            let paidOut = payouts.filter { $0.voidedAt == nil && slotIds.contains($0.slotId) }.reduce(0) { $0 + $1.amount.rupees }
+            var state: MonthCollectionState = month < current ? .paidOut : (month == current ? (received >= target ? .fullyCollected : .collecting) : .upcoming)
+            if paidOut > 0 { state = paidOut >= target ? .paidOut : .paidOutShort }
             result.collections.append(MonthCollectionRow(
                 kametiId: kameti.id, monthIndex: month, monthStart: start(month), isCurrent: month == current, target: Money(target),
                 received: Money(received), covered: Money(allocatedByMonth[month] ?? 0), paidCount: paidCountByMonth[month] ?? 0, memberCount: payers,
-                payoutShortfall: .zero, paidOut: Money(month < current ? target : 0), recipients: 1, recipientsPaid: month < current ? 1 : 0,
-                paidOutShortBy: .zero, state: state
+                payoutShortfall: Money(month <= current ? max(target - received, 0) : 0), paidOut: Money(paidOut > 0 ? paidOut : (month < current ? target : 0)),
+                recipients: 1, recipientsPaid: month < current ? 1 : 0,
+                paidOutShortBy: Money(paidOut > 0 ? max(target - paidOut, 0) : 0), state: state
             ))
         }
         return result
@@ -386,9 +449,11 @@ struct SampleLedgerRepository: LedgerRepository {
     private func ledger(_ kametiId: String) -> SampleLedger.Result {
         switch kametiId {
         case "family":
-            return SampleLedger.compute(kameti: SampleData.family, members: SampleData.familyMembers, shares: SampleData.familyShares, payments: store.all("family"), current: 2)
+            return SampleLedger.compute(kameti: SampleData.family, members: SampleData.familyMembers, shares: SampleData.familyShares, slots: SampleData.familySlots, payments: store.all("family"), payouts: store.payouts("family"), current: 2)
+        case "friends":
+            return SampleLedger.compute(kameti: SampleData.friends, members: SampleData.friendsMembers, shares: SampleData.friendsShares, slots: SampleData.friendsSlots, payments: store.all("friends"), payouts: store.payouts("friends"), current: 2)
         case "office":
-            return SampleLedger.compute(kameti: SampleData.office, members: SampleData.officeMembers, shares: SampleData.officeShares, payments: store.all("office"), current: 2)
+            return SampleLedger.compute(kameti: SampleData.office, members: SampleData.officeMembers, shares: SampleData.officeShares, slots: SampleData.officeSlots, payments: store.all("office"), payouts: store.payouts("office"), current: 2)
         default:
             return SampleLedger.Result()
         }
@@ -405,11 +470,11 @@ struct SamplePaymentsRepository: PaymentsRepository {
     let store: SamplePaymentStore
 
     func payments(kametiId: String) async throws(Failure) -> [Payment] { store.all(kametiId) }
-    func payouts(kametiId: String) async throws(Failure) -> [Payout] { [] }
+    func payouts(kametiId: String) async throws(Failure) -> [Payout] { store.payouts(kametiId) }
 
     func recordPayment(_ new: NewPayment) async throws(Failure) -> Payment {
         guard new.amount.isPositive else { throw Failure.server(code: "invalid_amount", detail: nil) }
-        let kametiId = SampleData.familyMembers.contains { $0.id == new.memberId } ? "family" : "office"
+        let kametiId = SampleData.familyMembers.contains { $0.id == new.memberId } ? "family" : (SampleData.friendsMembers.contains { $0.id == new.memberId } ? "friends" : "office")
         let payment = Payment(
             id: UUID().uuidString.lowercased(), kametiId: kametiId, memberId: new.memberId, amount: new.amount, receivedOn: new.receivedOn,
             method: new.method, createdAt: Date(), reference: new.reference, note: new.note, paidByName: new.paidByName
@@ -436,6 +501,18 @@ struct SamplePaymentsRepository: PaymentsRepository {
         return voided
     }
 
-    func recordPayout(_ new: NewPayout) async throws(Failure) -> Payout { throw readOnly }
-    func voidPayout(id: String, reason: String) async throws(Failure) -> Payout { throw readOnly }
+    func recordPayout(_ new: NewPayout) async throws(Failure) -> Payout {
+        guard new.amount.isPositive else { throw Failure.server(code: "invalid_amount", detail: nil) }
+        let payout = Payout(
+            id: UUID().uuidString.lowercased(), kametiId: new.slotId.hasPrefix("fs") ? "family" : (new.slotId.hasPrefix("frs") ? "friends" : "office"), slotId: new.slotId,
+            memberId: new.memberId, amount: new.amount, paidOn: new.paidOn, method: new.method, reference: new.reference, note: new.note
+        )
+        store.add(payout)
+        return payout
+    }
+
+    func voidPayout(id: String, reason: String) async throws(Failure) -> Payout {
+        guard let voided = store.voidPayout(id: id, reason: reason) else { throw notFound }
+        return voided
+    }
 }

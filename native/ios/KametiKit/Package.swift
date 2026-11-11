@@ -49,7 +49,7 @@ let package = Package(
             ]
         ),
         // Typed routes, tabs and deep links. No UI, no other layers.
-        .target(name: "KametiNavigation"),
+        .target(name: "KametiNavigation", dependencies: ["KametiCore"]),
         // Fake repositories for unit tests (and previews).
         .target(name: "KametiTestSupport", dependencies: ["KametiCore", "KametiDomain"]),
         // Features depend on KametiDomain and KametiUI, never on KametiData.

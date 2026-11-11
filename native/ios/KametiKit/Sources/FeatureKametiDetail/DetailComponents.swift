@@ -162,6 +162,8 @@ struct PaymentRow: View {
 /// month (board A v2 · Schedule, FR-62).
 struct ScheduleSection: View {
     let data: KametiDetailData
+    /// When set (owner), a started month that isn't paid out gets a Pay out button.
+    var onPayOut: ((Int) -> Void)?
     @State private var selected: Int?
 
     private var currentIndex: Int? { data.current?.monthIndex }
@@ -192,7 +194,7 @@ struct ScheduleSection: View {
                 }
             }
             if let chosen {
-                MonthDetails(data: data, monthIndex: chosen, row: byMonth[chosen])
+                MonthDetails(data: data, monthIndex: chosen, row: byMonth[chosen], onPayOut: onPayOut)
                     .id(chosen)
                     .transition(.opacity)
             } else {
@@ -257,6 +259,7 @@ private struct MonthDetails: View {
     let data: KametiDetailData
     let monthIndex: Int
     let row: MonthCollectionRow?
+    let onPayOut: ((Int) -> Void)?
 
     var body: some View {
         let recipients = DetailLogic.recipients(kameti: data.kameti, monthIndex: monthIndex, slots: data.slots, shares: data.shares, members: data.members)
@@ -278,6 +281,9 @@ private struct MonthDetails: View {
                             Spacer()
                             KMoneyText(recipient.payout, style: .title)
                         }
+                    }
+                    if let onPayOut, let row, !CollectionStatePill.isPaidOut(row.state), row.monthIndex <= (data.current?.monthIndex ?? 0) {
+                        KTonalButton(String(localized: "Pay out this month", bundle: .module), symbol: "arrow.up.right") { onPayOut(monthIndex) }
                     }
                 }
             }

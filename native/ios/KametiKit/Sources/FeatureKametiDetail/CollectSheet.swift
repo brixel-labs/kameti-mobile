@@ -14,7 +14,6 @@ struct CollectMonthSheet: View {
     @State private var session: CollectSession
     @State private var keys: [String: String]
     @State private var editing: String?
-    @State private var pickingDate = false
     @State private var receivedDate: Date
     @State private var method = PaymentMethod.cash
     @State private var reference = ""
@@ -34,23 +33,23 @@ struct CollectMonthSheet: View {
 
     private var byId: [String: Member] { Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }) }
     private var receivedOn: Date { RecordPaymentSheet.utcDate(from: receivedDate) }
-    private var dateLabel: String {
-        receivedOn == data.today ? String(localized: "Today", bundle: .module) : DetailLogic.dayMonth(receivedOn)
-    }
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: KSpace.md) {
                     summary
-                    HStack {
-                        Text(String(localized: "Tap to mark the full amount · hold to edit", bundle: .module).uppercased())
-                            .kText(KTextToken.label, color: KColors.textSecondary)
-                        Spacer(minLength: KSpace.sm)
-                        KTonalButton(
-                            session.allMarked ? String(localized: "Clear all", bundle: .module) : String(localized: "Mark all paid", bundle: .module),
-                            style: .neutral
-                        ) { withAnimation(.smooth(duration: 0.25)) { session.markAll() } }
+                    // Only while someone is left to pay.
+                    if !session.lines.isEmpty {
+                        HStack {
+                            Text(String(localized: "Tap to mark the full amount · hold to edit", bundle: .module).uppercased())
+                                .kText(KTextToken.label, color: KColors.textSecondary)
+                            Spacer(minLength: KSpace.sm)
+                            KTonalButton(
+                                session.allMarked ? String(localized: "Clear all", bundle: .module) : String(localized: "Mark all paid", bundle: .module),
+                                style: .neutral
+                            ) { withAnimation(.smooth(duration: 0.25)) { session.markAll() } }
+                        }
                     }
                     if session.lines.isEmpty {
                         ContentUnavailableView(
@@ -76,12 +75,6 @@ struct CollectMonthSheet: View {
                     session.set(id, to: amount)
                     editing = nil
                 }
-            }
-        }
-        .kBottomSheet(isPresented: $pickingDate, title: String(localized: "Date received", bundle: .module), detents: [.medium]) {
-            // One level: tap a day and the sheet closes, even for the day already shown.
-            KCalendarPicker(selection: $receivedDate, in: RecordPaymentSheet.pickableRange(from: data.kameti.startMonth, to: data.today)) { _ in
-                pickingDate = false
             }
         }
     }
@@ -170,33 +163,10 @@ struct CollectMonthSheet: View {
 
     private var footer: some View {
         VStack(spacing: KSpace.md) {
-            HStack(spacing: KSpace.sm) {
-                Text("Received", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
-                Button { pickingDate = true } label: {
-                    footerPill(dateLabel, symbol: "calendar")
-                }
-                .buttonStyle(.plain)
-                Text("by", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
-                Menu {
-                    Picker(String(localized: "Method", bundle: .module), selection: $method) {
-                        Label(String(localized: "Cash", bundle: .module), systemImage: "banknote").tag(PaymentMethod.cash)
-                        Label(String(localized: "Bank transfer", bundle: .module), systemImage: "building.columns").tag(PaymentMethod.bankTransfer)
-                        Text("Other", bundle: .module).tag(PaymentMethod.other)
-                    }
-                } label: {
-                    footerPill(method.label, symbol: method == .cash ? "banknote" : (method == .bankTransfer ? "building.columns" : nil))
-                }
-                // Keep Cash, Bank transfer, Other in this order even when the menu opens upward.
-                .menuOrder(.fixed)
-                Spacer(minLength: 0)
-            }
-            if method == .bankTransfer {
-                TextField(String(localized: "Reference no. (optional)", bundle: .module), text: $reference)
-                    .padding(.horizontal, KSpace.md)
-                    .frame(minHeight: 44)
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
+            DateMethodBar(
+                prefix: String(localized: "Received", bundle: .module), date: $receivedDate, method: $method, reference: $reference,
+                today: data.today, earliest: data.kameti.startMonth
+            )
             if let failure {
                 Label(failure.userMessage, systemImage: "exclamationmark.triangle").kText(KTextToken.bodySm, color: KColors.negative)
             }
@@ -217,19 +187,6 @@ struct CollectMonthSheet: View {
         .padding(.horizontal, KSpace.xl)
         .padding(.vertical, KSpace.md)
         .background(KColors.background)
-        .animation(.smooth(duration: 0.25), value: method)
-    }
-
-    private func footerPill(_ title: String, symbol: String?) -> some View {
-        HStack(spacing: 6) {
-            if let symbol { Image(systemName: symbol).font(.system(size: 13, weight: .semibold)) }
-            Text(title)
-            Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
-        }
-        .kText(KTextStyle(size: 14, weight: .semibold))
-        .padding(.horizontal, 14).frame(height: 38)
-        .background(KColors.surface, in: Capsule())
-        .overlay(Capsule().stroke(KColors.border))
     }
 
     private var saveTitle: String {
