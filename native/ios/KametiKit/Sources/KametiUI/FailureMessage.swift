@@ -67,7 +67,7 @@ extension Failure {
         case "member_has_history":
             String(localized: "This person holds a slot share or has payments, so they can’t be removed.", bundle: .module)
         case "already_member":
-            String(localized: "This person is already in the kameti.", bundle: .module)
+            String(localized: "You're already a member of this kameti.", bundle: .module)
         case "contact_already_member":
             String(localized: "This person is already in the kameti.", bundle: .module)
         case "already_voided":
