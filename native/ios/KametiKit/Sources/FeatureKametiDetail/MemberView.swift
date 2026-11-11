@@ -48,7 +48,7 @@ struct MemberView: View {
             Text(String(localized: "\(month) · YOUR DUE", bundle: .module))
                 .kText(KTextToken.label, color: KColors.textOnBrand.opacity(0.85))
             if owes.isPositive {
-                KMoneyText(owes, style: .displayLg).foregroundStyle(KColors.textOnBrand)
+                KMoneyText(owes, style: .displayLg, tone: .onBrand)
             } else {
                 Text("Paid up", bundle: .module).kText(KTextToken.displayLg, color: KColors.textOnBrand)
             }
@@ -109,15 +109,19 @@ struct MemberView: View {
     private func potCard(_ current: MonthCollectionRow) -> some View {
         let recipients = DetailLogic.recipients(kameti: data.kameti, monthIndex: current.monthIndex, slots: data.slots, shares: data.shares, members: data.members)
         let percent = KPotProgress.percent(of: current.received, target: current.target)
-        return card(title: String(localized: "This month's pot", bundle: .module), trailing: {
-            NavigationLink {
-                ScrollView { ScheduleSection(data: data).padding(KSpace.xl) }
-                    .background(KColors.background)
-                    .navigationTitle(String(localized: "Schedule", bundle: .module))
-                    .navigationBarTitleDisplayMode(.inline)
-            } label: {
-                Text("Schedule", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
+        // The whole card opens the schedule, not only the word in its corner.
+        return NavigationLink {
+            ScrollView { ScheduleSection(data: data).padding(KSpace.xl) }
+                .background(KColors.background)
+                .navigationTitle(String(localized: "Schedule", bundle: .module))
+                .navigationBarTitleDisplayMode(.inline)
+        } label: {
+          card(title: String(localized: "This month's pot", bundle: .module), trailing: {
+            HStack(spacing: 4) {
+                Text("Schedule", bundle: .module)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
             }
+            .kText(KTextToken.bodyStrong, color: KColors.brand)
         }) {
             HStack {
                 Text(recipients.isEmpty
@@ -136,7 +140,11 @@ struct MemberView: View {
             .frame(height: 8)
             Text("\(current.paidCount) of \(current.memberCount) members have paid", bundle: .module)
                 .kText(KTextToken.subtitle, color: KColors.textSubtitle)
+          }
+          .contentShape(RoundedRectangle(cornerRadius: KRadius.card))
         }
+        .buttonStyle(.plain)
+        .accessibilityHint(Text("Opens the schedule", bundle: .module))
     }
 
     // MARK: Your payments

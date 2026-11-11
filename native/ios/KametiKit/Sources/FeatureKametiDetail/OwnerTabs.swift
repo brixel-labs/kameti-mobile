@@ -18,6 +18,8 @@ struct OwnerTabs: View {
     @State private var payingOut: Int?
     @State private var addingMember = false
     @State private var editingMember: Member?
+    @State private var confirmingInviteAll = false
+    @State private var inviteAllResult: String?
 
     struct RecordTarget: Identifiable {
         let id = UUID()
@@ -108,6 +110,25 @@ struct OwnerTabs: View {
             }
         }
         .task { await startPendingAction() }
+        .alert(inviteAllTitle, isPresented: $confirmingInviteAll) {
+            let people = AccessState.invitable(in: data)
+            if people.isEmpty {
+                Button(String(localized: "OK", bundle: .module)) {}
+            } else {
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
+                Button(String(localized: "Send \(people.count)", bundle: .module)) { inviteAll(people) }
+            }
+        } message: {
+            Text(inviteAllMessage)
+        }
+        .alert(
+            String(localized: "Invites", bundle: .module),
+            isPresented: Binding(get: { inviteAllResult != nil }, set: { if !$0 { inviteAllResult = nil } })
+        ) {
+            Button(String(localized: "OK", bundle: .module)) {}
+        } message: {
+            Text(inviteAllResult ?? "")
+        }
         .kBottomSheet(isPresented: $addingMember, title: String(localized: "Add member", bundle: .module), detents: [.large]) {
             AddMemberSheet(data: data, model: model) { addingMember = false }
         }
@@ -147,6 +168,47 @@ struct OwnerTabs: View {
         }
     }
 
+    // MARK: Invite all
+
+    private var noEmailCount: Int {
+        data.members.filter {
+            if case .notInvited(let email, _) = AccessState.of($0, in: data) { return email == nil }
+            return false
+        }.count
+    }
+
+    private var inviteAllTitle: String {
+        let count = AccessState.invitable(in: data).count
+        return count == 0
+            ? String(localized: "No one to invite", bundle: .module)
+            : (count == 1 ? String(localized: "Send 1 invite?", bundle: .module) : String(localized: "Send \(count) invites?", bundle: .module))
+    }
+
+    private var inviteAllMessage: String {
+        let people = AccessState.invitable(in: data)
+        let missing = noEmailCount
+        let names = people.map { MemberLogic.firstName($0.name) }.joined(separator: ", ")
+        let base = people.isEmpty
+            ? String(localized: "Everyone with an email already has an invite or has joined.", bundle: .module)
+            : String(localized: "Invites go to \(names).", bundle: .module)
+        guard missing > 0 else { return base }
+        return base + " " + (missing == 1
+            ? String(localized: "1 person has no email yet: add one in their member sheet.", bundle: .module)
+            : String(localized: "\(missing) people have no email yet: add one in their member sheet.", bundle: .module))
+    }
+
+    private func inviteAll(_ people: [Member]) {
+        Task {
+            let result = await model.inviteAll(memberIds: people.map(\.id))
+            let emailed = people.compactMap { model.sentInvites[$0.id] }.contains { $0.emailed }
+            var message = emailed
+                ? String(localized: "Invites emailed to \(result.invited) of \(people.count).", bundle: .module)
+                : String(localized: "\(result.invited) invites made. Email isn't set up yet, so open each member to share their code or link.", bundle: .module)
+            if let failure = result.failure { message += "\n" + failure.userMessage }
+            inviteAllResult = message
+        }
+    }
+
     /// Home's Record payment opens the kameti and starts the chosen action.
     private func startPendingAction() async {
         guard let action = model.pendingAction else { return }
@@ -163,7 +225,7 @@ struct OwnerTabs: View {
     private func content(for tab: Tab) -> some View {
         switch tab {
         case .overview: OverviewTab(data: data) { recording = RecordTarget(memberId: $0) }
-        case .members: MembersTab(data: data) { editingMember = $0 }
+        case .members: MembersTab(data: data, onSelect: { editingMember = $0 }, onInviteAll: { confirmingInviteAll = true })
         case .schedule: ScheduleSection(data: data) { payingOut = $0 }
         case .payments: PaymentsTab(data: data) { voiding = $0 }
         }
@@ -331,6 +393,7 @@ struct MembersTab: View {
     let data: KametiDetailData
     /// Opens the edit sheet for a member (owner only, so always set here).
     var onSelect: ((Member) -> Void)?
+    var onInviteAll: (() -> Void)?
     @State private var search = ""
 
     var body: some View {
@@ -362,8 +425,7 @@ struct MembersTab: View {
                          : String(localized: "\(notJoined) people haven't joined the app yet", bundle: .module))
                         .kText(KTextToken.bodySm, color: KColors.warning)
                     Spacer(minLength: KSpace.sm)
-                    // Sending invites arrives with the invites screens.
-                    Button {} label: {
+                    Button { onInviteAll?() } label: {
                         Text("Invite all", bundle: .module)
                             .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.textOnBrand)
                             .padding(.horizontal, KSpace.md).frame(height: 32)

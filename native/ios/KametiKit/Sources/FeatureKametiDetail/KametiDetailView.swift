@@ -34,11 +34,13 @@ public struct KametiDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if case .loaded(let data) = model.state, !data.isOwner {
+                // A label, not a button: the same "View only" pill as the Home
+                // card, without the toolbar's glass button behind it.
                 ToolbarItem(placement: .topBarTrailing) {
-                    Label(String(localized: "View only", bundle: .module), systemImage: "eye")
-                        .kText(KTextStyle(size: 12, weight: .semibold), color: KColors.textSecondary)
-                        .padding(.horizontal, KSpace.sm)
+                    KPill(String(localized: "View only", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)
+                        .accessibilityLabel(Text("View only: only the owner can make changes", bundle: .module))
                 }
+                .sharedBackgroundVisibility(.hidden)
             }
         }
         .task { await model.load() }

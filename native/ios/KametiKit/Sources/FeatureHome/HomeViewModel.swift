@@ -53,6 +53,10 @@ public final class HomeViewModel {
     public private(set) var hasLoaded = false
     /// The signed-in user's first name, for the title.
     public private(set) var firstName: String?
+    /// Live invitations addressed to my email (board AI-1b).
+    public private(set) var invitations: [MyInvitation] = []
+    /// The app clock's "now" (fixed in the demo), for "expires in".
+    public var now: Date { dependencies.clock.now() }
 
     private let userId: String
     private let dependencies: KametiDependencies
@@ -98,6 +102,8 @@ public final class HomeViewModel {
         if firstName == nil, let profile = try? await dependencies.profiles.myProfile(userId: userId) {
             firstName = profile.displayName.split(separator: " ").first.map(String.init)
         }
+        // Invitations are extra: a failure here never blocks Home.
+        invitations = (try? await dependencies.invites.myInvitations()) ?? []
         do throws(Failure) {
             let all = try await dependencies.kametis.listKametis()
             var summaries = all.map {
@@ -112,6 +118,17 @@ public final class HomeViewModel {
         } catch {
             failure = error
         }
+    }
+
+    /// Declines an invitation from Home, then reloads.
+    public func decline(_ invitation: MyInvitation) async -> Failure? {
+        do throws(Failure) {
+            _ = try await dependencies.invites.declineInvite(token: nil, inviteId: invitation.inviteId)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
     }
 
     private func detail(for item: HomeKametiSummary) async -> HomeKametiSummary {

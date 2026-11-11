@@ -11,16 +11,22 @@ public enum SampleData {
     public static func dependencies() -> KametiDependencies {
         let store = SamplePaymentStore()
         let people = SampleContactStore()
+        let kametis = SampleKametiRepository(payments: store, contacts: people)
         return KametiDependencies(
-            kametis: SampleKametiRepository(payments: store, contacts: people), ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store),
-            invites: UnusedRepositories(), audit: UnusedRepositories(),
+            kametis: kametis, ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store),
+            invites: SampleInvitesRepository(kametis: kametis, contacts: people), audit: UnusedRepositories(),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
             contacts: SampleContactsRepository(store: people), auth: FakeAuthRepository(userId: userId),
             // The sample data is set in November 2026, so "today" is fixed there
             // whatever the phone's date is.
-            clock: KametiClock(nowUTC: { DateOnly.make(year: 2026, month: 11, day: 10).addingTimeInterval(8 * 3600) })
+            clock: KametiClock(nowUTC: { now })
         )
     }
+
+    /// "Now" in the demo: 10 Nov 2026, 1 pm in Pakistan.
+    static let now = DateOnly.make(year: 2026, month: 11, day: 10).addingTimeInterval(8 * 3600)
+    /// The demo account's email, which invites to it are addressed to.
+    static let email = "demo@kameti.test"
 
     public static let contacts = [
         Contact(id: "c1", ownerId: userId, name: "Ali Raza", email: "ali.raza@gmail.com"),
@@ -28,6 +34,8 @@ public enum SampleData {
         Contact(id: "c3", ownerId: userId, name: "Hira Shah"),
         Contact(id: "c4", ownerId: userId, name: "Omar Farooq", email: "omar.f@gmail.com"),
         Contact(id: "c5", ownerId: userId, name: "Zainab Tariq", email: "zainab.t@gmail.com"),
+        Contact(id: "c6", ownerId: userId, name: "Hira Malik", email: "hira.malik@gmail.com"),
+        Contact(id: "c7", ownerId: userId, name: "Faisal Iqbal", email: "faisal.iqbal@gmail.com"),
     ]
 
     // MARK: Family kameti (I run it)
@@ -39,11 +47,13 @@ public enum SampleData {
     static let familyNames = ["Ali Raza", "Sara Khan", "Naveed Ahmed", "Osama Sheikh", "Hira Malik", "Faisal Iqbal"]
     /// Members added from My people stay linked to that person, like on the
     /// backend, so "From my people" doesn't offer them again.
-    static let familyContactIds = ["Ali Raza": "c1", "Sara Khan": "c2"]
+    static let familyContactIds = ["Ali Raza": "c1", "Sara Khan": "c2", "Hira Malik": "c6", "Faisal Iqbal": "c7"]
     static let familyMembers = familyNames.enumerated().map {
         Member(
-            id: "f\($0.offset + 1)", kametiId: "family", name: $0.element, joinStatus: $0.offset == 5 ? .invited : .joined,
-            contactId: familyContactIds[$0.element]
+            id: "f\($0.offset + 1)", kametiId: "family", name: $0.element,
+            // Hira accepted with another email and waits for approval; Faisal is invited.
+            joinStatus: $0.offset == 5 ? .invited : ($0.offset == 4 ? .pendingApproval : .joined),
+            contactId: familyContactIds[$0.element], profileId: $0.offset == 4 ? "hira-account" : nil
         )
     }
     static let familySlots = (1...6).map { Slot(id: "fs\($0)", kametiId: "family", payoutMonthIndex: $0) }
@@ -96,6 +106,25 @@ public enum SampleData {
     static let officeSlots = (1...4).map { Slot(id: "os\($0)", kametiId: "office", payoutMonthIndex: $0) }
     static let officeShares = (1...4).map {
         Share(id: "oh\($0)", kametiId: "office", slotId: "os\($0)", memberId: "o\($0)", monthlyAmount: Money(100_000), effectiveFromMonth: 1)
+    }
+
+    // MARK: Cousins kameti (someone else runs it; I'm invited)
+
+    static let ownerNames = [userId: "Demo Owner", "someone-else": "Bilal Qureshi", "ayesha": "Ayesha Siddiqui"]
+
+    static let cousins = Kameti(
+        id: "cousins", ownerId: "ayesha", name: "Cousins kameti", startMonth: date(11), monthsN: 4,
+        slotAmountC: Money(200_000), dueDay: 15, reminderDays: [1], maxSlotsPerMember: 2, status: .active
+    )
+    static let cousinsMembers = [
+        Member(id: "cz1", kametiId: "cousins", name: "Ayesha Siddiqui", joinStatus: .joined, profileId: "ayesha"),
+        Member(id: "cz2", kametiId: "cousins", name: "Imran Shah", joinStatus: .joined),
+        Member(id: "cz3", kametiId: "cousins", name: "Demo Owner", joinStatus: .invited),
+        Member(id: "cz4", kametiId: "cousins", name: "Nadia Ali", joinStatus: .joined),
+    ]
+    static let cousinsSlots = (1...4).map { Slot(id: "czs\($0)", kametiId: "cousins", payoutMonthIndex: $0) }
+    static let cousinsShares = (1...4).map {
+        Share(id: "czh\($0)", kametiId: "cousins", slotId: "czs\($0)", memberId: "cz\($0)", monthlyAmount: Money(200_000), effectiveFromMonth: 1)
     }
 
     // MARK: Ledger
@@ -246,10 +275,13 @@ private let notFound = Failure.server(code: "not_found", detail: nil)
 /// wizard can be tried without a backend. Nothing is saved to disk.
 final class SampleKametiRepository: KametiRepository {
     private struct State {
-        var kametis = [SampleData.family, SampleData.friends, SampleData.office]
-        var members = ["family": SampleData.familyMembers, "friends": SampleData.friendsMembers, "office": SampleData.officeMembers]
-        var slots = ["family": SampleData.familySlots, "friends": SampleData.friendsSlots, "office": SampleData.officeSlots]
-        var shares = ["family": SampleData.familyShares, "friends": SampleData.friendsShares, "office": SampleData.officeShares]
+        var kametis = [SampleData.family, SampleData.friends, SampleData.office, SampleData.cousins]
+        var members = [
+            "family": SampleData.familyMembers, "friends": SampleData.friendsMembers, "office": SampleData.officeMembers,
+            "cousins": SampleData.cousinsMembers,
+        ]
+        var slots = ["family": SampleData.familySlots, "friends": SampleData.friendsSlots, "office": SampleData.officeSlots, "cousins": SampleData.cousinsSlots]
+        var shares = ["family": SampleData.familyShares, "friends": SampleData.friendsShares, "office": SampleData.officeShares, "cousins": SampleData.cousinsShares]
         var counter = 0
     }
 
@@ -262,7 +294,45 @@ final class SampleKametiRepository: KametiRepository {
         self.contacts = contacts
     }
 
-    func listKametis() async throws(Failure) -> [Kameti] { state.withLock { $0.kametis } }
+    /// Like RLS: kametis I run, or where a member is linked to my account.
+    func listKametis() async throws(Failure) -> [Kameti] {
+        state.withLock { s in
+            s.kametis.filter { k in
+                k.ownerId == SampleData.userId || (s.members[k.id] ?? []).contains { $0.profileId == SampleData.userId }
+            }
+        }
+    }
+
+    // MARK: For the invites store
+
+    func kametiRow(_ id: String) -> Kameti? { state.withLock { $0.kametis.first { $0.id == id } } }
+
+    func memberRow(_ id: String) -> Member? { member(id) }
+
+    func shareRows(memberId: String, kametiId: String) -> [(share: Share, slot: Slot?)] {
+        state.withLock { s in
+            (s.shares[kametiId] ?? []).filter { $0.memberId == memberId }.map { share in
+                (share, s.slots[kametiId]?.first { $0.id == share.slotId })
+            }
+        }
+    }
+
+    /// Replaces a member's join status and linked account.
+    @discardableResult
+    func setJoin(memberId: String, status: JoinStatus, profileId: String?) -> Member? {
+        state.withLock { s in
+            for key in s.members.keys {
+                guard let index = s.members[key]?.firstIndex(where: { $0.id == memberId }), let old = s.members[key]?[index] else { continue }
+                let new = Member(
+                    id: old.id, kametiId: old.kametiId, name: old.name, joinStatus: status, contactId: old.contactId,
+                    profileId: profileId, nickname: old.nickname, color: old.color
+                )
+                s.members[key]?[index] = new
+                return new
+            }
+            return nil
+        }
+    }
 
     func kameti(id: String) async throws(Failure) -> Kameti {
         guard let found = state.withLock({ $0.kametis.first { $0.id == id } }) else { throw notFound }
@@ -579,6 +649,8 @@ struct SampleLedgerRepository: LedgerRepository {
             return SampleLedger.compute(kameti: SampleData.friends, members: SampleData.friendsMembers, shares: SampleData.friendsShares, slots: SampleData.friendsSlots, payments: store.all("friends"), payouts: store.payouts("friends"), current: 2)
         case "office":
             return SampleLedger.compute(kameti: SampleData.office, members: SampleData.officeMembers, shares: SampleData.officeShares, slots: SampleData.officeSlots, payments: store.all("office"), payouts: store.payouts("office"), current: 2)
+        case "cousins":
+            return SampleLedger.compute(kameti: SampleData.cousins, members: SampleData.cousinsMembers, shares: SampleData.cousinsShares, slots: SampleData.cousinsSlots, payments: store.all("cousins"), payouts: store.payouts("cousins"), current: 1)
         default:
             return SampleLedger.Result()
         }

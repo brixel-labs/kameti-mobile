@@ -78,15 +78,22 @@ public struct InvitePreview: Codable, Hashable, Sendable {
     public let ownerName: String
     public let memberName: String
     public let shares: [InviteShare]
+    /// First day of month 1. `nil` from a backend without the
+    /// `invite_preview_dates` migration.
+    public let startMonth: Date?
+    /// N, the number of months (and slots).
+    public let monthsN: Int?
 
     public init(
         inviteId: String, status: String, expired: Bool, expiresAt: Date, emailMatches: Bool,
-        kametiName: String, ownerName: String, memberName: String, shares: [InviteShare] = []
+        kametiName: String, ownerName: String, memberName: String, shares: [InviteShare] = [],
+        startMonth: Date? = nil, monthsN: Int? = nil
     ) {
         self.inviteId = inviteId; self.status = status; self.expired = expired
         self.expiresAt = expiresAt; self.emailMatches = emailMatches
         self.kametiName = kametiName; self.ownerName = ownerName
         self.memberName = memberName; self.shares = shares
+        self.startMonth = startMonth; self.monthsN = monthsN
     }
 
     /// Still open: pending and not past its expiry.
