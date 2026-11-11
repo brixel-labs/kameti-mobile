@@ -42,3 +42,11 @@ struct KametiUITests {
         #expect(KSize.minTouch == 44)
     }
 }
+
+@Suite("Error help text")
+struct ErrorHelpTests {
+    @Test func offlineGetsConnectionAdviceOthersTheirMessage() {
+        #expect(Failure.network.helpMessage == "Check your connection and try again.")
+        #expect(Failure.server(code: "not_kameti_owner", detail: nil).helpMessage == Failure.server(code: "not_kameti_owner", detail: nil).userMessage)
+    }
+}

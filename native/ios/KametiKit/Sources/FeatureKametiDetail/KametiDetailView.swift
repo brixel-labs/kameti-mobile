@@ -22,15 +22,28 @@ public struct KametiDetailView: View {
         Group {
             switch model.state {
             case .loading:
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                ScrollView {
+                    VStack(spacing: KSpace.md) { KSkeletonRows(rows: 2); KSkeletonRows(rows: 4) }
+                        .padding(.horizontal, KSpace.xl).padding(.top, KSpace.md)
+                }
             case .failed(let failure):
-                ContentUnavailableView {
-                    Label(failure.userMessage, systemImage: "exclamationmark.triangle")
-                } actions: {
-                    Button(String(localized: "Try again", bundle: .module)) { Task { await model.load() } }
+                ScrollView {
+                    KMessageCard(
+                        String(localized: "Couldn't load this kameti", bundle: .module), message: failure.helpMessage,
+                        actionTitle: String(localized: "Try again", bundle: .module)
+                    ) { Task { await model.load() } }
+                    .padding(.horizontal, KSpace.xl).padding(.top, KSpace.md)
                 }
             case .loaded(let data):
                 loaded(data)
+                    // Offline: the last loaded data stays, with a note on how old it is.
+                    .safeAreaInset(edge: .top, spacing: 0) {
+                        if !KConnectivity.shared.isOnline {
+                            KOfflineBanner(since: model.loadedAt)
+                                .padding(.horizontal, KSpace.xl).padding(.vertical, KSpace.sm)
+                                .background(KColors.background)
+                        }
+                    }
             }
         }
         .background(KColors.background)

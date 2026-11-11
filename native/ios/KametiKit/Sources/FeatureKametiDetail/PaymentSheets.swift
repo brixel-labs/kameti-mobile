@@ -63,6 +63,9 @@ struct RecordPaymentSheet: View {
                     Label(failure.userMessage, systemImage: "exclamationmark.triangle")
                         .kText(KTextToken.bodySm, color: KColors.negative)
                 }
+                if !KConnectivity.shared.isOnline {
+                    KOfflineActionBanner(String(localized: "Can't record payments offline. Connect and try again.", bundle: .module))
+                }
                 Button(action: submit) {
                     ZStack {
                         Text("Record \(amount.format())", bundle: .module).opacity(isBusy ? 0 : 1)
@@ -74,7 +77,7 @@ struct RecordPaymentSheet: View {
                 .buttonStyle(.glassProminent)
                 .tint(KColors.brand)
                 .controlSize(.large)
-                .disabled(!amount.isPositive || memberId == nil)
+                .disabled(!amount.isPositive || memberId == nil || !KConnectivity.shared.isOnline)
                 .allowsHitTesting(!isBusy)
             }
             .padding(.horizontal, KSpace.xl)

@@ -238,6 +238,9 @@ struct PayoutSheet: View {
             if let failure {
                 Label(failure.userMessage, systemImage: "exclamationmark.triangle").kText(KTextToken.bodySm, color: KColors.negative)
             }
+if !KConnectivity.shared.isOnline {
+                KOfflineActionBanner(String(localized: "Can't record a payout offline. Connect and try again.", bundle: .module))
+            }
             Button(action: save) {
                 ZStack {
                     Text("Mark paid out · \(draft.total.format())", bundle: .module).opacity(isBusy ? 0 : 1)
@@ -249,7 +252,7 @@ struct PayoutSheet: View {
             .buttonStyle(.glassProminent)
             .tint(KColors.brand)
             .controlSize(.large)
-            .disabled(!draft.hasAnything)
+            .disabled(!draft.hasAnything || !KConnectivity.shared.isOnline)
             .allowsHitTesting(!isBusy)
         }
         .padding(.horizontal, KSpace.xl)

@@ -1,6 +1,7 @@
 import Foundation
 import KametiCore
 import KametiDomain
+import KametiUI
 import Observation
 
 /// Everything the detail screens show, loaded together.
@@ -43,6 +44,8 @@ public final class KametiDetailViewModel {
 
     public private(set) var state = State.loading
     public private(set) var isRefreshing = false
+    /// When the details last loaded, for "Showing data from …" while offline.
+    public private(set) var loadedAt: Date?
 
     private let kametiId: String
     private let userId: String
@@ -89,7 +92,10 @@ public final class KametiDetailViewModel {
                 collections: collections, balances: balances, months: months, payments: payments,
                 payouts: payouts, contacts: contacts, invites: invites, notes: notes, today: DetailLogic.pakistanToday(dependencies.clock.now())
             ))
+            loadedAt = Date()
+            KConnectivity.shared.record(nil)
         } catch {
+            KConnectivity.shared.record(error)
             // Keep what is on screen if a refresh fails.
             if case .loaded = state { return }
             state = .failed(error)

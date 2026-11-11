@@ -93,15 +93,9 @@ public struct JoinInviteView: View {
         Group {
             switch model.state {
             case .loading:
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                ScrollView { KSkeletonRows(rows: 3).padding(.horizontal, KSpace.xl).padding(.top, KSpace.md) }
             case .failed(let failure):
-                ContentUnavailableView {
-                    Label(String(localized: "Can't open this invite", bundle: .module), systemImage: "envelope.badge")
-                } description: {
-                    Text(failure.userMessage)
-                } actions: {
-                    Button(String(localized: "Try again", bundle: .module)) { Task { await model.load() } }
-                }
+                ScrollView { failedCard(failure).padding(.horizontal, KSpace.xl).padding(.top, KSpace.md) }
             case .loaded(let preview):
                 loaded(preview)
             case .waiting(let kameti, let owner):
@@ -224,6 +218,30 @@ public struct JoinInviteView: View {
             Button(String(localized: "Decline", bundle: .module), role: .destructive) { Task { await model.decline() } }
         } message: {
             Text("\(preview.ownerName) will see that you declined. They can invite you again later.", bundle: .module)
+        }
+    }
+
+    /// AF-States: an expired or used invite gets its own card; anything else
+    /// (offline, a server error) can be tried again.
+    @ViewBuilder private func failedCard(_ failure: Failure) -> some View {
+        switch failure {
+        case .server(code: "invite_expired", _):
+            KMessageCard(
+                String(localized: "This invite has expired", bundle: .module),
+                message: String(localized: "Ask the person running the kameti to send you a new one.", bundle: .module),
+                symbol: "envelope", tint: KColors.warning
+            )
+        case .server(code: "invite_not_found", _), .server(code: "invite_not_active", _), .server(code: "invalid_invite", _):
+            KMessageCard(
+                String(localized: "This invite link is no longer valid", bundle: .module),
+                message: String(localized: "It may have been used, revoked or replaced. Ask for a new one.", bundle: .module),
+                symbol: "envelope", tint: KColors.warning
+            )
+        default:
+            KMessageCard(
+                String(localized: "Can't open this invite", bundle: .module), message: failure.helpMessage,
+                actionTitle: String(localized: "Try again", bundle: .module)
+            ) { Task { await model.load() } }
         }
     }
 

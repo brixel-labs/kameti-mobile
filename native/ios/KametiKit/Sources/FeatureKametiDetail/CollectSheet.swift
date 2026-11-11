@@ -170,6 +170,9 @@ struct CollectMonthSheet: View {
             if let failure {
                 Label(failure.userMessage, systemImage: "exclamationmark.triangle").kText(KTextToken.bodySm, color: KColors.negative)
             }
+if !KConnectivity.shared.isOnline {
+                KOfflineActionBanner(String(localized: "Can't record payments offline. Connect and try again.", bundle: .module))
+            }
             Button(action: save) {
                 ZStack {
                     Text(saveTitle).opacity(isBusy ? 0 : 1)
@@ -181,7 +184,7 @@ struct CollectMonthSheet: View {
             .buttonStyle(.glassProminent)
             .tint(KColors.brand)
             .controlSize(.large)
-            .disabled(session.count == 0)
+            .disabled(session.count == 0 || !KConnectivity.shared.isOnline)
             .allowsHitTesting(!isBusy)
         }
         .padding(.horizontal, KSpace.xl)

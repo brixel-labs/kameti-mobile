@@ -23,7 +23,7 @@ public struct KEmptyIllustration: View {
             var plus = Path()
             plus.move(to: point(54, 48)); plus.addLine(to: point(66, 48))
             plus.move(to: point(60, 42)); plus.addLine(to: point(60, 54))
-            context.stroke(plus, with: .color(.white), style: StrokeStyle(lineWidth: 2.4 * scale, lineCap: .round))
+            context.stroke(plus, with: .color(KColors.textOnBrand), style: StrokeStyle(lineWidth: 2.4 * scale, lineCap: .round))
         }
         .frame(width: 120, height: 96)
         .accessibilityHidden(true)
