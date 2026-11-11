@@ -5,6 +5,11 @@ import Testing
 @Suite("Deep links")
 struct DeepLinkTests {
     @Test func inviteLinkBecomesAJoinRoute() {
+        let url = URL(string: "https://kameti.fhbtechservices.com/join/abc123")!
+        #expect(DeepLink.route(for: url) == .join(token: "abc123"))
+    }
+
+    @Test func theFirstLinksSentOnTheCompanySiteStillWork() {
         let url = URL(string: "https://www.fhbtechservices.com/kameti/join/abc123")!
         #expect(DeepLink.route(for: url) == .join(token: "abc123"))
     }
@@ -21,6 +26,10 @@ struct DeepLinkTests {
         "https://www.fhbtechservices.com/kameti/join/",     // empty token
         "https://www.fhbtechservices.com/kameti/other/abc", // another path
         "https://www.fhbtechservices.com/kameti/join/a/b",  // extra segment
+        "https://kameti.fhbtechservices.com/join",          // no token
+        "https://kameti.fhbtechservices.com/privacy",       // another page
+        "https://kameti.fhbtechservices.com/kameti/join/x", // old path on the new site
+        "https://other.fhbtechservices.com/join/x",         // another subdomain
     ])
     func ignoresOtherLinks(_ text: String) {
         #expect(DeepLink.route(for: URL(string: text)!) == nil)

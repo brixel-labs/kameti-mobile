@@ -42,7 +42,7 @@ final class SampleInvitesRepository: InvitesRepository {
         ))
     }
 
-    private static let base = "https://www.fhbtechservices.com/kameti/join/"
+    private static let base = "https://kameti.fhbtechservices.com/join/"
 
     // MARK: Owner
 
