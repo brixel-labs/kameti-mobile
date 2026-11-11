@@ -9,6 +9,7 @@ import SwiftUI
 public struct KametiDetailView: View {
     private let model: KametiDetailViewModel
     private let onResumeDraft: ((String) -> Void)?
+    @State private var editing = false
 
     public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil) {
         self.model = model
@@ -35,6 +36,20 @@ public struct KametiDetailView: View {
         .navigationSubtitle(subtitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // The owner's ••• menu (board AE-2): Edit now; Activity and
+            // Archive join it later.
+            if case .loaded(let data) = model.state, data.isOwner, data.kameti.status == .active {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button { editing = true } label: {
+                            Label(String(localized: "Edit kameti", bundle: .module), systemImage: "pencil")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                    }
+                    .accessibilityLabel(Text("More", bundle: .module))
+                }
+            }
             if case .loaded(let data) = model.state, !data.isOwner {
                 // A label, not a button: the same "View only" pill as the Home
                 // card, without the toolbar's glass button behind it.
@@ -46,6 +61,11 @@ public struct KametiDetailView: View {
             }
         }
         .task { await model.load() }
+        .kBottomSheet(isPresented: $editing, title: String(localized: "Edit kameti", bundle: .module), detents: [.large]) {
+            if case .loaded(let data) = model.state {
+                EditKametiView(data: data, model: model) { editing = false }
+            }
+        }
     }
 
     /// The kameti to name the screen after: the loaded one, else what Home passed.

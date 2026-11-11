@@ -392,6 +392,21 @@ final class SampleKametiRepository: KametiRepository {
         try state.withLock { s throws(Failure) in
             guard let index = s.kametis.firstIndex(where: { $0.id == id }) else { throw notFound }
             let old = s.kametis[index]
+            // Like update_kameti_draft: drafts and running kametis only, and
+            // once started the money shape is fixed (FR-34).
+            guard [.draft, .active].contains(old.status) else { throw Failure.server(code: "kameti_not_editable", detail: nil) }
+            let structural = (changes.startMonth.map { $0 != old.startMonth } ?? false)
+                || (changes.months.map { $0 != old.monthsN } ?? false)
+                || (changes.slotAmount.map { $0 != old.slotAmountC } ?? false)
+                || (changes.maxSlotsPerMember.map { $0 != old.maxSlotsPerMember } ?? false)
+            if structural, old.status != .draft { throw Failure.server(code: "kameti_not_draft", detail: nil) }
+            if let name = changes.name {
+                let trimmed = name.trimmingCharacters(in: .whitespaces)
+                guard (3...40).contains(trimmed.count) else { throw Failure.server(code: "invalid_name", detail: nil) }
+                if s.kametis.contains(where: { $0.id != id && $0.ownerId == old.ownerId && $0.name.lowercased() == trimmed.lowercased() && [.draft, .active].contains($0.status) }) {
+                    throw Failure.server(code: "kameti_name_taken", detail: nil)
+                }
+            }
             let months = changes.months ?? old.monthsN
             let updated = Kameti(
                 id: id, ownerId: old.ownerId, name: changes.name ?? old.name, description: changes.description ?? old.description,
