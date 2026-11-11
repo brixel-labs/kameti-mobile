@@ -509,6 +509,47 @@ final class SampleKametiRepository: KametiRepository {
         }
     }
 
+    /// Mirrors `duplicate_kameti` (FR-13): settings, members, current shares and
+    /// payout order; only my own member row stays linked; no payments.
+    func duplicateKameti(id: String, name: String, startMonth: Date) async throws(Failure) -> Kameti {
+        try state.withLock { s throws(Failure) in
+            guard let old = s.kametis.first(where: { $0.id == id }) else { throw notFound }
+            guard old.ownerId == SampleData.userId else { throw Failure.server(code: "not_kameti_owner", detail: nil) }
+            let trimmed = name.trimmingCharacters(in: .whitespaces)
+            guard (3...40).contains(trimmed.count) else { throw Failure.server(code: "invalid_name", detail: nil) }
+            if s.kametis.contains(where: { $0.ownerId == old.ownerId && $0.name.lowercased() == trimmed.lowercased() && [.draft, .active].contains($0.status) }) {
+                throw Failure.server(code: "kameti_name_taken", detail: nil)
+            }
+            s.counter += 1
+            let newId = "draft-\(s.counter)"
+            let copy = Kameti(
+                id: newId, ownerId: old.ownerId, name: trimmed, description: old.description, startMonth: startMonth,
+                monthsN: old.monthsN, slotAmountC: old.slotAmountC, dueDay: old.dueDay, reminderDays: old.reminderDays,
+                maxSlotsPerMember: old.maxSlotsPerMember, status: .draft
+            )
+            var memberIds: [String: String] = [:]
+            s.members[newId] = (s.members[id] ?? []).enumerated().map { index, m in
+                let mine = m.profileId == SampleData.userId
+                memberIds[m.id] = "\(newId)-m\(index + 1)"
+                return Member(
+                    id: "\(newId)-m\(index + 1)", kametiId: newId, name: m.name, joinStatus: mine ? .joined : .notInvited,
+                    contactId: m.contactId, profileId: mine ? m.profileId : nil, nickname: m.nickname, color: m.color
+                )
+            }
+            var slotIds: [String: String] = [:]
+            s.slots[newId] = (s.slots[id] ?? []).map { slot in
+                slotIds[slot.id] = "\(newId)-s\(slot.payoutMonthIndex)"
+                return Slot(id: "\(newId)-s\(slot.payoutMonthIndex)", kametiId: newId, payoutMonthIndex: slot.payoutMonthIndex, note: slot.note)
+            }
+            s.shares[newId] = (s.shares[id] ?? []).filter { $0.effectiveToMonth == nil }.enumerated().compactMap { index, share in
+                guard let slot = slotIds[share.slotId], let member = memberIds[share.memberId] else { return nil }
+                return Share(id: "\(newId)-h\(index + 1)", kametiId: newId, slotId: slot, memberId: member, monthlyAmount: share.monthlyAmount, effectiveFromMonth: 1)
+            }
+            s.kametis.insert(copy, at: 0)
+            return copy
+        }
+    }
+
     private static func with(_ k: Kameti, status: KametiStatus) -> Kameti {
         Kameti(
             id: k.id, ownerId: k.ownerId, name: k.name, description: k.description, startMonth: k.startMonth,

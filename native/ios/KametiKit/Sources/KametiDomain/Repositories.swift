@@ -27,6 +27,9 @@ public protocol KametiRepository: Sendable {
     /// Owner only: back to the state it was archived from. Fails with
     /// `kameti_not_archived` or `kameti_name_taken`.
     func restoreKameti(id: String) async throws(Failure) -> Kameti
+    /// Owner only (FR-13): a new draft with the same settings, members, shares
+    /// and payout order, and no payments. Fails with `kameti_name_taken`.
+    func duplicateKameti(id: String, name: String, startMonth: Date) async throws(Failure) -> Kameti
 
     func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member
     func updateMember(id: String, changes: MemberChanges) async throws(Failure) -> Member

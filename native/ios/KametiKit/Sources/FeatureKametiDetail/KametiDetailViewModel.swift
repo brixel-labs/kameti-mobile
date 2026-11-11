@@ -332,6 +332,27 @@ public final class KametiDetailViewModel {
         return nil
     }
 
+    // MARK: Duplicate (FR-13)
+
+    /// Copies this kameti as a new draft named "<name> (copy)", starting the
+    /// month after it ends (or this month, if that's later). The owner can
+    /// change both in the setup steps. Returns the new draft's id.
+    public func duplicate() async -> Result<String, Failure> {
+        guard case .loaded(let data) = state else { return .failure(.server(code: "not_found", detail: nil)) }
+        let start = DuplicateLogic.startMonth(after: data.kameti, currentMonth: dependencies.clock.currentMonth())
+        var lastFailure = Failure.server(code: "kameti_name_taken", detail: nil)
+        for attempt in 1...5 {
+            let name = DuplicateLogic.name(for: data.kameti.name, attempt: attempt)
+            do throws(Failure) {
+                return .success(try await dependencies.kametis.duplicateKameti(id: kametiId, name: name, startMonth: start).id)
+            } catch {
+                lastFailure = error
+                guard case .server(let code, _) = error, code == "kameti_name_taken" else { return .failure(error) }
+            }
+        }
+        return .failure(lastFailure)
+    }
+
     // MARK: Notes
 
     public func addNote(_ new: NewNote) async -> Failure? {

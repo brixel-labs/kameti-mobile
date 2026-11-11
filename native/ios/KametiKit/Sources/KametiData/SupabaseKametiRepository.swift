@@ -71,6 +71,14 @@ public final class SupabaseKametiRepository: KametiRepository {
         }
     }
 
+    public func duplicateKameti(id: String, name: String, startMonth: Date) async throws(Failure) -> Kameti {
+        try await run {
+            try await client.rpc("duplicate_kameti", params: [
+                "p_kameti_id": JSONValue.string(id), "p_name": .string(name), "p_start_month": .day(startMonth),
+            ] as RPCParams).execute().value
+        }
+    }
+
     public func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member {
         try await run {
             try await client.rpc("add_member", params: Params.addMember(kametiId: kametiId, new)).execute().value
