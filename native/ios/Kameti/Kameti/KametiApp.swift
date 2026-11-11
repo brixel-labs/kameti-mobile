@@ -6,6 +6,7 @@ import SwiftUI
 
 @main
 struct KametiApp: App {
+    @UIApplicationDelegateAdaptor(PushAppDelegate.self) private var pushDelegate
     @State private var container = AppConfig.load().map { AppContainer(config: $0) }
 
     init() {

@@ -156,3 +156,44 @@ struct InvitePreviewBlockerTests {
     }
 }
 
+/// The Inbox's Updates feed (FR-86) against the demo store.
+@MainActor
+@Suite("Inbox updates")
+struct InboxUpdatesTests {
+    @Test func loadsUpdatesAndCountsUnread() async {
+        let model = InboxViewModel(userId: SampleData.userId, dependencies: SampleData.dependencies())
+        await model.load()
+        #expect(model.updates.count == 4)
+        #expect(model.unreadUpdates == 2)
+        #expect(model.badgeCount == model.needsYou + 2)
+    }
+
+    @Test func markingReadClearsTheBadge() async throws {
+        let model = InboxViewModel(userId: SampleData.userId, dependencies: SampleData.dependencies())
+        await model.load()
+        let first = try #require(model.updates.first { $0.isUnread })
+        model.markRead(first)
+        #expect(model.unreadUpdates == 1)
+        model.markAllRead()
+        #expect(model.unreadUpdates == 0)
+    }
+
+    @Test func agoReadsNaturally() {
+        let now = Date()
+        #expect(InboxLogic.ago(now - 30, now: now) == "Just now")
+        #expect(InboxLogic.ago(now - 5 * 60, now: now) == "5 min ago")
+        #expect(InboxLogic.ago(now - 3 * 3600, now: now) == "3 h ago")
+        #expect(InboxLogic.ago(now - 30 * 3600, now: now) == "Yesterday")
+    }
+}
+
+@Suite("Notification taps")
+struct NotificationTapTests {
+    @Test func onlyKametisYouCanSeeOpen() {
+        #expect(AppNotification.opensKameti(kind: "payment"))
+        #expect(AppNotification.opensKameti(kind: "joined"))
+        #expect(!AppNotification.opensKameti(kind: "join_declined"))
+        #expect(!AppNotification.opensKameti(kind: "invite"))
+        #expect(!AppNotification.opensKameti(kind: "join_request"))
+    }
+}

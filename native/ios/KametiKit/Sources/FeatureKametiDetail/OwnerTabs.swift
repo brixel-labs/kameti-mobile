@@ -78,7 +78,8 @@ struct OwnerTabs: View {
                         }
                         .padding(.horizontal, KSpace.xl)
                         .padding(.top, KSpace.lg)
-                        .padding(.bottom, KSpace.xl)
+                        // Room under the last row for the floating Record payment button.
+                        .padding(.bottom, page == .notes || page == .overview ? KSpace.xl : 84)
                     }
                     // Not on Notes: its rows swipe sideways, and a refresh control
                     // would attach to them too. Notes reload after every change.
@@ -93,7 +94,8 @@ struct OwnerTabs: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.smooth(duration: 0.28), value: tab)
             .overlay(alignment: .bottomTrailing) {
-                if tab == .overview, data.current != nil, !isArchived {
+                // On every tab but Notes, whose composer sits at the bottom.
+                if tab != .notes, data.current != nil, !isArchived {
                     Menu {
                         if let current = data.current, canPayOut(current) {
                             Button { payingOut = current.monthIndex } label: {
@@ -173,7 +175,10 @@ struct OwnerTabs: View {
             Text(inviteAllResult ?? "")
         }
         .kBottomSheet(isPresented: $addingMember, title: String(localized: "Add member", bundle: .module), detents: [.large]) {
-            AddMemberSheet(data: data, model: model) { addingMember = false }
+            AddMemberSheet(data: data, model: model) {
+                addingMember = false
+                openAddedMember()
+            }
         }
         .kBottomSheet(
             isPresented: Binding(get: { editingMember != nil }, set: { if !$0 { editingMember = nil } }),
@@ -249,6 +254,17 @@ struct OwnerTabs: View {
                 : String(localized: "\(result.invited) invites made. Email isn't set up yet, so open each member to share their code or link.", bundle: .module)
             if let failure = result.failure { message += "\n" + failure.userMessage }
             inviteAllResult = message
+        }
+    }
+
+    /// After adding someone, open their sheet so the invite is one tap away.
+    private func openAddedMember() {
+        guard let id = model.lastAddedMemberId else { return }
+        Task {
+            // Let the add sheet finish closing first.
+            try? await Task.sleep(for: .milliseconds(450))
+            guard case .loaded(let current) = model.state, let member = current.members.first(where: { $0.id == id }) else { return }
+            editingMember = member
         }
     }
 

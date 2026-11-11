@@ -5,6 +5,8 @@ import SwiftUI
 /// layout priority, the first button can never be squeezed away.
 struct SplitRow: Layout {
     var spacing: CGFloat = 12
+    /// The first column's share of the width (a third by default; 0.5 = equal).
+    var firstShare: CGFloat = 1.0 / 3
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? 320
@@ -23,6 +25,6 @@ struct SplitRow: Layout {
 
     private func split(_ width: CGFloat) -> [CGFloat] {
         let usable = max(width - spacing, 0)
-        return [usable / 3, usable * 2 / 3]
+        return [usable * firstShare, usable * (1 - firstShare)]
     }
 }

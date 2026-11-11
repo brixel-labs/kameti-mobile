@@ -165,23 +165,15 @@ public struct HomeView: View {
     @ViewBuilder private var recordButton: some View {
         if !recordable.isEmpty {
             Menu {
-                Section(String(localized: "Choose a kameti", bundle: .module)) {
-                  ForEach(recordable) { item in
-                    Menu(item.kameti.name) {
-                        let month = item.currentMonth.map { DetailLogic.monthTitle($0.monthStart).split(separator: " ").first.map(String.init) ?? "" } ?? ""
-                        if item.currentMonth != nil, !(item.currentMonth?.state == .paidOut || item.currentMonth?.state == .paidOutShort), !item.recipients.isEmpty {
-                            Button { onRecord(item.id, .payOut) } label: {
-                                Label(String(localized: "Pay out \(month)", bundle: .module), systemImage: "arrow.up.right")
-                            }
-                        }
-                        Button { onRecord(item.id, .recordOne) } label: {
-                            Label(String(localized: "Record one payment", bundle: .module), systemImage: "plus")
-                        }
-                        Button { onRecord(item.id, .collect) } label: {
-                            Label(String(localized: "Collect \(month) (tap to settle)", bundle: .module), systemImage: "checklist")
+                if recordable.count == 1, let only = recordable.first {
+                    // One kameti: its actions straight away, no picking.
+                    Section(only.kameti.name) { recordActions(for: only) }
+                } else {
+                    Section(String(localized: "Choose a kameti", bundle: .module)) {
+                        ForEach(recordable) { item in
+                            Menu(item.kameti.name) { recordActions(for: item) }
                         }
                     }
-                  }
                 }
             } label: {
                 Label(String(localized: "Record payment", bundle: .module), systemImage: "plus")
@@ -192,6 +184,21 @@ public struct HomeView: View {
                     .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
             }
             .padding(KSpace.xl)
+        }
+    }
+
+    @ViewBuilder private func recordActions(for item: HomeKametiSummary) -> some View {
+        let month = item.currentMonth.map { DetailLogic.monthTitle($0.monthStart).split(separator: " ").first.map(String.init) ?? "" } ?? ""
+        if item.currentMonth != nil, !(item.currentMonth?.state == .paidOut || item.currentMonth?.state == .paidOutShort), !item.recipients.isEmpty {
+            Button { onRecord(item.id, .payOut) } label: {
+                Label(String(localized: "Pay out \(month)", bundle: .module), systemImage: "arrow.up.right")
+            }
+        }
+        Button { onRecord(item.id, .recordOne) } label: {
+            Label(String(localized: "Record one payment", bundle: .module), systemImage: "plus")
+        }
+        Button { onRecord(item.id, .collect) } label: {
+            Label(String(localized: "Collect \(month) (tap to settle)", bundle: .module), systemImage: "checklist")
         }
     }
 
@@ -312,6 +319,9 @@ struct HomeKametiCard: View {
                 }
                 .padding(KSpace.md)
                 .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
+            } else if item.monthlyDue?.isPositive == false {
+                // Owing nothing because there's no share yet isn't "paid up".
+                KPill(String(localized: "No share yet", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)
             } else {
                 KStatusChip(.paid, label: String(localized: "Paid up", bundle: .module))
             }

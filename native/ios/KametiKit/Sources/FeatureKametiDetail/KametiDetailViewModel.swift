@@ -47,7 +47,7 @@ public final class KametiDetailViewModel {
     /// When the details last loaded, for "Showing data from …" while offline.
     public private(set) var loadedAt: Date?
 
-    private let kametiId: String
+    public let kametiId: String
     private let userId: String
     private let dependencies: KametiDependencies
     /// What the caller already knows (from Home), so the title and subtitle
@@ -201,9 +201,12 @@ public final class KametiDetailViewModel {
 
     /// Adds a member (a new person, or one of the owner's saved people), then
     /// reloads. Returns the failure to show, or `nil`.
+    /// The member added last, so the owner can go straight on to inviting them.
+    public private(set) var lastAddedMemberId: String?
+
     public func addMember(_ new: NewMember) async -> Failure? {
         do throws(Failure) {
-            _ = try await dependencies.kametis.addMember(kametiId: kametiId, new)
+            lastAddedMemberId = try await dependencies.kametis.addMember(kametiId: kametiId, new).id
         } catch {
             return error
         }

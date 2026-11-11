@@ -16,6 +16,8 @@ public enum KNavigationBarStyle {
         let edge = UINavigationBarAppearance()
         edge.configureWithTransparentBackground()
         edge.subtitleTextAttributes = attributes
+        // Pull to refresh is only a fallback now (screens update live): brand green.
+        UIRefreshControl.appearance().tintColor = UIColor(KColors.brand)
         let bar = UINavigationBar.appearance()
         bar.standardAppearance = standard
         bar.scrollEdgeAppearance = edge

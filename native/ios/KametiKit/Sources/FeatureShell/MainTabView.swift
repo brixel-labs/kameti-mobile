@@ -17,6 +17,9 @@ struct MainTabView: View {
     @State private var profileModel: ProfileViewModel
     @State private var homeModel: HomeViewModel
     @State private var inboxModel: InboxViewModel
+    @State private var askingPush = false
+    @Environment(\.scenePhase) private var scenePhase
+    private var push: PushCenter { .shared }
 
     init(router: AppRouter, userId: String, dependencies: KametiDependencies) {
         self.router = router
@@ -51,13 +54,17 @@ struct MainTabView: View {
 
             Tab(value: AppTab.inbox) {
                 NavigationStack(path: $router.inboxPath) {
-                    InboxView(model: inboxModel) { router.push(.invitation(id: $0)) }
+                    InboxView(
+                        model: inboxModel,
+                        onOpenInvitation: { router.push(.invitation(id: $0)) },
+                        onOpenKameti: { router.push(.kametiDetail(id: $0)) }
+                    )
                         .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }, homeModel: homeModel, profileModel: profileModel) }
                 }
             } label: {
                 Label(String(localized: "Inbox", bundle: .module), systemImage: "tray")
             }
-            .badge(inboxModel.invitations.count + inboxModel.requests.count)
+            .badge(inboxModel.badgeCount)
 
             Tab(value: AppTab.profile) {
                 NavigationStack(path: $router.profilePath) {
@@ -71,6 +78,60 @@ struct MainTabView: View {
         .tint(KColors.brand)
         // Keeps the Inbox badge current from the first launch.
         .task { await inboxModel.load() }
+        .task { await startPush() }
+        // Live updates (FR-86-adjacent): screens refresh themselves.
+        .task {
+            await dependencies.live.start { change in
+                Task { @MainActor in KLiveUpdates.shared.record(kametiId: change.kametiId) }
+            }
+        }
+        .onDisappear { Task { await dependencies.live.stop() } }
+        .onChange(of: KLiveUpdates.shared.revision) {
+            Task { await homeModel.load() }
+            Task { await inboxModel.load() }
+        }
+        // Back in the app: catch up on anything missed while away.
+        .onChange(of: scenePhase) { old, new in
+            if new == .active, old == .background { KLiveUpdates.shared.refreshAll() }
+        }
+        .onChange(of: inboxModel.badgeCount) { _, count in push.setBadge(count) }
+        // Ask once, after the first kameti shows up (board AN-4).
+        .onChange(of: homeModel.sections.isEmpty) { _, empty in
+            if !empty, !push.hasAsked, push.status == .notDetermined { askingPush = true }
+        }
+        .onChange(of: push.pendingTap) { _, tap in if let tap { open(tap) } }
+        .kBottomSheet(isPresented: $askingPush, title: "", detents: [.large]) {
+            PushPermissionSheet(
+                onAllow: { askingPush = false; Task { await push.requestPermission() } },
+                onLater: { askingPush = false; push.hasAsked = true }
+            )
+        }
+    }
+
+    /// Saves this phone's token for the signed-in account whenever it appears
+    /// or changes, and registers with APNs if pushes are already allowed.
+    private func startPush() async {
+        let notifications = dependencies.notifications
+        push.onToken = { token in
+            guard let token else { return }
+            Task { try? await notifications.registerDevice(token: token, platform: "ios") }
+        }
+        if let token = push.fcmToken { try? await notifications.registerDevice(token: token, platform: "ios") }
+        await push.registerIfAllowed()
+        if let tap = push.pendingTap { open(tap) }
+    }
+
+    /// A tapped notification: requests and invitations open the Inbox, the
+    /// rest open their kameti.
+    private func open(_ tap: PushTap) {
+        push.pendingTap = nil
+        Task { await inboxModel.load() }
+        if !AppNotification.opensKameti(kind: tap.kind) || tap.kametiId == nil {
+            router.tab = .inbox
+        } else if let id = tap.kametiId {
+            router.tab = .home
+            router.homePath = [.kametiDetail(id: id)]
+        }
     }
 }
 
