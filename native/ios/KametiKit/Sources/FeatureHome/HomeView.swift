@@ -39,12 +39,17 @@ public struct HomeView: View {
     public var body: some View {
         Group {
             if !model.hasLoaded {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                ScrollView {
+                    VStack(spacing: KSpace.md) { KSkeletonRows(rows: 3); KSkeletonRows(rows: 2) }
+                        .padding(.horizontal, KSpace.xl).padding(.top, KSpace.md)
+                }
             } else if let failure = model.failure, model.sections.isEmpty {
-                ContentUnavailableView {
-                    Label(failure.userMessage, systemImage: "exclamationmark.triangle")
-                } actions: {
-                    Button(String(localized: "Try again", bundle: .module)) { Task { await model.load() } }
+                ScrollView {
+                    KMessageCard(
+                        String(localized: "Couldn't load your kametis", bundle: .module), message: failure.helpMessage,
+                        actionTitle: String(localized: "Try again", bundle: .module)
+                    ) { Task { await model.load() } }
+                    .padding(.horizontal, KSpace.xl).padding(.top, KSpace.md)
                 }
             } else {
                 list
@@ -108,6 +113,7 @@ public struct HomeView: View {
     private var list: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: KSpace.md) {
+                if !KConnectivity.shared.isOnline { KOfflineBanner(since: model.loadedAt) }
                 invitationsSection
                 if model.sections.isEmpty {
                     KCard {

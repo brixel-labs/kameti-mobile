@@ -32,8 +32,8 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Invites, join, approve | Built (boards AI-1a/1b, AF-Join-Invite, AF-Approve-Join) | Universal links; checked in the demo only |
 | Activity log | Built (AL-1 feed with AL-2 before → after; ••• menu; members see their own) | Activity in the Inbox feed |
 | Edit kameti, draft screen, Notes | Built: drafts reopen in the wizard; Notes tab (A2-Notes-Tab, swipe actions); edit a running kameti (AE-1, ••• menu) | Notes on payment and payout screens |
-| Offline and error states | Basic messages | Canvas design |
-| Dark mode | Colours switch | No screen checked against the dark artboards |
+| Offline and error states | Built (AF-States): offline banner, writes blocked offline, skeletons, error and invite cards | Saved copy for opening the app offline |
+| Dark mode | Checked: tokens match the dark artboards; two hard-coded colours fixed | — |
 | Android | Not started | Later |
 
 ## Order of work
@@ -47,7 +47,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 7. **Edit kameti, reopen a draft, Notes tab.**
 8. **Activity log.**
 9. **Profile and settings** (Profile v2 artboard).
-10. **Dark mode, offline and error states, accessibility.**
+10. **Dark mode, offline and error states.** (Accessibility pass dropped: not required for this app.)
 11. **Release preparation**: remove sample data from release builds, real-device test, Apple and Google configuration, PR to `develop`.
 12. **Android.**
 

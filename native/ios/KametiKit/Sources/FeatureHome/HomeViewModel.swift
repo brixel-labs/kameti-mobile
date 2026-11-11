@@ -2,6 +2,7 @@ import KametiCore
 import FeatureKametiDetail
 import Foundation
 import KametiDomain
+import KametiUI
 import Observation
 
 /// One kameti on Home with the parts that load separately. A part that fails
@@ -55,6 +56,8 @@ public final class HomeViewModel {
     public private(set) var firstName: String?
     /// Live invitations addressed to my email (board AI-1b).
     public private(set) var invitations: [MyInvitation] = []
+    /// When the kametis last loaded, for "Showing data from …" while offline.
+    public private(set) var loadedAt: Date?
     /// The app clock's "now" (fixed in the demo), for "expires in".
     public var now: Date { dependencies.clock.now() }
 
@@ -115,8 +118,11 @@ public final class HomeViewModel {
                 summaries[index] = await detail(for: summaries[index])
             }
             sections = Self.sections(of: summaries)
+            loadedAt = Date()
+            KConnectivity.shared.record(nil)
         } catch {
             failure = error
+            KConnectivity.shared.record(error)
         }
     }
 

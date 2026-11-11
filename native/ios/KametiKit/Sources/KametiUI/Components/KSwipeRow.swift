@@ -58,7 +58,8 @@ public struct KSwipeRow<Content: View>: View {
                         } label: {
                             Image(systemName: item.symbol)
                                 .font(.system(size: 19, weight: .semibold))
-                                .foregroundStyle(.white)
+                                // Readable on the tint in both looks (dark mode's tints are light).
+                                .foregroundStyle(KColors.textOnBrand)
                                 .frame(width: 52, height: 52)
                                 .background(item.tint, in: Circle())
                                 .contentShape(Circle())

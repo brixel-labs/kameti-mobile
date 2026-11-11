@@ -101,12 +101,14 @@ public struct InboxView: View {
     public var body: some View {
         Group {
             if !model.hasLoaded {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                ScrollView { KSkeletonRows(rows: 3).padding(.horizontal, KSpace.xl).padding(.top, KSpace.md) }
             } else if let failure = model.failure, model.isEmpty {
-                ContentUnavailableView {
-                    Label(failure.userMessage, systemImage: "exclamationmark.triangle")
-                } actions: {
-                    Button(String(localized: "Try again", bundle: .module)) { Task { await model.load() } }
+                ScrollView {
+                    KMessageCard(
+                        String(localized: "Couldn't load your inbox", bundle: .module), message: failure.helpMessage,
+                        actionTitle: String(localized: "Try again", bundle: .module)
+                    ) { Task { await model.load() } }
+                    .padding(.horizontal, KSpace.xl).padding(.top, KSpace.md)
                 }
             } else if model.isEmpty {
                 ContentUnavailableView(
