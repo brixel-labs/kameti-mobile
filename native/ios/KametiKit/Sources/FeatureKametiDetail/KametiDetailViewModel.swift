@@ -100,6 +100,17 @@ public final class KametiDetailViewModel {
         return nil
     }
 
+    /// Records several payments in one go (tap-to-settle), then reloads.
+    public func recordPayments(items: [BatchPaymentItem], receivedOn: Date, method: PaymentMethod) async -> Failure? {
+        do throws(Failure) {
+            _ = try await dependencies.payments.recordPayments(kametiId: kametiId, receivedOn: receivedOn, items: items, method: method)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
     /// Voids a payment with a reason (payments are never edited or deleted).
     public func voidPayment(id: String, reason: String) async -> Failure? {
         do throws(Failure) {

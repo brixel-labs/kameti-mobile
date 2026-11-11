@@ -13,11 +13,16 @@ struct OwnerTabs: View {
     let model: KametiDetailViewModel
     @State private var tab = Tab.overview
     @State private var recording: RecordTarget?
+    @State private var collecting = false
     @State private var voiding: Payment?
 
     struct RecordTarget: Identifiable {
         let id = UUID()
         let memberId: String?
+    }
+
+    private var monthName: String {
+        data.current.map { DetailLogic.monthTitle($0.monthStart).split(separator: " ").first.map(String.init) ?? "" } ?? ""
     }
 
     private var titles: [(tab: Tab, title: String)] {
@@ -52,7 +57,14 @@ struct OwnerTabs: View {
             .animation(.smooth(duration: 0.28), value: tab)
             .overlay(alignment: .bottomTrailing) {
                 if tab == .overview, data.current != nil {
-                    Button { recording = RecordTarget(memberId: nil) } label: {
+                    Menu {
+                        Button { recording = RecordTarget(memberId: nil) } label: {
+                            Label(String(localized: "Record one payment", bundle: .module), systemImage: "plus")
+                        }
+                        Button { collecting = true } label: {
+                            Label(String(localized: "Collect \(monthName) (tap to settle)", bundle: .module), systemImage: "checklist")
+                        }
+                    } label: {
                         Label(String(localized: "Record payment", bundle: .module), systemImage: "plus")
                             .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
                             .padding(.horizontal, KSpace.lg)
@@ -60,7 +72,6 @@ struct OwnerTabs: View {
                             .background(KColors.brand, in: RoundedRectangle(cornerRadius: KRadius.card))
                             .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
                     }
-                    .buttonStyle(.plain)
                     .padding(KSpace.xl)
                     .transition(.opacity)
                 }
@@ -75,6 +86,10 @@ struct OwnerTabs: View {
                 RecordPaymentSheet(data: data, model: model, preselected: target.memberId) { recording = nil }
                     .id(target.id)
             }
+        }
+        .kBottomSheet(isPresented: $collecting, title: String(localized: "Collect \(monthName)", bundle: .module), detents: [.large]) {
+            // No condition here: the sheet is only built while it is presented.
+            CollectMonthSheet(data: data, model: model) { collecting = false }
         }
         .kBottomSheet(
             isPresented: Binding(get: { voiding != nil }, set: { if !$0 { voiding = nil } }),

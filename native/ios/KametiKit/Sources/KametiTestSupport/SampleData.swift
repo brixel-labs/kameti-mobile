@@ -14,7 +14,10 @@ public enum SampleData {
             kametis: SampleKametiRepository(), ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store),
             invites: UnusedRepositories(), audit: UnusedRepositories(),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
-            contacts: SampleContactsRepository(), auth: FakeAuthRepository(userId: userId)
+            contacts: SampleContactsRepository(), auth: FakeAuthRepository(userId: userId),
+            // The sample data is set in November 2026, so "today" is fixed there
+            // whatever the phone's date is.
+            clock: KametiClock(nowUTC: { DateOnly.make(year: 2026, month: 11, day: 10).addingTimeInterval(8 * 3600) })
         )
     }
 

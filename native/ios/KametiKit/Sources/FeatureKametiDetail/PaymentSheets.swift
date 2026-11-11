@@ -15,7 +15,6 @@ struct RecordPaymentSheet: View {
     @State private var digits = ""
     @State private var dateChoice = DateChoice.today
     @State private var customDate: Date
-    @State private var pickingDate = false
     @State private var method = PaymentMethod.cash
     @State private var reference = ""
     @State private var note = ""
@@ -38,22 +37,7 @@ struct RecordPaymentSheet: View {
         }
     }
 
-    enum DateChoice { case today, yesterday, custom }
-
-    /// The day the money came in, as a date-only (UTC) value.
-    private var receivedOn: Date {
-        switch dateChoice {
-        case .today: data.today
-        case .yesterday: addingDays(-1, to: data.today)
-        case .custom: Self.utcDate(from: customDate)
-        }
-    }
-
-    private func addingDays(_ days: Int, to date: Date) -> Date {
-        var utc = Calendar(identifier: .gregorian)
-        utc.timeZone = .gmt
-        return utc.date(byAdding: .day, value: days, to: date) ?? date
-    }
+    private var receivedOn: Date { dateChoice.date(today: data.today, custom: customDate) }
 
     private var member: Member? { data.members.first { $0.id == memberId } }
     private var row: MemberMonthRow? { memberId.flatMap { PaymentLogic.monthRow(for: $0, in: data) } }
@@ -65,8 +49,8 @@ struct RecordPaymentSheet: View {
             VStack(alignment: .leading, spacing: KSpace.lg) {
                 memberField
                 amountField
-                dateSection
-                methodSection
+                ReceivedDateChooser(choice: $dateChoice, custom: $customDate, today: data.today, earliest: data.kameti.startMonth)
+                MethodChooser(method: $method, reference: $reference)
                 VStack(alignment: .leading, spacing: 6) {
                     label(String(localized: "Note (optional)", bundle: .module))
                     TextField(String(localized: "e.g. Meezan transfer, ref 88213", bundle: .module), text: $note)
@@ -107,59 +91,6 @@ struct RecordPaymentSheet: View {
     }
 
     // MARK: Pieces
-
-    private var dateSection: some View {
-        VStack(alignment: .leading, spacing: KSpace.sm) {
-            label(String(localized: "Date received", bundle: .module))
-            KFlowLayout {
-                KChip(String(localized: "Today", bundle: .module), isOn: dateChoice == .today, style: .outlined) { dateChoice = .today }
-                KChip(String(localized: "Yesterday", bundle: .module), isOn: dateChoice == .yesterday, style: .outlined) { dateChoice = .yesterday }
-                KChip(
-                    dateChoice == .custom ? DetailLogic.dayMonth(receivedOn) : String(localized: "Pick a date", bundle: .module),
-                    symbol: "calendar", isOn: dateChoice == .custom, style: .outlined
-                ) { kDismissKeyboard(); pickingDate = true }
-            }
-        }
-        .kBottomSheet(isPresented: $pickingDate, title: String(localized: "Date received", bundle: .module), detents: [.medium]) {
-            VStack(spacing: KSpace.md) {
-                DatePicker("", selection: $customDate, in: ...Self.localDate(from: data.today), displayedComponents: .date)
-                    .datePickerStyle(.graphical)
-                    .labelsHidden()
-                    .tint(KColors.brand)
-                    .padding(.horizontal, KSpace.lg)
-                Button {
-                    dateChoice = .custom
-                    pickingDate = false
-                } label: {
-                    Text("Use this date", bundle: .module)
-                        .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glassProminent)
-                .tint(KColors.brand)
-                .controlSize(.large)
-                .padding(.horizontal, KSpace.xl)
-            }
-        }
-    }
-
-    private var methodSection: some View {
-        VStack(alignment: .leading, spacing: KSpace.sm) {
-            label(String(localized: "Method", bundle: .module))
-            KFlowLayout {
-                KChip(String(localized: "Cash", bundle: .module), symbol: "banknote", isOn: method == .cash, style: .outlined) { withAnimation(.smooth(duration: 0.25)) { method = .cash } }
-                KChip(String(localized: "Bank transfer", bundle: .module), symbol: "building.columns", isOn: method == .bankTransfer, style: .outlined) { withAnimation(.smooth(duration: 0.25)) { method = .bankTransfer } }
-                KChip(String(localized: "Other", bundle: .module), isOn: method == .other, style: .outlined) { withAnimation(.smooth(duration: 0.25)) { method = .other } }
-            }
-            if method == .bankTransfer {
-                TextField(String(localized: "Reference no. (optional)", bundle: .module), text: $reference)
-                    .padding(.horizontal, KSpace.md)
-                    .frame(minHeight: 48)
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-    }
 
     private func label(_ text: String) -> some View {
         Text(text).kText(KTextToken.bodyStrong, color: KColors.textSecondary)
@@ -264,6 +195,13 @@ struct RecordPaymentSheet: View {
     }
 
     // The picker works in local calendar days; the backend takes a date-only value.
+    /// Days the owner can pick: from the kameti's first day to today (never an
+    /// empty range, even if the phone's date is before the kameti started).
+    static func pickableRange(from earliest: Date, to today: Date) -> ClosedRange<Date> {
+        let end = localDate(from: today)
+        return min(localDate(from: earliest), end)...end
+    }
+
     static func localDate(from utcDay: Date) -> Date {
         var utc = Calendar(identifier: .gregorian)
         utc.timeZone = .gmt
