@@ -57,7 +57,9 @@ public enum SampleData {
             id: "f\($0.offset + 1)", kametiId: "family", name: $0.element,
             // Hira accepted with another email and waits for approval; Faisal is invited.
             joinStatus: $0.offset == 5 ? .invited : ($0.offset == 4 ? .pendingApproval : .joined),
-            contactId: familyContactIds[$0.element], profileId: $0.offset == 4 ? "hira-account" : nil
+            // Joined members have an account, as on the backend.
+            contactId: familyContactIds[$0.element],
+            profileId: $0.offset == 4 ? "hira-account" : ($0.offset == 5 ? nil : "account-f\($0.offset + 1)")
         )
     }
     static let familySlots = (1...6).map { Slot(id: "fs\($0)", kametiId: "family", payoutMonthIndex: $0) }

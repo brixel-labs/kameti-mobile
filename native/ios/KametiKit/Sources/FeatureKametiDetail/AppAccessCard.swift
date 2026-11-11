@@ -43,7 +43,8 @@ enum AccessState: Equatable {
 }
 
 /// App access (board AI-1a): invite status, the code and link to share, and
-/// Send / Resend / Revoke; Review join when someone is waiting for approval.
+/// Send / Resend / Revoke; Review join when someone is waiting for approval;
+/// Remove access once they've joined.
 struct AppAccessCard: View {
     let data: KametiDetailData
     let model: KametiDetailViewModel
@@ -52,6 +53,7 @@ struct AppAccessCard: View {
     @State private var busy = false
     @State private var failure: Failure?
     @State private var confirmingRevoke = false
+    @State private var confirmingUnlink = false
     @State private var reviewing = false
     @State private var copied = false
 
@@ -80,6 +82,12 @@ struct AppAccessCard: View {
                 Button(String(localized: "Revoke", bundle: .module), role: .destructive) { run { await model.revokeInvite(memberId: member.id) } }
             } message: {
                 Text("The link and code stop working. You can send a new invite later.", bundle: .module)
+            }
+            .alert(String(localized: "Remove \(firstName)'s app access?", bundle: .module), isPresented: $confirmingUnlink) {
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
+                Button(String(localized: "Remove access", bundle: .module), role: .destructive) { run { await model.unlinkMember(memberId: member.id) } }
+            } message: {
+                Text("\(firstName) stops seeing this kameti in the app. Their payments and history stay, and you can invite them again later.", bundle: .module)
             }
             .kBottomSheet(isPresented: $reviewing, title: String(localized: "Join request", bundle: .module), detents: [.large]) {
                 if case .needsApproval(let invited, let accepted) = state {
@@ -123,7 +131,11 @@ struct AppAccessCard: View {
         case .owner:
             EmptyView()
         case .joined:
-            note(String(localized: "\(firstName) can see this kameti in the app.", bundle: .module))
+            HStack(alignment: .center, spacing: KSpace.md) {
+                note(String(localized: "\(firstName) can see this kameti in the app.", bundle: .module))
+                Spacer(minLength: 0)
+                if data.kameti.status != .archived { unlinkButton }
+            }
         case .needsApproval:
             note(String(localized: "\(firstName) accepted with a different email. Check it's really them before they can see anything.", bundle: .module))
             actionButton(String(localized: "Review join", bundle: .module), symbol: "person.badge.clock", prominent: true) { reviewing = true }
@@ -172,6 +184,17 @@ struct AppAccessCard: View {
     private var resendButton: some View {
         Button { run { await model.invite(memberId: member.id, resend: true) } } label: {
             smallLabel(String(localized: "Resend", bundle: .module), symbol: "arrow.clockwise", prominent: false)
+        }
+        .buttonStyle(.plain)
+        .disabled(busy)
+    }
+
+    private var unlinkButton: some View {
+        Button { confirmingUnlink = true } label: {
+            Text("Remove access", bundle: .module).kText(KTextStyle(size: 13, weight: .semibold), color: KColors.negative)
+                .padding(.horizontal, KSpace.md).frame(minHeight: 36)
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(KColors.negative.opacity(0.35)))
+                .contentShape(RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
         .disabled(busy)

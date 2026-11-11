@@ -69,6 +69,19 @@ struct InviteAccessTests {
         #expect(await model.approveJoin(memberId: "f5") == .server(code: "not_pending_approval", detail: nil))
     }
 
+    @Test func removingAccessUnlinksAJoinedMember() async throws {
+        let (model, data) = await loaded()
+        #expect(try state("f1", try #require(data())) == .joined)
+        #expect(await model.unlinkMember(memberId: "f1") == nil)
+        let after = try #require(data())
+        let ali = try #require(after.members.first { $0.id == "f1" })
+        #expect(ali.profileId == nil)
+        #expect(ali.joinStatus == .notInvited)
+        // Their record stays in the kameti.
+        #expect(after.members.count == (try #require(data())).members.count)
+        #expect(await model.unlinkMember(memberId: "f1") == .server(code: "member_not_linked", detail: nil))
+    }
+
     @Test func inviteAllInvitesEveryoneWithAnEmail() async throws {
         let (model, data) = await loaded()
         #expect(await model.addMember(NewMember(name: "A One", email: "a1@x.com")) == nil)
