@@ -19,6 +19,8 @@ public struct KametiDetailData: Equatable, Sendable {
     /// The owner's saved people (for "From my people" and members' email and
     /// phone). Owner only: empty for a member.
     public var contacts: [Contact] = []
+    /// Every invite of this kameti, newest first. Owner only.
+    public var invites: [Invite] = []
     /// Today in Pakistan (date-only), for "Today" labels.
     public let today: Date
 
@@ -76,10 +78,11 @@ public final class KametiDetailViewModel {
             let payments = try await dependencies.payments.payments(kametiId: kametiId)
             let payouts = (try? await dependencies.payments.payouts(kametiId: kametiId)) ?? []
             let contacts = owner ? ((try? await dependencies.contacts.contacts()) ?? []) : []
+            let invites = owner ? ((try? await dependencies.invites.invites(kametiId: kametiId)) ?? []) : []
             state = .loaded(KametiDetailData(
                 kameti: kameti, userId: userId, members: members, slots: slots, shares: shares,
                 collections: collections, balances: balances, months: months, payments: payments,
-                payouts: payouts, contacts: contacts, today: DetailLogic.pakistanToday(dependencies.clock.now())
+                payouts: payouts, contacts: contacts, invites: invites, today: DetailLogic.pakistanToday(dependencies.clock.now())
             ))
         } catch {
             // Keep what is on screen if a refresh fails.
@@ -218,6 +221,76 @@ public final class KametiDetailViewModel {
         await load()
         return nil
     }
+
+    // MARK: Invites
+
+    /// A freshly made invite. The token and code can only be read when the
+    /// invite is created or resent, so they're kept for this screen's life.
+    public struct SentInvite: Equatable, Sendable {
+        public let link: InviteLink
+        /// `false` when email isn't set up: the owner shares the code or link.
+        public let emailed: Bool
+    }
+
+    public private(set) var sentInvites: [String: SentInvite] = [:]
+
+    /// Creates (or with `resend`, replaces) a member's invite and emails it
+    /// when email is set up, then reloads.
+    public func invite(memberId: String, resend: Bool = false) async -> Failure? {
+        do throws(Failure) {
+            let link = resend
+                ? try await dependencies.invites.resendInvite(memberId: memberId)
+                : try await dependencies.invites.createInvite(memberId: memberId)
+            // The invite exists either way; a failed email only means sharing by hand.
+            let emailed = (try? await dependencies.invites.sendInviteEmail(link)) ?? false
+            sentInvites[memberId] = SentInvite(link: link, emailed: emailed)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
+    /// Invites everyone given, one by one. Returns how many were invited and
+    /// the first failure, if any.
+    public func inviteAll(memberIds: [String]) async -> (invited: Int, failure: Failure?) {
+        var invited = 0
+        var failure: Failure?
+        for id in memberIds {
+            do throws(Failure) {
+                let link = try await dependencies.invites.createInvite(memberId: id)
+                let emailed = (try? await dependencies.invites.sendInviteEmail(link)) ?? false
+                sentInvites[id] = SentInvite(link: link, emailed: emailed)
+                invited += 1
+            } catch {
+                failure = failure ?? error
+            }
+        }
+        await load()
+        return (invited, failure)
+    }
+
+    public func revokeInvite(memberId: String) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.invites.revokeInvite(memberId: memberId) } catch { return error }
+        sentInvites[memberId] = nil
+        await load()
+        return nil
+    }
+
+    public func approveJoin(memberId: String) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.invites.approveJoin(memberId: memberId) } catch { return error }
+        await load()
+        return nil
+    }
+
+    public func declineJoin(memberId: String) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.invites.declineJoin(memberId: memberId) } catch { return error }
+        await load()
+        return nil
+    }
+
+    /// The app clock's "now" (fixed in the demo), for "expires in".
+    public var now: Date { dependencies.clock.now() }
 
     public var idempotencyKey: String { dependencies.makeIdempotencyKey() }
 }

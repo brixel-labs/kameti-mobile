@@ -198,6 +198,8 @@ struct EditMemberSheet: View {
     }
 
     private var contact: Contact? { MemberLogic.contact(of: member, in: data) }
+    /// The member as loaded now, so invite changes show while the sheet is open.
+    private var currentMember: Member { data.members.first { $0.id == member.id } ?? member }
     private var changes: MemberChanges? {
         MemberLogic.changes(name: name, email: email, phone: phone, from: member, contact: contact)
     }
@@ -207,6 +209,7 @@ struct EditMemberSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: KSpace.lg) {
                 identity
+                AppAccessCard(data: data, model: model, member: currentMember)
                 MemberField(
                     title: String(localized: "Name", bundle: .module), text: $name,
                     error: submitted && !MemberLogic.isValidName(name) ? String(localized: "Enter a name.", bundle: .module) : nil,

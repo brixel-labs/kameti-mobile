@@ -4,7 +4,8 @@ import SwiftUI
 /// The only way to show an amount (`Rs 24,00,000`, compact `24 L`).
 public struct KMoneyText: View {
     public enum Style: Sendable { case body, title, display, displayLg }
-    public enum Tone: Sendable { case neutral, positive, negative }
+    /// `onBrand` is for amounts on a brand-coloured surface (the member's due card).
+    public enum Tone: Sendable { case neutral, positive, negative, onBrand }
 
     private let amount: Money
     private let style: Style
@@ -37,6 +38,7 @@ public struct KMoneyText: View {
         case .neutral: KColors.textPrimary
         case .positive: KColors.positive
         case .negative: KColors.negative
+        case .onBrand: KColors.textOnBrand
         }
     }
 }

@@ -17,4 +17,6 @@ public enum Route: Hashable, Sendable {
     case activity(kametiId: String)
     /// An invite link token or the 6-character code.
     case join(token: String)
+    /// An invitation addressed to my email, from Home or Inbox.
+    case invitation(id: String)
 }

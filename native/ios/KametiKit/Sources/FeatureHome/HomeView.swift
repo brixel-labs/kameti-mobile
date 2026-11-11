@@ -1,3 +1,4 @@
+import FeatureInvites
 import FeatureKametiDetail
 import KametiCore
 import KametiDomain
@@ -12,15 +13,23 @@ public struct HomeView: View {
     private let onCreate: () -> Void
     private let onJoin: (String) -> Void
     private let onRecord: (String, RecordAction) -> Void
+    private let onOpenInvitation: (String) -> Void
+    @State private var enteringCode = false
+    /// The code card's measured height, so its sheet is only as tall as needed.
+    @State private var codeCardHeight: CGFloat = 170
+    @State private var declining: MyInvitation?
+    @State private var declineFailure: Failure?
 
     public init(
         model: HomeViewModel,
         onOpen: @escaping (String) -> Void,
         onRecord: @escaping (String, RecordAction) -> Void = { _, _ in },
         onCreate: @escaping () -> Void,
-        onJoin: @escaping (String) -> Void
+        onJoin: @escaping (String) -> Void,
+        onOpenInvitation: @escaping (String) -> Void = { _ in }
     ) {
         self.model = model
+        self.onOpenInvitation = onOpenInvitation
         self.onOpen = onOpen
         self.onRecord = onRecord
         self.onCreate = onCreate
@@ -46,11 +55,60 @@ public struct HomeView: View {
         .navigationTitle(model.firstName ?? String(localized: "Kameti", bundle: .module))
         .task { await model.load() }
         .refreshable { await model.load() }
+        // Sized to the card: the sheet's title row (~84 pt) plus the card and a margin.
+        .kBottomSheet(
+            isPresented: $enteringCode, title: String(localized: "Join with a code", bundle: .module),
+            detents: [.height(codeCardHeight + 84 + KSpace.xl)]
+        ) {
+            ScrollView {
+                InviteCodeCard { code in
+                    enteringCode = false
+                    onJoin(code)
+                }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { codeCardHeight = $0 }
+                .padding(.horizontal, KSpace.xl)
+                .padding(.top, KSpace.xxs)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .alert(
+            String(localized: "Decline this invite?", bundle: .module),
+            isPresented: Binding(get: { declining != nil }, set: { if !$0 { declining = nil } }), presenting: declining
+        ) { invitation in
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
+            Button(String(localized: "Decline", bundle: .module), role: .destructive) {
+                Task { declineFailure = await model.decline(invitation) }
+            }
+        } message: { invitation in
+            Text("\(invitation.ownerName) will see that you declined \(invitation.kametiName).", bundle: .module)
+        }
+        .alert(
+            String(localized: "Couldn't decline", bundle: .module),
+            isPresented: Binding(get: { declineFailure != nil }, set: { if !$0 { declineFailure = nil } }), presenting: declineFailure
+        ) { _ in
+            Button(String(localized: "OK", bundle: .module)) {}
+        } message: { failure in
+            Text(failure.userMessage)
+        }
+    }
+
+    @ViewBuilder private var invitationsSection: some View {
+        if !model.invitations.isEmpty {
+            KSectionHeader(String(localized: "Invitations", bundle: .module))
+            ForEach(model.invitations) { invitation in
+                InvitationCard(
+                    invitation: invitation, now: model.now,
+                    onDecline: { declining = invitation },
+                    onReview: { onOpenInvitation(invitation.inviteId) }
+                )
+            }
+        }
     }
 
     private var list: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: KSpace.md) {
+                invitationsSection
                 if model.sections.isEmpty {
                     KCard {
                         VStack(spacing: KSpace.md) {
@@ -75,6 +133,14 @@ public struct HomeView: View {
                 group(String(localized: "Running by me", bundle: .module), model.sections.mine, showsNew: true)
                 group(String(localized: "I'm a member", bundle: .module), model.sections.joined, showsNew: !hasMine)
                 group(String(localized: "Past", bundle: .module), model.sections.past)
+                if !model.sections.isEmpty {
+                    Button { enteringCode = true } label: {
+                        Text("Have an invite code?", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.horizontal, KSpace.xl)
             .padding(.bottom, KSpace.xl)

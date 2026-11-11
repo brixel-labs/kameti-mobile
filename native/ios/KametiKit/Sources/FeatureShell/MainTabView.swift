@@ -1,5 +1,6 @@
 import FeatureCreateKameti
 import FeatureHome
+import FeatureInvites
 import FeatureKametiDetail
 import KametiCore
 import KametiDomain
@@ -15,6 +16,7 @@ struct MainTabView: View {
     let dependencies: KametiDependencies
     @State private var profileModel: ProfileViewModel
     @State private var homeModel: HomeViewModel
+    @State private var inboxModel: InboxViewModel
 
     init(router: AppRouter, userId: String, dependencies: KametiDependencies) {
         self.router = router
@@ -22,6 +24,7 @@ struct MainTabView: View {
         self.dependencies = dependencies
         _profileModel = State(initialValue: ProfileViewModel(userId: userId, dependencies: dependencies))
         _homeModel = State(initialValue: HomeViewModel(userId: userId, dependencies: dependencies))
+        _inboxModel = State(initialValue: InboxViewModel(userId: userId, dependencies: dependencies))
     }
 
     var body: some View {
@@ -33,7 +36,8 @@ struct MainTabView: View {
                         onOpen: { router.push(.kametiDetail(id: $0)) },
                         onRecord: { router.push(.kametiAction(id: $0, action: $1)) },
                         onCreate: { router.push(.createKameti) },
-                        onJoin: { router.push(.join(token: $0)) }
+                        onJoin: { router.push(.join(token: $0)) },
+                        onOpenInvitation: { router.push(.invitation(id: $0)) }
                     )
                         .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
                 }
@@ -43,13 +47,13 @@ struct MainTabView: View {
 
             Tab(value: AppTab.inbox) {
                 NavigationStack(path: $router.inboxPath) {
-                    ComingNextView(title: String(localized: "Inbox", bundle: .module), symbol: "tray",
-                                   message: String(localized: "Invitations and join requests will show here.", bundle: .module))
+                    InboxView(model: inboxModel) { router.push(.invitation(id: $0)) }
                         .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
                 }
             } label: {
                 Label(String(localized: "Inbox", bundle: .module), systemImage: "tray")
             }
+            .badge(inboxModel.invitations.count + inboxModel.requests.count)
 
             Tab(value: AppTab.profile) {
                 NavigationStack(path: $router.profilePath) {
@@ -61,19 +65,8 @@ struct MainTabView: View {
             }
         }
         .tint(KColors.brand)
-    }
-}
-
-/// A tab whose screen lands in a later slice.
-private struct ComingNextView: View {
-    let title: String
-    let symbol: String
-    let message: String
-
-    var body: some View {
-        ContentUnavailableView(title, systemImage: symbol, description: Text(message))
-            .background(KColors.background)
-            .navigationTitle(title)
+        // Keeps the Inbox badge current from the first launch.
+        .task { await inboxModel.load() }
     }
 }
 
@@ -94,12 +87,45 @@ private struct RouteDestination: View {
             KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), action: action)
         case .createKameti:
             CreateKametiScreen(userId: userId, dependencies: dependencies, router: router, onFinished: onFinished)
-        case .activity, .join:
+        case .join(let token):
+            JoinInviteScreen(token: token, inviteId: nil, dependencies: dependencies, router: router, onFinished: onFinished)
+        case .invitation(let id):
+            JoinInviteScreen(token: nil, inviteId: id, dependencies: dependencies, router: router, onFinished: onFinished)
+        case .activity:
             ContentUnavailableView(
                 String(localized: "This screen is coming next.", bundle: .module),
                 systemImage: "hammer"
             )
         }
+    }
+}
+
+/// Owns the accept-invite model. Joining opens the kameti on Home.
+private struct JoinInviteScreen: View {
+    @State private var model: JoinInviteViewModel
+    let router: AppRouter
+    let onFinished: () -> Void
+
+    init(token: String?, inviteId: String?, dependencies: KametiDependencies, router: AppRouter, onFinished: @escaping () -> Void) {
+        _model = State(initialValue: JoinInviteViewModel(token: token, inviteId: inviteId, dependencies: dependencies))
+        self.router = router
+        self.onFinished = onFinished
+    }
+
+    var body: some View {
+        JoinInviteView(
+            model: model,
+            onJoined: { id in
+                onFinished()
+                router.inboxPath = []
+                router.tab = .home
+                router.homePath = [.kametiDetail(id: id)]
+            },
+            onClose: {
+                onFinished()
+                router.popToRoot()
+            }
+        )
     }
 }
 
