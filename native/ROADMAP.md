@@ -24,7 +24,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Detail, Overview | Matches the canvas | Remind and Record payment buttons do nothing |
 | Detail, Members / Schedule / Payments | Built from Flutter | Not checked against the canvas |
 | Member view | Built from Flutter | Not checked against the canvas |
-| Profile | Name, counts, sign out | Settings rows from the canvas |
+| Profile | Built (v3b icon list): edit name, appearance cards, My people, sign-in methods, past kametis, support/privacy links, delete account | Website pages for support/privacy; archive so owners can delete |
 | Inbox | Invitations and join requests | Activity feed (step 8) |
 | Record payment, tap-to-settle, void | Built | Checked in the demo only |
 | Record payout | Built, with the shortfall | Checked in the demo only |

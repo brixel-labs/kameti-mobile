@@ -82,6 +82,11 @@ public final class FakeAuthRepository: AuthRepository {
         }
     }
 
+    /// The demo account signs in with Apple.
+    public func signInMethods() async -> [SignInMethod] {
+        currentUserId == nil ? [] : [SignInMethod(provider: .apple, email: "demo@kameti.test")]
+    }
+
     public func signOut() async throws(Failure) {
         let result = state.mutex.withLock { state in state.calls.append("signOut"); return state.signOut }
         switch result {
@@ -112,6 +117,18 @@ public final class FakeProfileRepository: ProfileRepository {
     }
 
     public func set(_ newResult: Result<Profile, Failure>) { result.withLock { $0 = newResult } }
+
+    /// Like the backend: 1–80 characters after trimming.
+    public func updateDisplayName(userId: String, _ name: String) async throws(Failure) -> Profile {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard (1...80).contains(trimmed.count) else { throw Failure.server(code: "invalid_name", detail: nil) }
+        return try result.withLock { state throws(Failure) -> Profile in
+            let old = try state.get()
+            let updated = Profile(id: old.id, displayName: trimmed, avatarUrl: old.avatarUrl)
+            state = .success(updated)
+            return updated
+        }
+    }
     /// The user ids that were loaded.
     public var loadedUserIds: [String] { loads.withLock { $0 } }
 

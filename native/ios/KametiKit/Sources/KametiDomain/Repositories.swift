@@ -84,6 +84,8 @@ public protocol AuditRepository: Sendable {
 
 public protocol ProfileRepository: Sendable {
     func myProfile(userId: String) async throws(Failure) -> Profile
+    /// The name other people see (1–80 characters).
+    func updateDisplayName(userId: String, _ name: String) async throws(Failure) -> Profile
 }
 
 /// The owner's private contact list. Read only.
@@ -105,4 +107,18 @@ public protocol AuthRepository: Sendable {
     /// Local development only: email and password for seeded test users.
     func signInWithPassword(email: String, password: String) async throws(Failure)
     func signOut() async throws(Failure)
+    /// How the signed-in account can sign in (Apple, Google, email), with
+    /// the email each one uses. Empty when unknown.
+    func signInMethods() async -> [SignInMethod]
+}
+
+/// One way to sign in to the account.
+public struct SignInMethod: Hashable, Sendable {
+    public enum Provider: String, Sendable { case apple, google, email }
+    public let provider: Provider
+    public let email: String?
+
+    public init(provider: Provider, email: String?) {
+        self.provider = provider; self.email = email
+    }
 }

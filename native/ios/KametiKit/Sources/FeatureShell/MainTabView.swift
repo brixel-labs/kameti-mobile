@@ -60,7 +60,7 @@ struct MainTabView: View {
 
             Tab(value: AppTab.profile) {
                 NavigationStack(path: $router.profilePath) {
-                    ProfileView(model: profileModel)
+                    ProfileView(model: profileModel) { router.push(.kametiDetail(id: $0)) }
                         .navigationDestination(for: Route.self) { RouteDestination(route: $0, userId: userId, dependencies: dependencies, router: router, onFinished: { Task { await homeModel.load() } }, knownKameti: { homeModel.kameti(id: $0) }) }
                 }
             } label: {

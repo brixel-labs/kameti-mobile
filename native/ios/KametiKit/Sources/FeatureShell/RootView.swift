@@ -35,7 +35,10 @@ public struct RootView: View {
                     .id(userId)
             }
         }
-        .preferredColorScheme((KAppearance(rawValue: appearance) ?? .system).colorScheme)
+        // On the windows, not `preferredColorScheme`: that misses sheets
+        // already on screen and doesn't always return to System.
+        .onAppear { (KAppearance(rawValue: appearance) ?? .system).applyToWindows() }
+        .onChange(of: appearance) { _, new in (KAppearance(rawValue: new) ?? .system).applyToWindows() }
         .animation(.default, value: session.state)
         .task { session.start() }
         .onOpenURL { router.open($0) }
