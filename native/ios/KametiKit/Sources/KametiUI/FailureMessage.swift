@@ -114,6 +114,12 @@ extension Failure {
             String(localized: "You run this kameti, so you can't join it as a member.", bundle: .module)
         case "member_already_linked":
             String(localized: "Your account is already linked to this kameti.", bundle: .module)
+        case "owner_has_active_kametis":
+            String(localized: "You still run a kameti. Archive it or hand it over before deleting your account.", bundle: .module)
+        case "confirmation_required":
+            String(localized: "Confirm that you want to delete your account.", bundle: .module)
+        case "delete_failed", "auth_delete_failed", "check_failed":
+            String(localized: "Your account couldn't be deleted. Please try again.", bundle: .module)
         case "invalid_note_body":
             String(localized: "A note must be 1 to 2,000 characters.", bundle: .module)
         case "invalid_visibility":

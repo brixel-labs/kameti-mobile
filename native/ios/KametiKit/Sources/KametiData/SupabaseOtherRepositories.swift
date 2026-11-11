@@ -29,6 +29,12 @@ public final class SupabaseProfileRepository: ProfileRepository {
             try await client.from("profiles").select().eq("id", value: userId).single().execute().value
         }
     }
+
+    public func updateDisplayName(userId: String, _ name: String) async throws(Failure) -> Profile {
+        try await run {
+            try await client.from("profiles").update(["display_name": name]).eq("id", value: userId).select().single().execute().value
+        }
+    }
 }
 
 public final class SupabaseContactsRepository: ContactsRepository {

@@ -301,8 +301,8 @@ public extension View {
                     .accessibilityLabel(Text("Close", bundle: .module))
                 }
                 .padding(.horizontal, KSpace.xl)
-                // Same title position with or without a grabber.
-                .padding(.top, 35)
+                // Same title position with or without a grabber, clear of it.
+                .padding(.top, KSpace.xl)
                 .padding(.bottom, KSpace.md)
                 content()
             }

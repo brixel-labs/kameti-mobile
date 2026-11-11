@@ -13,12 +13,14 @@ public enum SampleData {
         let people = SampleContactStore()
         let log = SampleAuditLog()
         let kametis = SampleKametiRepository(payments: store, contacts: people, log: log)
+        let auth = FakeAuthRepository(userId: userId)
         return KametiDependencies(
             kametis: kametis, ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store, log: log),
             invites: SampleInvitesRepository(kametis: kametis, contacts: people, log: log), audit: SampleAuditRepository(log: log, kametis: kametis),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
-            contacts: SampleContactsRepository(store: people), auth: FakeAuthRepository(userId: userId),
+            contacts: SampleContactsRepository(store: people), auth: auth,
             notes: SampleNotesRepository(kametis: kametis, payments: store, log: log),
+            account: SampleAccountRepository(kametis: kametis, contacts: people, auth: auth),
             // The sample data is set in November 2026, so "today" is fixed there
             // whatever the phone's date is.
             clock: KametiClock(nowUTC: { now })
@@ -143,6 +145,22 @@ public enum SampleData {
     static let neighboursShares = [
         Share(id: "nbh1", kametiId: "neighbours", slotId: "nbs1", memberId: "nb1", monthlyAmount: Money(150_000), effectiveFromMonth: 1),
     ]
+
+    // MARK: Friends kameti 2025 (mine, completed)
+
+    static let past = Kameti(
+        id: "past-2025", ownerId: userId, name: "Friends kameti 2025", startMonth: DateOnly.make(year: 2025, month: 6), monthsN: 2,
+        slotAmountC: Money(100_000), dueDay: 10, reminderDays: [1], maxSlotsPerMember: 2, status: .completed,
+        startedAt: DateOnly.make(year: 2025, month: 6)
+    )
+    static let pastMembers = [
+        Member(id: "p1", kametiId: "past-2025", name: "Hamza Ali", joinStatus: .joined),
+        Member(id: "p2", kametiId: "past-2025", name: "Bilal Khan", joinStatus: .joined),
+    ]
+    static let pastSlots = (1...2).map { Slot(id: "ps\($0)", kametiId: "past-2025", payoutMonthIndex: $0) }
+    static let pastShares = (1...2).map {
+        Share(id: "ph\($0)", kametiId: "past-2025", slotId: "ps\($0)", memberId: "p\($0)", monthlyAmount: Money(100_000), effectiveFromMonth: 1)
+    }
 
     // MARK: Ledger
 
@@ -292,18 +310,18 @@ private let notFound = Failure.server(code: "not_found", detail: nil)
 /// wizard can be tried without a backend. Nothing is saved to disk.
 final class SampleKametiRepository: KametiRepository {
     private struct State {
-        var kametis = [SampleData.neighbours, SampleData.family, SampleData.friends, SampleData.office, SampleData.cousins]
+        var kametis = [SampleData.neighbours, SampleData.family, SampleData.friends, SampleData.office, SampleData.cousins, SampleData.past]
         var members = [
             "family": SampleData.familyMembers, "friends": SampleData.friendsMembers, "office": SampleData.officeMembers,
-            "cousins": SampleData.cousinsMembers, "neighbours": SampleData.neighboursMembers,
+            "cousins": SampleData.cousinsMembers, "neighbours": SampleData.neighboursMembers, "past-2025": SampleData.pastMembers,
         ]
         var slots = [
             "family": SampleData.familySlots, "friends": SampleData.friendsSlots, "office": SampleData.officeSlots,
-            "cousins": SampleData.cousinsSlots, "neighbours": SampleData.neighboursSlots,
+            "cousins": SampleData.cousinsSlots, "neighbours": SampleData.neighboursSlots, "past-2025": SampleData.pastSlots,
         ]
         var shares = [
             "family": SampleData.familyShares, "friends": SampleData.friendsShares, "office": SampleData.officeShares,
-            "cousins": SampleData.cousinsShares, "neighbours": SampleData.neighboursShares,
+            "cousins": SampleData.cousinsShares, "neighbours": SampleData.neighboursShares, "past-2025": SampleData.pastShares,
         ]
         var counter = 0
     }

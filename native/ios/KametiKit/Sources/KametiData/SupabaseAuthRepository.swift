@@ -85,6 +85,15 @@ public final class SupabaseAuthRepository: AuthRepository {
         try await run { try await client.auth.signOut() }
     }
 
+    public func signInMethods() async -> [SignInMethod] {
+        guard let user = try? await client.auth.user() else { return [] }
+        return (user.identities ?? []).compactMap { identity in
+            guard let provider = SignInMethod.Provider(rawValue: identity.provider) else { return nil }
+            let email = identity.identityData?["email"]?.stringValue ?? user.email
+            return SignInMethod(provider: provider, email: email)
+        }
+    }
+
     /// A refused sign-in says why; a network problem still says "offline".
     static func signInFailure(_ error: any Error) -> Failure {
         let failure = Failure(mapping: error)

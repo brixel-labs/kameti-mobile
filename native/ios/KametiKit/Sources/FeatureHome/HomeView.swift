@@ -55,10 +55,10 @@ public struct HomeView: View {
         .navigationTitle(model.firstName ?? String(localized: "Kameti", bundle: .module))
         .task { await model.load() }
         .refreshable { await model.load() }
-        // Sized to the card: the sheet's title row (~84 pt) plus the card and a margin.
+        // Sized to the card: the sheet's title row (~58 pt) plus the card and a margin.
         .kBottomSheet(
             isPresented: $enteringCode, title: String(localized: "Join with a code", bundle: .module),
-            detents: [.height(codeCardHeight + 84 + KSpace.xl)]
+            detents: [.height(codeCardHeight + 58 + KSpace.xl)]
         ) {
             ScrollView {
                 InviteCodeCard { code in
