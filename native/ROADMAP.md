@@ -26,9 +26,9 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Member view | Built from Flutter | Not checked against the canvas |
 | Profile | Name, counts, sign out | Settings rows from the canvas |
 | Inbox | Placeholder | Everything |
-| Record payment, tap-to-settle, void | Not started | Everything |
-| Record payout | Not started | Everything |
-| Members management | Not started | Add, edit, remove |
+| Record payment, tap-to-settle, void | Built | Checked in the demo only |
+| Record payout | Built, with the shortfall | Checked in the demo only |
+| Members management | Built (board AM-1a/1b: sheets) | Checked in the demo only |
 | Invites, join, approve | Not started | Everything; universal links |
 | Activity log | Not started | Everything |
 | Edit kameti, draft screen, Notes | Not started | Everything |

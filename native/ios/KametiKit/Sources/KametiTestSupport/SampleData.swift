@@ -10,11 +10,12 @@ public enum SampleData {
 
     public static func dependencies() -> KametiDependencies {
         let store = SamplePaymentStore()
+        let people = SampleContactStore()
         return KametiDependencies(
-            kametis: SampleKametiRepository(), ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store),
+            kametis: SampleKametiRepository(payments: store, contacts: people), ledger: SampleLedgerRepository(store: store), payments: SamplePaymentsRepository(store: store),
             invites: UnusedRepositories(), audit: UnusedRepositories(),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
-            contacts: SampleContactsRepository(), auth: FakeAuthRepository(userId: userId),
+            contacts: SampleContactsRepository(store: people), auth: FakeAuthRepository(userId: userId),
             // The sample data is set in November 2026, so "today" is fixed there
             // whatever the phone's date is.
             clock: KametiClock(nowUTC: { DateOnly.make(year: 2026, month: 11, day: 10).addingTimeInterval(8 * 3600) })
@@ -36,8 +37,14 @@ public enum SampleData {
         slotAmountC: Money(250_000), dueDay: 10, reminderDays: [1, 3], maxSlotsPerMember: 4, status: .active
     )
     static let familyNames = ["Ali Raza", "Sara Khan", "Naveed Ahmed", "Osama Sheikh", "Hira Malik", "Faisal Iqbal"]
+    /// Members added from My people stay linked to that person, like on the
+    /// backend, so "From my people" doesn't offer them again.
+    static let familyContactIds = ["Ali Raza": "c1", "Sara Khan": "c2"]
     static let familyMembers = familyNames.enumerated().map {
-        Member(id: "f\($0.offset + 1)", kametiId: "family", name: $0.element, joinStatus: $0.offset == 5 ? .invited : .joined)
+        Member(
+            id: "f\($0.offset + 1)", kametiId: "family", name: $0.element, joinStatus: $0.offset == 5 ? .invited : .joined,
+            contactId: familyContactIds[$0.element]
+        )
     }
     static let familySlots = (1...6).map { Slot(id: "fs\($0)", kametiId: "family", payoutMonthIndex: $0) }
     /// Month 2's slot is shared between Sara and Ali, so the payout screen
@@ -187,8 +194,49 @@ public enum SampleData {
     }
 }
 
+/// The owner's people, shared by the contacts and kameti repositories so a
+/// person added or edited in a kameti shows up in "From my people" too.
+final class SampleContactStore: Sendable {
+    private let state = Mutex((rows: SampleData.contacts, counter: 0))
+
+    var all: [Contact] { state.withLock { $0.rows } }
+
+    func contact(id: String?) -> Contact? {
+        guard let id else { return nil }
+        return state.withLock { $0.rows.first { $0.id == id } }
+    }
+
+    /// Like `add_member`: an email already in the list reuses that person.
+    func findOrCreate(name: String, email: String?, phone: String?) -> Contact {
+        state.withLock { s in
+            if let email, let found = s.rows.first(where: { $0.email?.lowercased() == email }) { return found }
+            s.counter += 1
+            let created = Contact(id: "c-new-\(s.counter)", ownerId: SampleData.userId, name: name, email: email, phone: phone)
+            s.rows.append(created)
+            return created
+        }
+    }
+
+    /// Like `update_member`: `nil` keeps a field, an empty string clears it.
+    func update(id: String?, name: String, email: String?, phone: String?) -> Contact {
+        state.withLock { s in
+            let index = id.flatMap { id in s.rows.firstIndex { $0.id == id } }
+            let old = index.map { s.rows[$0] }
+            if old == nil { s.counter += 1 }
+            let updated = Contact(
+                id: old?.id ?? "c-new-\(s.counter)", ownerId: SampleData.userId, name: old?.name ?? name,
+                email: email.map { $0.isEmpty ? nil : $0 } ?? old?.email,
+                phone: phone.map { $0.isEmpty ? nil : $0 } ?? old?.phone, note: old?.note
+            )
+            if let index { s.rows[index] = updated } else { s.rows.append(updated) }
+            return updated
+        }
+    }
+}
+
 struct SampleContactsRepository: ContactsRepository {
-    func contacts() async throws(Failure) -> [Contact] { SampleData.contacts }
+    let store: SampleContactStore
+    func contacts() async throws(Failure) -> [Contact] { store.all }
 }
 
 private let notFound = Failure.server(code: "not_found", detail: nil)
@@ -206,6 +254,13 @@ final class SampleKametiRepository: KametiRepository {
     }
 
     private let state = Mutex(State())
+    private let payments: SamplePaymentStore
+    private let contacts: SampleContactStore
+
+    init(payments: SamplePaymentStore, contacts: SampleContactStore) {
+        self.payments = payments
+        self.contacts = contacts
+    }
 
     func listKametis() async throws(Failure) -> [Kameti] { state.withLock { $0.kametis } }
 
@@ -272,28 +327,99 @@ final class SampleKametiRepository: KametiRepository {
         }
     }
 
+    /// Mirrors `add_member`: the kameti must be a draft or active, a name of
+    /// 1–80 characters, and the same person can't be added twice.
     func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member {
-        state.withLock { s in
+        try requireEditable(kametiId)
+        let contact: Contact?
+        let name: String
+        if new.isSelf {
+            contact = nil
+            name = "Demo Owner"
+            if state.withLock({ ($0.members[kametiId] ?? []).contains { $0.profileId == SampleData.userId } }) {
+                throw Failure.server(code: "already_member", detail: nil)
+            }
+        } else if let id = new.contactId {
+            guard let found = contacts.contact(id: id) else { throw Failure.server(code: "contact_not_found", detail: nil) }
+            contact = found
+            name = trimmed(new.name) ?? found.name
+        } else {
+            guard let typed = trimmed(new.name) else { throw Failure.server(code: "invalid_name", detail: nil) }
+            name = typed
+            contact = contacts.findOrCreate(name: typed, email: trimmed(new.email)?.lowercased(), phone: trimmed(new.phone))
+        }
+        guard name.count <= 80 else { throw Failure.server(code: "invalid_name", detail: nil) }
+        return try state.withLock { s throws(Failure) in
+            if let contact, (s.members[kametiId] ?? []).contains(where: { $0.contactId == contact.id }) {
+                throw Failure.server(code: "contact_already_member", detail: nil)
+            }
             s.counter += 1
-            let contact = new.contactId.flatMap { id in SampleData.contacts.first { $0.id == id } }
             let member = Member(
-                id: "m-\(s.counter)", kametiId: kametiId, name: new.isSelf ? "Demo Owner" : (contact?.name ?? new.name ?? "Member"),
-                joinStatus: new.isSelf ? .joined : .notInvited, contactId: new.contactId, profileId: new.isSelf ? SampleData.userId : nil
+                id: "m-\(s.counter)", kametiId: kametiId, name: name, joinStatus: new.isSelf ? .joined : .notInvited,
+                contactId: contact?.id, profileId: new.isSelf ? SampleData.userId : nil, nickname: trimmed(new.nickname)
             )
             s.members[kametiId, default: []].append(member)
             return member
         }
     }
 
-    func updateMember(id: String, changes: MemberChanges) async throws(Failure) -> Member { throw readOnly }
-
-    func removeMember(id: String) async throws(Failure) {
-        state.withLock { s in
-            for key in s.members.keys {
-                s.members[key]?.removeAll { $0.id == id }
-                s.shares[key]?.removeAll { $0.memberId == id }
-            }
+    /// Mirrors `update_member`: `nil` keeps a field, an empty string clears
+    /// it; an email or phone goes on the member's contact (made if missing).
+    func updateMember(id: String, changes: MemberChanges) async throws(Failure) -> Member {
+        guard let old = member(id) else { throw notFound }
+        guard let kameti = state.withLock({ $0.kametis.first { $0.id == old.kametiId } }),
+              [.draft, .active, .completed].contains(kameti.status) else { throw Failure.server(code: "kameti_not_editable", detail: nil) }
+        if let name = changes.name {
+            let count = name.trimmingCharacters(in: .whitespacesAndNewlines).count
+            guard (1...80).contains(count) else { throw Failure.server(code: "invalid_name", detail: nil) }
         }
+        let name = changes.name.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? old.name
+        var contactId = old.contactId
+        if changes.email != nil || changes.phone != nil {
+            let email = changes.email.map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            let phone = changes.phone.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            contactId = contacts.update(id: old.contactId, name: name, email: email, phone: phone).id
+        }
+        let nickname = changes.nickname.map { trimmed($0) } ?? old.nickname
+        let updated = Member(
+            id: old.id, kametiId: old.kametiId, name: name, joinStatus: old.joinStatus, contactId: contactId,
+            profileId: old.profileId, nickname: nickname, color: old.color
+        )
+        state.withLock { s in
+            if let index = s.members[old.kametiId]?.firstIndex(where: { $0.id == id }) { s.members[old.kametiId]?[index] = updated }
+        }
+        return updated
+    }
+
+    /// Mirrors `remove_member`: once a kameti has started, someone who holds a
+    /// share or has any payment or payout (voided ones too) stays on the ledger.
+    func removeMember(id: String) async throws(Failure) {
+        guard let old = member(id) else { throw notFound }
+        try requireEditable(old.kametiId)
+        let status = state.withLock { s in s.kametis.first { $0.id == old.kametiId }?.status }
+        let holdsShares = state.withLock { s in (s.shares[old.kametiId] ?? []).contains { $0.memberId == id } }
+        let hasMoney = payments.all(old.kametiId).contains { $0.memberId == id } || payments.payouts(old.kametiId).contains { $0.memberId == id }
+        if status != .draft, holdsShares || hasMoney {
+            throw Failure.server(code: "member_has_history", detail: nil)
+        }
+        state.withLock { s in
+            s.members[old.kametiId]?.removeAll { $0.id == id }
+            s.shares[old.kametiId]?.removeAll { $0.memberId == id }
+        }
+    }
+
+    private func member(_ id: String) -> Member? {
+        state.withLock { s in s.members.values.lazy.flatMap { $0 }.first { $0.id == id } }
+    }
+
+    private func requireEditable(_ kametiId: String) throws(Failure) {
+        guard let kameti = state.withLock({ $0.kametis.first { $0.id == kametiId } }) else { throw notFound }
+        guard [.draft, .active].contains(kameti.status) else { throw Failure.server(code: "kameti_not_editable", detail: nil) }
+    }
+
+    private func trimmed(_ text: String?) -> String? {
+        guard let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
+        return text
     }
 
     func setSlotShares(slotId: String, shares: [ShareInput]) async throws(Failure) -> [Share] {
@@ -322,7 +448,6 @@ final class SampleKametiRepository: KametiRepository {
     }
 }
 
-private let readOnly = Failure.unknown(description: "sample data is read only")
 
 /// The recorded payments of the sample kametis, shared by the ledger and the
 /// payments repositories so a payment recorded in the demo shows up in the

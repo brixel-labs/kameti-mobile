@@ -16,6 +16,9 @@ public struct KametiDetailData: Equatable, Sendable {
     public let months: [MemberMonthRow]
     public let payments: [Payment]
     public let payouts: [Payout]
+    /// The owner's saved people (for "From my people" and members' email and
+    /// phone). Owner only: empty for a member.
+    public var contacts: [Contact] = []
     /// Today in Pakistan (date-only), for "Today" labels.
     public let today: Date
 
@@ -72,10 +75,11 @@ public final class KametiDetailViewModel {
                 : (mine == nil ? [] : try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: mine?.id))
             let payments = try await dependencies.payments.payments(kametiId: kametiId)
             let payouts = (try? await dependencies.payments.payouts(kametiId: kametiId)) ?? []
+            let contacts = owner ? ((try? await dependencies.contacts.contacts()) ?? []) : []
             state = .loaded(KametiDetailData(
                 kameti: kameti, userId: userId, members: members, slots: slots, shares: shares,
                 collections: collections, balances: balances, months: months, payments: payments,
-                payouts: payouts, today: DetailLogic.pakistanToday(dependencies.clock.now())
+                payouts: payouts, contacts: contacts, today: DetailLogic.pakistanToday(dependencies.clock.now())
             ))
         } catch {
             // Keep what is on screen if a refresh fails.
@@ -172,6 +176,42 @@ public final class KametiDetailViewModel {
     public func voidPayment(id: String, reason: String) async -> Failure? {
         do throws(Failure) {
             _ = try await dependencies.payments.voidPayment(id: id, reason: reason)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
+    // MARK: Members
+
+    /// Adds a member (a new person, or one of the owner's saved people), then
+    /// reloads. Returns the failure to show, or `nil`.
+    public func addMember(_ new: NewMember) async -> Failure? {
+        do throws(Failure) {
+            _ = try await dependencies.kametis.addMember(kametiId: kametiId, new)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
+    /// Saves a member's name, email or phone, then reloads.
+    public func updateMember(id: String, changes: MemberChanges) async -> Failure? {
+        do throws(Failure) {
+            _ = try await dependencies.kametis.updateMember(id: id, changes: changes)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
+    /// Removes a member who holds no shares and has no payments, then reloads.
+    public func removeMember(id: String) async -> Failure? {
+        do throws(Failure) {
+            try await dependencies.kametis.removeMember(id: id)
         } catch {
             return error
         }
