@@ -6,6 +6,14 @@ public enum InviteStatus: String, Codable, Hashable, Sendable {
     case pending, accepted, declined, revoked, superseded
 }
 
+/// What happened to an invite's email (`public.email_delivery`), reported by
+/// Resend. `bounced` or `complained` means it didn't arrive (E39b).
+public enum EmailDelivery: String, Codable, Hashable, Sendable {
+    case sent, delivered, delayed, bounced, complained
+
+    public var didNotArrive: Bool { self == .bounced || self == .complained }
+}
+
 /// Row of `public.invites`: owner-only. The token itself is never stored in
 /// readable form, so "copy link" later means resending (a new link).
 public struct Invite: Codable, Hashable, Identifiable, Sendable {
@@ -19,15 +27,22 @@ public struct Invite: Codable, Hashable, Identifiable, Sendable {
     public let sentAt: Date?
     /// The email the invitee signed in with. Show it masked.
     public let acceptedEmail: String?
+    /// What happened to the last invite email; `nil` when none was sent.
+    public let deliveryStatus: EmailDelivery?
+
+    /// The columns the app may read (the table hides the token and code
+    /// hashes, so `select *` is refused).
+    public static let columns = "id,kameti_id,member_id,status,expires_at,send_count,email,sent_at,accepted_email,delivery_status"
 
     public init(
         id: String, kametiId: String, memberId: String, status: InviteStatus,
         expiresAt: Date, sendCount: Int, email: String? = nil, sentAt: Date? = nil,
-        acceptedEmail: String? = nil
+        acceptedEmail: String? = nil, deliveryStatus: EmailDelivery? = nil
     ) {
         self.id = id; self.kametiId = kametiId; self.memberId = memberId
         self.status = status; self.expiresAt = expiresAt; self.sendCount = sendCount
         self.email = email; self.sentAt = sentAt; self.acceptedEmail = acceptedEmail
+        self.deliveryStatus = deliveryStatus
     }
 
     /// Expired is derived: pending past its expiry (the member stays

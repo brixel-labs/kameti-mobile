@@ -103,6 +103,9 @@ struct AppAccessCard: View {
             KPill(String(localized: "Joined", bundle: .module), foreground: KColors.positive, background: KColors.positiveSubtle)
         case .needsApproval:
             KPill(String(localized: "Needs approval", bundle: .module), foreground: KColors.info, background: KColors.infoSubtle)
+        case .invited(let invite) where invite.deliveryStatus?.didNotArrive == true && sent == nil:
+            KPill(String(localized: "Email bounced", bundle: .module), symbol: "exclamationmark.triangle.fill",
+                  foreground: KColors.negative, background: KColors.negativeSubtle)
         case .invited(let invite):
             KPill(
                 String(localized: "Invited · \(InviteLogic.expiryText(invite.expiresAt, now: model.now))", bundle: .module),
@@ -138,8 +141,17 @@ struct AppAccessCard: View {
                     resendButton
                     revokeButton
                 }
+            } else if invite.deliveryStatus?.didNotArrive == true {
+                // E39b: the email didn't arrive; a resend gives a new code and link to share by hand.
+                note(String(localized: "The invite email to \(invite.email ?? "") didn't arrive. Check the address above, or resend to get a new code and link to share on WhatsApp.", bundle: .module))
+                HStack(spacing: KSpace.sm) {
+                    resendButton
+                    revokeButton
+                }
             } else {
-                note(String(localized: "Sent to \(invite.email ?? ""). The code is only shown when an invite is sent; resend to get a new one.", bundle: .module))
+                note(invite.deliveryStatus == .delivered
+                     ? String(localized: "Delivered to \(invite.email ?? ""). The code is only shown when an invite is sent; resend to get a new one.", bundle: .module)
+                     : String(localized: "Sent to \(invite.email ?? ""). The code is only shown when an invite is sent; resend to get a new one.", bundle: .module))
                 HStack(spacing: KSpace.sm) {
                     resendButton
                     revokeButton

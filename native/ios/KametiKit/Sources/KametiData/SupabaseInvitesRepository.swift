@@ -54,7 +54,7 @@ public final class SupabaseInvitesRepository: InvitesRepository {
 
     public func invites(kametiId: String) async throws(Failure) -> [Invite] {
         try await run {
-            try await client.from("invites").select()
+            try await client.from("invites").select(Invite.columns)
                 .eq("kameti_id", value: kametiId).order("created_at", ascending: false).execute().value
         }
     }

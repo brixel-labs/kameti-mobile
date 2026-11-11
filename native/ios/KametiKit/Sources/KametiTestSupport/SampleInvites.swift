@@ -28,9 +28,9 @@ final class SampleInvitesRepository: InvitesRepository {
         let now = SampleData.now
         state = Mutex(State(
             invites: [
-                // Faisal: invited two days ago, not answered.
+                // Faisal: invited two days ago; the email bounced (E39b).
                 Invite(id: "inv-f6", kametiId: "family", memberId: "f6", status: .pending, expiresAt: now + 12 * day, sendCount: 1,
-                       email: "faisal.iqbal@gmail.com", sentAt: now - 2 * day),
+                       email: "faisal.iqbal@gmail.com", sentAt: now - 2 * day, deliveryStatus: .bounced),
                 // Hira: accepted with a different (Apple private relay) email.
                 Invite(id: "inv-f5", kametiId: "family", memberId: "f5", status: .accepted, expiresAt: now + 13 * day, sendCount: 1,
                        email: "hira.malik@gmail.com", sentAt: now - 1 * day, acceptedEmail: "x7d2k9q4mb@privaterelay.appleid.com"),
@@ -217,7 +217,8 @@ final class SampleInvitesRepository: InvitesRepository {
     private func replaced(_ old: Invite, status: InviteStatus, acceptedEmail: String? = nil) -> Invite {
         Invite(
             id: old.id, kametiId: old.kametiId, memberId: old.memberId, status: status, expiresAt: old.expiresAt,
-            sendCount: old.sendCount, email: old.email, sentAt: old.sentAt, acceptedEmail: acceptedEmail ?? old.acceptedEmail
+            sendCount: old.sendCount, email: old.email, sentAt: old.sentAt, acceptedEmail: acceptedEmail ?? old.acceptedEmail,
+            deliveryStatus: old.deliveryStatus
         )
     }
 
