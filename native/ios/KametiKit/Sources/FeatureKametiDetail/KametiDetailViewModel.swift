@@ -294,6 +294,14 @@ public final class KametiDetailViewModel {
         return nil
     }
 
+    /// Takes a joined member's app access away; their record and payments stay.
+    public func unlinkMember(memberId: String) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.invites.unlinkMember(memberId: memberId) } catch { return error }
+        sentInvites[memberId] = nil
+        await load()
+        return nil
+    }
+
     public func declineJoin(memberId: String) async -> Failure? {
         do throws(Failure) { _ = try await dependencies.invites.declineJoin(memberId: memberId) } catch { return error }
         await load()
