@@ -35,12 +35,16 @@ public struct CreateKametiView: View {
             .padding(.horizontal, KSpace.xl)
             .padding(.top, KSpace.xs)
             ZStack {
+                if model.isLoadingDraft {
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
                 stepView(shownStep)
                     .id(shownStep)
                     .transition(.asymmetric(
                         insertion: .move(edge: forward ? .trailing : .leading),
                         removal: .move(edge: forward ? .leading : .trailing)
                     ))
+                }
             }
             .frame(maxHeight: .infinity)
             .clipped()
@@ -53,7 +57,7 @@ public struct CreateKametiView: View {
         }
         .background(KColors.background)
         .kDismissesKeyboard()
-        .navigationTitle(String(localized: "New kameti", bundle: .module))
+        .navigationTitle(model.isResumed ? String(localized: "Finish setting up", bundle: .module) : String(localized: "New kameti", bundle: .module))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
         .toolbar(.hidden, for: .tabBar)
@@ -65,8 +69,19 @@ public struct CreateKametiView: View {
                     Button(String(localized: "Back", bundle: .module), systemImage: "chevron.left") { model.back() }
                 }
             }
+            // A reopened draft starts mid-way, so it can be closed from any
+            // step; everything is already saved on the server.
+            if model.isResumed, !model.isAtStart {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(String(localized: "Close", bundle: .module), systemImage: "xmark", action: onClose)
+                }
+            }
         }
         .task { await model.loadOwner() }
+        // A reopened draft jumps straight to its step, without sliding through the rest.
+        .onChange(of: model.isResumed) { _, resumed in
+            if resumed { shownStep = model.step }
+        }
         .alert(
             model.failure?.userMessage ?? "",
             isPresented: Binding(get: { model.failure != nil }, set: { if !$0 { model.clearFailure() } })

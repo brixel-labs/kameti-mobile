@@ -7,7 +7,7 @@ import SwiftUI
 /// Overview, Members, Schedule and Payments. Recording actions arrive with
 /// the payments slice.
 struct OwnerTabs: View {
-    enum Tab: Hashable, CaseIterable { case overview, members, schedule, payments }
+    enum Tab: Hashable, CaseIterable { case overview, members, schedule, payments, notes }
 
     let data: KametiDetailData
     let model: KametiDetailViewModel
@@ -18,6 +18,9 @@ struct OwnerTabs: View {
     @State private var payingOut: Int?
     @State private var addingMember = false
     @State private var editingMember: Member?
+    @State private var searchingNotes = false
+    /// The note row showing its swipe actions, if any.
+    @State private var openNote: String?
     @State private var confirmingInviteAll = false
     @State private var inviteAllResult: String?
 
@@ -47,6 +50,7 @@ struct OwnerTabs: View {
             (.members, String(localized: "Members", bundle: .module)),
             (.schedule, String(localized: "Schedule", bundle: .module)),
             (.payments, String(localized: "Payments", bundle: .module)),
+            (.notes, String(localized: "Notes", bundle: .module)),
         ]
     }
 
@@ -65,6 +69,13 @@ struct OwnerTabs: View {
                         .padding(.horizontal, KSpace.xl)
                         .padding(.top, KSpace.lg)
                         .padding(.bottom, KSpace.xl)
+                    }
+                    // Not on Notes: its rows swipe sideways, and a refresh control
+                    // would attach to them too. Notes reload after every change.
+                    .modifier(PullToRefresh(isOn: page != .notes) { await model.load() })
+                    // Notes keeps its composer pinned under the list.
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        if page == .notes { NoteComposer(data: data, model: model) }
                     }
                     .tag(page)
                 }
@@ -99,7 +110,21 @@ struct OwnerTabs: View {
             }
         }
         .animation(.smooth(duration: 0.2), value: tab)
+        // A tap anywhere closes an open note row; buttons still work as usual.
+        .simultaneousGesture(TapGesture().onEnded { if openNote != nil { openNote = nil } })
+        // So does moving to another tab (tapped or swiped).
+        .onChange(of: tab) { openNote = nil }
         .toolbar {
+            if tab == .notes {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        withAnimation(.smooth(duration: 0.2)) { searchingNotes.toggle() }
+                    } label: {
+                        Image(systemName: searchingNotes ? "xmark" : "magnifyingglass")
+                    }
+                    .accessibilityLabel(searchingNotes ? Text("Close search", bundle: .module) : Text("Search notes", bundle: .module))
+                }
+            }
             if tab == .members, [.draft, .active].contains(data.kameti.status) {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { addingMember = true } label: {
@@ -228,6 +253,7 @@ struct OwnerTabs: View {
         case .members: MembersTab(data: data, onSelect: { editingMember = $0 }, onInviteAll: { confirmingInviteAll = true })
         case .schedule: ScheduleSection(data: data) { payingOut = $0 }
         case .payments: PaymentsTab(data: data) { voiding = $0 }
+        case .notes: NotesTab(data: data, model: model, isSearching: searchingNotes, openNote: $openNote)
         }
     }
 }
@@ -644,5 +670,15 @@ struct PaymentsTab: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(KColors.surface, in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(KColors.border))
+    }
+}
+
+/// `.refreshable` that can be left off for one page.
+private struct PullToRefresh: ViewModifier {
+    let isOn: Bool
+    let action: @Sendable () async -> Void
+
+    func body(content: Content) -> some View {
+        if isOn { content.refreshable { await action() } } else { content }
     }
 }

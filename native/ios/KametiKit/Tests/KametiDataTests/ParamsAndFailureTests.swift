@@ -32,6 +32,22 @@ struct ParamsTests {
         #expect(p["p_reminder_days"] == .null)
     }
 
+    @Test func noteCalls() {
+        let kametiWide = Params.addNote(kametiId: "k1", NewNote(body: "Pay by the 10th", visibility: .shared, targetType: .kameti, targetId: "ignored"))
+        #expect(kametiWide["p_kameti_id"] == .string("k1"))
+        #expect(kametiWide["p_body"] == .string("Pay by the 10th"))
+        #expect(kametiWide["p_visibility"] == .string("shared"))
+        #expect(kametiWide["p_target_type"] == .string("kameti"))
+        #expect(kametiWide["p_target_id"] == .null) // a kameti note never sends a target id
+        let onMember = Params.addNote(kametiId: "k1", NewNote(body: "x", targetType: .member, targetId: "m1"))
+        #expect(onMember["p_visibility"] == .string("private"))
+        #expect(onMember["p_target_id"] == .string("m1"))
+        let update = Params.updateNote(id: "n1", body: nil, visibility: .shared)
+        #expect(update["p_note_id"] == .string("n1"))
+        #expect(update["p_body"] == .null)
+        #expect(update["p_visibility"] == .string("shared"))
+    }
+
     @Test func memberCalls() {
         let add = Params.addMember(kametiId: "k1", NewMember(name: "Ali", email: "a@b.co", isSelf: false))
         #expect(add["p_name"] == .string("Ali"))

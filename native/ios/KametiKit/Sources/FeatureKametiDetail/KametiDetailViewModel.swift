@@ -21,6 +21,9 @@ public struct KametiDetailData: Equatable, Sendable {
     public var contacts: [Contact] = []
     /// Every invite of this kameti, newest first. Owner only.
     public var invites: [Invite] = []
+    /// Notes I can read: all of them for the owner, shared ones I'm involved
+    /// in for a member (FR-71). Newest first.
+    public var notes: [Note] = []
     /// Today in Pakistan (date-only), for "Today" labels.
     public let today: Date
 
@@ -79,10 +82,12 @@ public final class KametiDetailViewModel {
             let payouts = (try? await dependencies.payments.payouts(kametiId: kametiId)) ?? []
             let contacts = owner ? ((try? await dependencies.contacts.contacts()) ?? []) : []
             let invites = owner ? ((try? await dependencies.invites.invites(kametiId: kametiId)) ?? []) : []
+            // Notes are extra: if they fail to load, the rest still shows.
+            let notes = (try? await dependencies.notes.notes(kametiId: kametiId)) ?? []
             state = .loaded(KametiDetailData(
                 kameti: kameti, userId: userId, members: members, slots: slots, shares: shares,
                 collections: collections, balances: balances, months: months, payments: payments,
-                payouts: payouts, contacts: contacts, invites: invites, today: DetailLogic.pakistanToday(dependencies.clock.now())
+                payouts: payouts, contacts: contacts, invites: invites, notes: notes, today: DetailLogic.pakistanToday(dependencies.clock.now())
             ))
         } catch {
             // Keep what is on screen if a refresh fails.
@@ -285,6 +290,26 @@ public final class KametiDetailViewModel {
 
     public func declineJoin(memberId: String) async -> Failure? {
         do throws(Failure) { _ = try await dependencies.invites.declineJoin(memberId: memberId) } catch { return error }
+        await load()
+        return nil
+    }
+
+    // MARK: Notes
+
+    public func addNote(_ new: NewNote) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.notes.addNote(kametiId: kametiId, new) } catch { return error }
+        await load()
+        return nil
+    }
+
+    public func updateNote(id: String, body: String?, visibility: NoteVisibility?) async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.notes.updateNote(id: id, body: body, visibility: visibility) } catch { return error }
+        await load()
+        return nil
+    }
+
+    public func deleteNote(id: String) async -> Failure? {
+        do throws(Failure) { try await dependencies.notes.deleteNote(id: id) } catch { return error }
         await load()
         return nil
     }

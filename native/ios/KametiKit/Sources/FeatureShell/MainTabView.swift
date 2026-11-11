@@ -33,7 +33,10 @@ struct MainTabView: View {
                 NavigationStack(path: $router.homePath) {
                     HomeView(
                         model: homeModel,
-                        onOpen: { router.push(.kametiDetail(id: $0)) },
+                        // A draft reopens the wizard where it was left.
+                        onOpen: { id in
+                            router.push(homeModel.kameti(id: id)?.status == .draft ? .resumeDraft(id: id) : .kametiDetail(id: id))
+                        },
                         onRecord: { router.push(.kametiAction(id: $0, action: $1)) },
                         onCreate: { router.push(.createKameti) },
                         onJoin: { router.push(.join(token: $0)) },
@@ -82,11 +85,13 @@ private struct RouteDestination: View {
     var body: some View {
         switch route {
         case .kametiDetail(let id):
-            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id))
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router)
         case .kametiAction(let id, let action):
-            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), action: action)
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, action: action)
         case .createKameti:
             CreateKametiScreen(userId: userId, dependencies: dependencies, router: router, onFinished: onFinished)
+        case .resumeDraft(let id):
+            CreateKametiScreen(userId: userId, dependencies: dependencies, router: router, onFinished: onFinished, draftId: id)
         case .join(let token):
             JoinInviteScreen(token: token, inviteId: nil, dependencies: dependencies, router: router, onFinished: onFinished)
         case .invitation(let id):
@@ -132,14 +137,18 @@ private struct JoinInviteScreen: View {
 /// Owns the detail view model, so it lives as long as the screen is pushed.
 private struct KametiDetailScreen: View {
     @State private var model: KametiDetailViewModel
+    let router: AppRouter
 
-    init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?, action: RecordAction? = nil) {
+    init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?, router: AppRouter, action: RecordAction? = nil) {
         let model = KametiDetailViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies, preview: preview)
         model.pendingAction = action
         _model = State(initialValue: model)
+        self.router = router
     }
 
-    var body: some View { KametiDetailView(model: model) }
+    var body: some View {
+        KametiDetailView(model: model) { router.push(.resumeDraft(id: $0)) }
+    }
 }
 
 /// Owns the wizard model for as long as the wizard is on screen. Closing
@@ -148,11 +157,13 @@ private struct CreateKametiScreen: View {
     @State private var model: CreateWizardModel
     let router: AppRouter
     let onFinished: () -> Void
+    let draftId: String?
 
-    init(userId: String, dependencies: KametiDependencies, router: AppRouter, onFinished: @escaping () -> Void) {
+    init(userId: String, dependencies: KametiDependencies, router: AppRouter, onFinished: @escaping () -> Void, draftId: String? = nil) {
         _model = State(initialValue: CreateWizardModel(userId: userId, dependencies: dependencies))
         self.router = router
         self.onFinished = onFinished
+        self.draftId = draftId
     }
 
     var body: some View {
@@ -167,5 +178,8 @@ private struct CreateKametiScreen: View {
                 router.popToRoot()
             }
         )
+        .task {
+            if let draftId, model.kametiId == nil { await model.resume(draftId: draftId) }
+        }
     }
 }

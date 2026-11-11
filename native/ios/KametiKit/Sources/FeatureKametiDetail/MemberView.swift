@@ -36,6 +36,14 @@ struct MemberView: View {
         }
         if let current = data.current { potCard(current) }
         paymentsCard(me: me)
+        // Shared notes from the owner that are about me or the whole kameti (FR-71).
+        if !data.notes.isEmpty {
+            card(title: String(localized: "Notes from the owner", bundle: .module)) {
+                VStack(spacing: KSpace.sm) {
+                    ForEach(data.notes) { NoteCard(note: $0, data: data) }
+                }
+            }
+        }
     }
 
     // MARK: Your due

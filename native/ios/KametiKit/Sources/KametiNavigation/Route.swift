@@ -14,6 +14,8 @@ public enum Route: Hashable, Sendable {
     case kametiAction(id: String, action: RecordAction)
     /// The create-kameti wizard.
     case createKameti
+    /// The create wizard reopened on a saved draft.
+    case resumeDraft(id: String)
     case activity(kametiId: String)
     /// An invite link token or the 6-character code.
     case join(token: String)

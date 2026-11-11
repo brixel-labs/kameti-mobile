@@ -509,11 +509,18 @@ public struct KGripHandle: View {
 
 /// Tabs with an underline that slides under the selected one. Pair it with
 /// content that slides the same way (see `OwnerTabs`).
+///
+/// Every tab is the same width (the widest title plus padding). When they fit
+/// they share the full width; when they don't, the row scrolls sideways and
+/// keeps the selected tab in view.
 public struct KUnderlineTabs<Tab: Hashable>: View {
     private let tabs: [(tab: Tab, title: String)]
     private let inset: CGFloat
     @Binding private var selection: Tab
     @Namespace private var underline
+    @State private var available: CGFloat = 0
+    /// The row's measured height: a horizontal scroll view has none of its own.
+    @State private var rowHeight: CGFloat = 44
 
     /// `inset` pads the tabs from the screen edges while the divider under
     /// them still runs the full width.
@@ -522,37 +529,85 @@ public struct KUnderlineTabs<Tab: Hashable>: View {
     }
 
     public var body: some View {
-        HStack(spacing: KSpace.xl) {
-            ForEach(tabs.indices, id: \.self) { index in
-                let item = tabs[index]
-                let isOn = item.tab == selection
-                Button {
-                    withAnimation(.smooth(duration: 0.28)) { selection = item.tab }
-                } label: {
-                    VStack(spacing: 10) {
-                        Text(item.title)
-                            .kText(KTextToken.bodyStrong, color: isOn ? KColors.brand : KColors.textSecondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        ZStack {
-                            Rectangle().fill(.clear).frame(height: 2.5)
-                            if isOn {
-                                Capsule().fill(KColors.brand).frame(height: 2.5)
-                                    .matchedGeometryEffect(id: "underline", in: underline)
-                            }
-                        }
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                EqualWidthRow(minItemWidth: tabs.isEmpty ? 0 : max(available - 2 * inset, 0) / CGFloat(tabs.count)) {
+                    ForEach(tabs.indices, id: \.self) { index in
+                        tabButton(tabs[index]).id(index)
                     }
-                    .padding(.top, KSpace.sm)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(isOn ? .isSelected : [])
+                .padding(.horizontal, inset)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { rowHeight = $0 }
             }
-            Spacer(minLength: 0)
+            .frame(height: rowHeight)
+            // Sideways only: never bounce up and down.
+            .scrollBounceBehavior(.basedOnSize, axes: [.horizontal, .vertical])
+            // This small row must not become the scroll view the navigation
+            // bar tracks: that pushed its content down out of sight.
+            .scrollEdgeEffectHidden(true, for: .all)
+            .onChange(of: selection) { _, new in
+                guard let index = tabs.firstIndex(where: { $0.tab == new }) else { return }
+                withAnimation(.smooth(duration: 0.28)) { proxy.scrollTo(index, anchor: .center) }
+            }
         }
-        .padding(.horizontal, inset)
-        .fixedSize(horizontal: false, vertical: true)
+        // The top spacing sits outside the scroll view, so the scroll view
+        // never touches the navigation bar's edge.
+        .padding(.top, KSpace.sm)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { available = $0 }
         .background(alignment: .bottom) { Rectangle().fill(KColors.border).frame(height: 1) }
+    }
+
+    private func tabButton(_ item: (tab: Tab, title: String)) -> some View {
+        let isOn = item.tab == selection
+        return Button {
+            withAnimation(.smooth(duration: 0.28)) { selection = item.tab }
+        } label: {
+            VStack(spacing: 10) {
+                Text(item.title)
+                    .kText(KTextToken.bodyStrong, color: isOn ? KColors.brand : KColors.textSecondary)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.horizontal, KSpace.md)
+                ZStack {
+                    Rectangle().fill(.clear).frame(height: 2.5)
+                    if isOn {
+                        Capsule().fill(KColors.brand).frame(height: 2.5)
+                            .matchedGeometryEffect(id: "underline", in: underline)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}
+
+/// Lays children side by side, all as wide as the widest one (and at least
+/// `minItemWidth`), so tabs are equal.
+private struct EqualWidthRow: Layout {
+    let minItemWidth: CGFloat
+
+    private func itemWidth(_ subviews: Subviews) -> CGFloat {
+        let widest = subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+        return max(widest, minItemWidth)
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = itemWidth(subviews)
+        let height = subviews.map { $0.sizeThatFits(ProposedViewSize(width: width, height: nil)).height }.max() ?? 0
+        return CGSize(width: width * CGFloat(subviews.count), height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let width = itemWidth(subviews)
+        for (index, subview) in subviews.enumerated() {
+            subview.place(
+                at: CGPoint(x: bounds.minX + CGFloat(index) * width, y: bounds.minY),
+                proposal: ProposedViewSize(width: width, height: bounds.height)
+            )
+        }
     }
 }
 

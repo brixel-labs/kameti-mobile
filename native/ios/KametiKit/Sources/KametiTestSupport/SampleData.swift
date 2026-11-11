@@ -17,6 +17,7 @@ public enum SampleData {
             invites: SampleInvitesRepository(kametis: kametis, contacts: people), audit: UnusedRepositories(),
             profiles: FakeProfileRepository(.success(Profile(id: userId, displayName: "Demo Owner"))),
             contacts: SampleContactsRepository(store: people), auth: FakeAuthRepository(userId: userId),
+            notes: SampleNotesRepository(kametis: kametis, payments: store),
             // The sample data is set in November 2026, so "today" is fixed there
             // whatever the phone's date is.
             clock: KametiClock(nowUTC: { now })
@@ -126,6 +127,21 @@ public enum SampleData {
     static let cousinsShares = (1...4).map {
         Share(id: "czh\($0)", kametiId: "cousins", slotId: "czs\($0)", memberId: "cz\($0)", monthlyAmount: Money(200_000), effectiveFromMonth: 1)
     }
+
+    // MARK: Neighbours kameti (my draft: slot 1 filled, 2 and 3 still empty)
+
+    static let neighbours = Kameti(
+        id: "neighbours", ownerId: userId, name: "Neighbours kameti", startMonth: date(12), monthsN: 3,
+        slotAmountC: Money(150_000), dueDay: 5, reminderDays: [1, 3], maxSlotsPerMember: 2, status: .draft
+    )
+    static let neighboursMembers = [
+        Member(id: "nb1", kametiId: "neighbours", name: "Ali Raza", joinStatus: .notInvited, contactId: "c1"),
+        Member(id: "nb2", kametiId: "neighbours", name: "Omar Farooq", joinStatus: .notInvited, contactId: "c4"),
+    ]
+    static let neighboursSlots = (1...3).map { Slot(id: "nbs\($0)", kametiId: "neighbours", payoutMonthIndex: $0) }
+    static let neighboursShares = [
+        Share(id: "nbh1", kametiId: "neighbours", slotId: "nbs1", memberId: "nb1", monthlyAmount: Money(150_000), effectiveFromMonth: 1),
+    ]
 
     // MARK: Ledger
 
@@ -275,13 +291,19 @@ private let notFound = Failure.server(code: "not_found", detail: nil)
 /// wizard can be tried without a backend. Nothing is saved to disk.
 final class SampleKametiRepository: KametiRepository {
     private struct State {
-        var kametis = [SampleData.family, SampleData.friends, SampleData.office, SampleData.cousins]
+        var kametis = [SampleData.neighbours, SampleData.family, SampleData.friends, SampleData.office, SampleData.cousins]
         var members = [
             "family": SampleData.familyMembers, "friends": SampleData.friendsMembers, "office": SampleData.officeMembers,
-            "cousins": SampleData.cousinsMembers,
+            "cousins": SampleData.cousinsMembers, "neighbours": SampleData.neighboursMembers,
         ]
-        var slots = ["family": SampleData.familySlots, "friends": SampleData.friendsSlots, "office": SampleData.officeSlots, "cousins": SampleData.cousinsSlots]
-        var shares = ["family": SampleData.familyShares, "friends": SampleData.friendsShares, "office": SampleData.officeShares, "cousins": SampleData.cousinsShares]
+        var slots = [
+            "family": SampleData.familySlots, "friends": SampleData.friendsSlots, "office": SampleData.officeSlots,
+            "cousins": SampleData.cousinsSlots, "neighbours": SampleData.neighboursSlots,
+        ]
+        var shares = [
+            "family": SampleData.familyShares, "friends": SampleData.friendsShares, "office": SampleData.officeShares,
+            "cousins": SampleData.cousinsShares, "neighbours": SampleData.neighboursShares,
+        ]
         var counter = 0
     }
 
@@ -308,6 +330,13 @@ final class SampleKametiRepository: KametiRepository {
     func kametiRow(_ id: String) -> Kameti? { state.withLock { $0.kametis.first { $0.id == id } } }
 
     func memberRow(_ id: String) -> Member? { member(id) }
+
+    func slotRow(_ id: String) -> Slot? { state.withLock { s in s.slots.values.lazy.flatMap { $0 }.first { $0.id == id } } }
+
+    /// My own member row in a kameti, if I'm in it.
+    func myMember(in kametiId: String) -> Member? {
+        state.withLock { s in s.members[kametiId]?.first { $0.profileId == SampleData.userId } }
+    }
 
     func shareRows(memberId: String, kametiId: String) -> [(share: Share, slot: Slot?)] {
         state.withLock { s in
