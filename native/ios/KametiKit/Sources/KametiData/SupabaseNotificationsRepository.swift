@@ -47,4 +47,20 @@ public final class SupabaseNotificationsRepository: NotificationsRepository {
             ]).eq("id", value: userId).execute()
         }
     }
+
+    public func reminderTargets(kametiId: String) async throws(Failure) -> ReminderTargets {
+        try await run {
+            try await client.rpc("reminder_targets", params: ["p_kameti_id": JSONValue.string(kametiId)]).execute().value
+        }
+    }
+
+    public func sendReminder(kametiId: String, message: String?, memberIds: [String]?) async throws(Failure) -> ReminderResult {
+        try await run {
+            try await client.rpc("send_reminder_broadcast", params: [
+                "p_kameti_id": JSONValue.string(kametiId),
+                "p_message": message.map { .string($0) } ?? .null,
+                "p_member_ids": memberIds.map { .array($0.map { .string($0) }) } ?? .null,
+            ]).execute().value
+        }
+    }
 }

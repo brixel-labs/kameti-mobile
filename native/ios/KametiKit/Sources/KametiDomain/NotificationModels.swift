@@ -58,6 +58,41 @@ public struct NotificationPreferences: Codable, Hashable, Sendable {
     public static let columns = "notify_reminders, notify_payments, notify_invites, notify_changes"
 }
 
+/// Who an owner's reminder would reach (`reminder_targets`, FR-82, FR-84).
+public struct ReminderTargets: Codable, Hashable, Sendable {
+    public struct Member: Codable, Hashable, Identifiable, Sendable {
+        public let memberId: String
+        public let name: String
+        public let owed: Money
+        /// Joined the app: gets the push. Otherwise remind on WhatsApp.
+        public let hasApp: Bool
+        /// The owner already reminded them today (one owner reminder a day each).
+        public let remindedToday: Bool
+        public let phone: String?
+        public var id: String { memberId }
+
+        public init(memberId: String, name: String, owed: Money, hasApp: Bool, remindedToday: Bool = false, phone: String? = nil) {
+            self.memberId = memberId; self.name = name; self.owed = owed; self.hasApp = hasApp
+            self.remindedToday = remindedToday; self.phone = phone
+        }
+    }
+
+    public let dueDay: Int
+    public let members: [Member]
+
+    public init(dueDay: Int, members: [Member]) {
+        self.dueDay = dueDay; self.members = members
+    }
+}
+
+/// What a reminder did: how many got it, and who was skipped (already reminded today).
+public struct ReminderResult: Codable, Hashable, Sendable {
+    public let sent: Int
+    public let skipped: [String]
+
+    public init(sent: Int, skipped: [String] = []) { self.sent = sent; self.skipped = skipped }
+}
+
 /// The signed-in user's notifications, devices and preferences.
 public protocol NotificationsRepository: Sendable {
     /// Newest first.
@@ -69,6 +104,10 @@ public protocol NotificationsRepository: Sendable {
     func unregisterDevice(token: String) async throws(Failure)
     func preferences(userId: String) async throws(Failure) -> NotificationPreferences
     func updatePreferences(userId: String, _ preferences: NotificationPreferences) async throws(Failure)
+    /// Owner only: who owes now, with and without the app.
+    func reminderTargets(kametiId: String) async throws(Failure) -> ReminderTargets
+    /// Owner only: pushes a reminder; each member gets at most one a day from the owner.
+    func sendReminder(kametiId: String, message: String?, memberIds: [String]?) async throws(Failure) -> ReminderResult
 }
 
 /// For builds without notifications: nothing to show, nothing to send.
@@ -80,4 +119,6 @@ public struct UnavailableNotificationsRepository: NotificationsRepository {
     public func unregisterDevice(token: String) async throws(Failure) {}
     public func preferences(userId: String) async throws(Failure) -> NotificationPreferences { NotificationPreferences() }
     public func updatePreferences(userId: String, _ preferences: NotificationPreferences) async throws(Failure) {}
+    public func reminderTargets(kametiId: String) async throws(Failure) -> ReminderTargets { ReminderTargets(dueDay: 10, members: []) }
+    public func sendReminder(kametiId: String, message: String?, memberIds: [String]?) async throws(Failure) -> ReminderResult { ReminderResult(sent: 0) }
 }

@@ -259,7 +259,7 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
   - Members who are fully paid (including through credit) are **never** reminded.
 - FR-81: **Overdue.** After the due day, the member gets an "Overdue" reminder and the owner gets a digest (e.g. "3 members still owe Rs 4,50,000 for November").
 - FR-82: **Owner broadcast.** One tap sends a reminder to **all unpaid members** of a kameti. The owner can optionally edit the message and choose recipients (e.g. all members, unpaid only, or selected people).
-  - Rate limit: at most **one broadcast per kameti per day**.
+  - Rate limit: each member gets at most **one owner reminder per day** (per kameti). Members already reminded today are skipped and named, so the owner can remind one person in the morning and the rest later. Automatic reminders (FR-80, FR-81) are counted separately, and skip anyone the owner already reminded that day. WhatsApp reminders (FR-84) are not limited.
 - FR-83: **Event notifications** to members:
   - a payment was recorded for you;
   - a payment was edited or voided;

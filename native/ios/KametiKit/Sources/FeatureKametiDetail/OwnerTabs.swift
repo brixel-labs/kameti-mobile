@@ -24,6 +24,7 @@ struct OwnerTabs: View {
     @State private var confirmingInviteAll = false
     @State private var inviteAllResult: String?
     @State private var restoreFailure: Failure?
+    @State private var reminding = false
 
     /// Archived (§6.11): read-only, so every write control is left out.
     private var isArchived: Bool { data.kameti.status == .archived }
@@ -174,6 +175,9 @@ struct OwnerTabs: View {
         } message: {
             Text(inviteAllResult ?? "")
         }
+        .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind members", bundle: .module), detents: [.large]) {
+            RemindSheet(kameti: data.kameti, dependencies: model.dependencies) { reminding = false }
+        }
         .kBottomSheet(isPresented: $addingMember, title: String(localized: "Add member", bundle: .module), detents: [.large]) {
             AddMemberSheet(data: data, model: model) {
                 addingMember = false
@@ -284,7 +288,10 @@ struct OwnerTabs: View {
     @ViewBuilder
     private func content(for tab: Tab) -> some View {
         switch tab {
-        case .overview: OverviewTab(data: data) { if !isArchived { recording = RecordTarget(memberId: $0) } }
+        case .overview:
+            OverviewTab(data: data, onRemind: isArchived || data.kameti.status != .active ? nil : { reminding = true }) {
+                if !isArchived { recording = RecordTarget(memberId: $0) }
+            }
         case .members:
             MembersTab(
                 data: data,
@@ -302,6 +309,7 @@ struct OwnerTabs: View {
 /// (board A · Kameti overview).
 struct OverviewTab: View {
     let data: KametiDetailData
+    var onRemind: (() -> Void)?
     let onRecord: (String) -> Void
 
     var body: some View {
@@ -347,8 +355,8 @@ struct OverviewTab: View {
                 }
             }
 
-            if !owing.isEmpty {
-                Button {} label: {
+            if !owing.isEmpty, let onRemind {
+                Button(action: onRemind) {
                     Label(String(localized: "Remind \(owing.count) members who owe", bundle: .module), systemImage: "bell")
                         .kText(KTextToken.bodyStrong, color: KColors.brand)
                         .frame(maxWidth: .infinity, minHeight: 48)
@@ -486,20 +494,31 @@ struct MembersTab: View {
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
 
             if notJoined > 0, onInviteAll != nil {
+                // Only offer "Invite" when someone can actually be invited (has an
+                // email and no live invite); otherwise say what's missing.
+                let invitable = AccessState.invitable(in: data).count
                 HStack(spacing: KSpace.sm + 2) {
                     Image(systemName: "envelope").foregroundStyle(KColors.warning)
-                    Text(notJoined == 1
-                         ? String(localized: "1 person hasn't joined the app yet", bundle: .module)
-                         : String(localized: "\(notJoined) people haven't joined the app yet", bundle: .module))
-                        .kText(KTextToken.bodySm, color: KColors.warning)
-                    Spacer(minLength: KSpace.sm)
-                    Button { onInviteAll?() } label: {
-                        Text("Invite all", bundle: .module)
-                            .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.textOnBrand)
-                            .padding(.horizontal, KSpace.md).frame(height: 32)
-                            .background(KColors.warning, in: RoundedRectangle(cornerRadius: 8))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(notJoined == 1
+                             ? String(localized: "1 person hasn't joined the app yet", bundle: .module)
+                             : String(localized: "\(notJoined) people haven't joined the app yet", bundle: .module))
+                            .kText(KTextToken.bodySm, color: KColors.warning)
+                        if invitable == 0 {
+                            Text("Add an email in their member sheet to invite them.", bundle: .module)
+                                .kText(KTextToken.caption, color: KColors.warning)
+                        }
                     }
-                    .buttonStyle(.plain)
+                    Spacer(minLength: KSpace.sm)
+                    if invitable > 0 {
+                        Button { onInviteAll?() } label: {
+                            Text(invitable == notJoined ? String(localized: "Invite all", bundle: .module) : String(localized: "Invite \(invitable)", bundle: .module))
+                                .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.textOnBrand)
+                                .padding(.horizontal, KSpace.md).frame(height: 32)
+                                .background(KColors.warning, in: RoundedRectangle(cornerRadius: 8))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .padding(KSpace.md)
                 .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: 12))

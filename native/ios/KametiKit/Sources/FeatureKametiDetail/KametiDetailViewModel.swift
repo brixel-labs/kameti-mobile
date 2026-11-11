@@ -49,7 +49,7 @@ public final class KametiDetailViewModel {
 
     public let kametiId: String
     private let userId: String
-    private let dependencies: KametiDependencies
+    let dependencies: KametiDependencies
     /// What the caller already knows (from Home), so the title and subtitle
     /// show the moment the screen opens, before the details load.
     public let preview: Kameti?

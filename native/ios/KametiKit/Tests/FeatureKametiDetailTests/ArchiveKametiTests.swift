@@ -174,3 +174,34 @@ struct TransferShareTests {
             == .server(code: "invalid_transfer_month", detail: nil))
     }
 }
+
+/// The owner's reminder (FR-82) and WhatsApp for members without the app (FR-84).
+@Suite("Reminders")
+struct ReminderTests {
+    @Test func whatsAppLinksUsePakistaniNumbers() throws {
+        let url = try #require(ReminderLogic.whatsAppURL(phone: "0300 1234567", text: "Hi"))
+        #expect(url.absoluteString == "https://wa.me/923001234567?text=Hi")
+        #expect(ReminderLogic.whatsAppURL(phone: "+92 300 1234567", text: "Hi")?.absoluteString.hasPrefix("https://wa.me/923001234567") == true)
+        #expect(ReminderLogic.whatsAppURL(phone: nil, text: "Hi") == nil)
+        #expect(ReminderLogic.whatsAppURL(phone: "123", text: "Hi") == nil)
+    }
+
+    @Test func theMessageSaysWhatAndWhen() {
+        let text = ReminderLogic.text(name: "Hira Malik", owed: Money(125_000), kameti: "Family kameti", dueDay: 10)
+        #expect(text == "Hi Hira, a reminder that Rs 1,25,000 for Family kameti is due by the 10th. Thank you!")
+        #expect(ReminderLogic.ordinal(1) == "1st" && ReminderLogic.ordinal(22) == "22nd" && ReminderLogic.ordinal(13) == "13th")
+    }
+
+    @Test func oncePerMemberPerDay() async throws {
+        let dependencies = SampleData.dependencies()
+        let first = try await dependencies.notifications.sendReminder(kametiId: "family", message: nil, memberIds: ["f4"])
+        #expect(first == ReminderResult(sent: 1))
+        let targets = try await dependencies.notifications.reminderTargets(kametiId: "family")
+        #expect(targets.members.first { $0.memberId == "f4" }?.remindedToday == true)
+        let everyone = try await dependencies.notifications.sendReminder(kametiId: "family", message: nil, memberIds: nil)
+        #expect(everyone == ReminderResult(sent: 1, skipped: ["Omar Farooq"]))
+        await #expect(throws: Failure.server(code: "already_reminded_today", detail: nil)) {
+            _ = try await dependencies.notifications.sendReminder(kametiId: "family", message: nil, memberIds: nil)
+        }
+    }
+}

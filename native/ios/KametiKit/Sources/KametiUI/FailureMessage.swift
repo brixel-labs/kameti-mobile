@@ -100,6 +100,10 @@ extension Failure {
             String(localized: "This share has already been transferred.", bundle: .module)
         case "same_member":
             String(localized: "Pick someone other than the current holder.", bundle: .module)
+        case "already_reminded_today":
+            String(localized: "Everyone you picked already had a reminder from you today. Try again tomorrow.", bundle: .module)
+        case "nobody_to_remind":
+            String(localized: "Nobody with the app owes anything right now.", bundle: .module)
         case "invalid_transfer_month":
             String(localized: "Pick this month or a later one.", bundle: .module)
         case "already_in_slot":
