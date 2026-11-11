@@ -492,6 +492,7 @@ struct MembersTab: View {
             .frame(minHeight: 44)
             .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
+            .kDismissesKeyboard()
 
             if notJoined > 0, onInviteAll != nil {
                 // Only offer "Invite" when someone can actually be invited (has an

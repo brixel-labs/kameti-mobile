@@ -15,16 +15,72 @@ public extension KSize {
     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
 }
 
+/// Moving between the text fields on screen, like UIKit's form navigation: the
+/// next field becomes first responder directly, so the keyboard stays up.
+@MainActor public enum KKeyboard {
+    /// The fields on screen, top to bottom then left to right.
+    private static func fields() -> [UIView] {
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene }).flatMap(\.windows).first(where: \.isKeyWindow) else { return [] }
+        var found: [UIView] = []
+        func walk(_ view: UIView) {
+            guard !view.isHidden, view.alpha > 0.01 else { return }
+            if (view is UITextField || view is UITextView), view.isUserInteractionEnabled, view.canBecomeFirstResponder,
+               (view as? UITextView)?.isEditable ?? true {
+                found.append(view)
+                return
+            }
+            view.subviews.forEach(walk)
+        }
+        walk(window)
+        return found.sorted {
+            let a = $0.convert($0.bounds, to: nil), b = $1.convert($1.bounds, to: nil)
+            return abs(a.minY - b.minY) > 4 ? a.minY < b.minY : a.minX < b.minX
+        }
+    }
+
+    /// Focus the previous (-1) or next (+1) field; at either end it stays put.
+    public static func move(_ step: Int) {
+        let all = fields()
+        guard let current = all.firstIndex(where: \.isFirstResponder) else { return }
+        let target = current + step
+        guard all.indices.contains(target) else { return }
+        all[target].becomeFirstResponder()
+    }
+
+    /// Whether a point (window coordinates) lands on a text field or text view.
+    static func isTextInput(at point: CGPoint) -> Bool {
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene }).flatMap(\.windows).first(where: \.isKeyWindow),
+              var view = window.hitTest(point, with: nil) else { return false }
+        while true {
+            if view is UITextField || view is UITextView { return true }
+            guard let parent = view.superview else { return false }
+            view = parent
+        }
+    }
+}
+
 public extension View {
-    /// Tapping empty space or dragging a scroll view down hides the keyboard,
-    /// and number pads (which have no return key) get a Done button.
+    /// Tapping empty space or dragging a scroll view down hides the keyboard;
+    /// tapping another field keeps it up. The keyboard gets a Liquid Glass bar:
+    /// previous / next field and done.
     func kDismissesKeyboard() -> some View {
         scrollDismissesKeyboard(.interactively)
-            .simultaneousGesture(TapGesture().onEnded { kDismissKeyboard() })
+            .simultaneousGesture(SpatialTapGesture(coordinateSpace: .global).onEnded { tap in
+                if !KKeyboard.isTextInput(at: tap.location) { kDismissKeyboard() }
+            })
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
+                    Button { KKeyboard.move(-1) } label: { Image(systemName: "chevron.up") }
+                        .accessibilityLabel(Text("Previous field", bundle: .module))
+                    Button { KKeyboard.move(1) } label: { Image(systemName: "chevron.down") }
+                        .accessibilityLabel(Text("Next field", bundle: .module))
                     Spacer()
-                    Button(String(localized: "Done", bundle: .module)) { kDismissKeyboard() }
+                    Button { kDismissKeyboard() } label: { Image(systemName: "checkmark") }
+                        .buttonStyle(.glassProminent)
+                        .tint(KColors.brand)
+                        .accessibilityLabel(Text("Done", bundle: .module))
                 }
             }
     }
