@@ -17,6 +17,10 @@ public enum Route: Hashable, Sendable {
     /// The create wizard reopened on a saved draft.
     case resumeDraft(id: String)
     case activity(kametiId: String)
+    /// Home's archived kametis (§6.11).
+    case archivedKametis
+    /// Profile's completed and cancelled kametis.
+    case pastKametis
     /// An invite link token or the 6-character code.
     case join(token: String)
     /// An invitation addressed to my email, from Home or Inbox.

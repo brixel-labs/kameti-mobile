@@ -41,8 +41,10 @@ public struct HomeSections: Equatable, Sendable {
     public var mine: [HomeKametiSummary] = []
     public var joined: [HomeKametiSummary] = []
     public var past: [HomeKametiSummary] = []
+    /// Archived (§6.11): off the main list, behind the "Archived (n)" row.
+    public var archived: [HomeKametiSummary] = []
 
-    public var isEmpty: Bool { mine.isEmpty && joined.isEmpty && past.isEmpty }
+    public var isEmpty: Bool { mine.isEmpty && joined.isEmpty && past.isEmpty && archived.isEmpty }
 }
 
 @MainActor
@@ -78,10 +80,14 @@ public final class HomeViewModel {
     }
 
     /// Groups kametis: mine (owner), joined (member), past. Order is kept.
+    /// Archived kametis go to their own list (§6.11: hidden from the main
+    /// list), opened from the "Archived (n)" row at the end of Past.
     nonisolated static func sections(of summaries: [HomeKametiSummary]) -> HomeSections {
         var result = HomeSections()
         for item in summaries {
-            if isPast(item.kameti.status) {
+            if item.kameti.status == .archived {
+                result.archived.append(item)
+            } else if isPast(item.kameti.status) {
                 result.past.append(item)
             } else if item.isOwner {
                 result.mine.append(item)
@@ -94,7 +100,7 @@ public final class HomeViewModel {
 
     /// A kameti Home already loaded, by id.
     public func kameti(id: String) -> Kameti? {
-        (sections.mine + sections.joined + sections.past).first { $0.id == id }?.kameti
+        (sections.mine + sections.joined + sections.past + sections.archived).first { $0.id == id }?.kameti
     }
 
     public func load() async {

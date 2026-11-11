@@ -142,4 +142,37 @@ public enum DetailLogic {
         if let name = payment.paidByName, !name.isEmpty { parts.append(paidBy(name)) }
         return parts.joined(separator: " · ")
     }
+
+    /// Totals for a kameti whose months are all over (no current month, but
+    /// collections exist). `nil` while it hasn't started.
+    public struct FinalSummary: Equatable, Sendable {
+        public let firstMonth: Date
+        public let lastMonth: Date
+        public let months: Int
+        public let collected: Money
+        public let paidOut: Money
+        public let monthsPaidOut: Int
+        /// Members who still owe, largest first.
+        public let owing: [MemberBalanceRow]
+        /// Members left with credit, largest first.
+        public let credit: [MemberBalanceRow]
+
+        public var isSettled: Bool { owing.isEmpty && credit.isEmpty }
+    }
+
+    public static func finalSummary(_ data: KametiDetailData) -> FinalSummary? {
+        guard data.current == nil, data.kameti.status != .draft,
+              let first = data.collections.min(by: { $0.monthIndex < $1.monthIndex }),
+              let last = data.collections.max(by: { $0.monthIndex < $1.monthIndex }),
+              last.monthStart <= data.today
+        else { return nil }
+        return FinalSummary(
+            firstMonth: first.monthStart, lastMonth: last.monthStart, months: data.kameti.monthsN,
+            collected: data.collections.reduce(Money(0)) { $0 + $1.received },
+            paidOut: data.collections.reduce(Money(0)) { $0 + $1.paidOut },
+            monthsPaidOut: data.collections.filter { $0.state == .paidOut || $0.state == .paidOutShort }.count,
+            owing: data.balances.filter { $0.owes.isPositive }.sorted { $0.owes > $1.owes },
+            credit: data.balances.filter { $0.credit.isPositive }.sorted { $0.credit > $1.credit }
+        )
+    }
 }

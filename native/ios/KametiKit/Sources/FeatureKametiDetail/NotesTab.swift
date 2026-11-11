@@ -12,6 +12,8 @@ struct NotesTab: View {
     /// The one note whose swipe actions are showing (owned by `OwnerTabs`, so
     /// a tap anywhere or a tab change closes it).
     @Binding var openNote: String?
+    /// Archived kametis: notes show without swipe actions.
+    var isReadOnly = false
 
     @State private var filter = NoteLogic.Filter.all
     @State private var search = ""
@@ -53,6 +55,9 @@ struct NotesTab: View {
                 .padding(.top, KSpace.xl)
             } else {
                 ForEach(list) { note in
+                    if isReadOnly {
+                        NoteCard(note: note, data: data)
+                    } else {
                     KSwipeRow(id: note.id, openRow: $openNote, actions: [
                         KSwipeAction(String(localized: "Edit", bundle: .module), symbol: "pencil", tint: KColors.brand) { editing = note },
                         note.visibility == .private
@@ -61,6 +66,7 @@ struct NotesTab: View {
                         KSwipeAction(String(localized: "Delete", bundle: .module), symbol: "trash.fill", tint: KColors.negative) { deleting = note },
                     ]) {
                         NoteCard(note: note, data: data)
+                    }
                     }
                 }
             }

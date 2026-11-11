@@ -14,6 +14,7 @@ public struct HomeView: View {
     private let onJoin: (String) -> Void
     private let onRecord: (String, RecordAction) -> Void
     private let onOpenInvitation: (String) -> Void
+    private let onOpenArchived: () -> Void
     @State private var enteringCode = false
     /// The code card's measured height, so its sheet is only as tall as needed.
     @State private var codeCardHeight: CGFloat = 170
@@ -26,9 +27,11 @@ public struct HomeView: View {
         onRecord: @escaping (String, RecordAction) -> Void = { _, _ in },
         onCreate: @escaping () -> Void,
         onJoin: @escaping (String) -> Void,
-        onOpenInvitation: @escaping (String) -> Void = { _ in }
+        onOpenInvitation: @escaping (String) -> Void = { _ in },
+        onOpenArchived: @escaping () -> Void = {}
     ) {
         self.model = model
+        self.onOpenArchived = onOpenArchived
         self.onOpenInvitation = onOpenInvitation
         self.onOpen = onOpen
         self.onRecord = onRecord
@@ -138,7 +141,7 @@ public struct HomeView: View {
                 let hasMine = !model.sections.mine.isEmpty
                 group(String(localized: "Running by me", bundle: .module), model.sections.mine, showsNew: true)
                 group(String(localized: "I'm a member", bundle: .module), model.sections.joined, showsNew: !hasMine)
-                group(String(localized: "Past", bundle: .module), model.sections.past)
+                group(String(localized: "Past", bundle: .module), model.sections.past, archivedCount: model.sections.archived.count)
                 if !model.sections.isEmpty {
                     Button { enteringCode = true } label: {
                         Text("Have an invite code?", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
@@ -204,8 +207,8 @@ public struct HomeView: View {
     }
 
     @ViewBuilder
-    private func group(_ title: String, _ items: [HomeKametiSummary], showsNew: Bool = false) -> some View {
-        if !items.isEmpty {
+    private func group(_ title: String, _ items: [HomeKametiSummary], showsNew: Bool = false, archivedCount: Int = 0) -> some View {
+        if !items.isEmpty || archivedCount > 0 {
             KSectionHeader(
                 title,
                 actionTitle: showsNew ? String(localized: "+ New kameti", bundle: .module) : nil,
@@ -213,6 +216,10 @@ public struct HomeView: View {
             )
             ForEach(items) { item in
                 Button { onOpen(item.id) } label: { HomeKametiCard(item: item) }
+                    .buttonStyle(.plain)
+            }
+            if archivedCount > 0 {
+                Button(action: onOpenArchived) { ArchivedRow(count: archivedCount) }
                     .buttonStyle(.plain)
             }
         }
@@ -411,5 +418,61 @@ struct InviteCodeCard: View {
     private func join() {
         guard !trimmed.isEmpty else { return }
         onJoin(trimmed)
+    }
+}
+
+/// The last row of Past: opens the archived kametis (§6.11).
+struct ArchivedRow: View {
+    let count: Int
+
+    var body: some View {
+        KCard {
+            HStack(spacing: KSpace.md) {
+                Image(systemName: "archivebox").foregroundStyle(KColors.textSecondary)
+                Text("Archived (\(count))", bundle: .module).kText(KTextToken.bodyStrong)
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(KColors.textSecondary)
+            }
+        }
+        .contentShape(Rectangle())
+    }
+}
+
+/// Archived kametis (§6.11): read-only, each opens with Restore.
+public struct ArchivedKametisView: View {
+    private let model: HomeViewModel
+    private let onOpen: (String) -> Void
+
+    public init(model: HomeViewModel, onOpen: @escaping (String) -> Void) {
+        self.model = model
+        self.onOpen = onOpen
+    }
+
+    public var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: KSpace.md) {
+                if model.sections.archived.isEmpty {
+                    ContentUnavailableView(
+                        String(localized: "Nothing archived", bundle: .module), systemImage: "archivebox",
+                        description: Text("Kametis you archive move here. Open one to restore it.", bundle: .module)
+                    )
+                    .padding(.top, KSpace.xxl)
+                } else {
+                    Text("Read-only for you and every member. Open one to restore it.", bundle: .module)
+                        .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                    ForEach(model.sections.archived) { item in
+                        Button { onOpen(item.id) } label: { HomeKametiCard(item: item) }
+                            .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.horizontal, KSpace.xl)
+            .padding(.vertical, KSpace.md)
+        }
+        .background(KColors.background)
+        .navigationTitle(String(localized: "Archived", bundle: .module))
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await model.load() }
+        .refreshable { await model.load() }
     }
 }

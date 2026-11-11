@@ -23,6 +23,10 @@ struct OwnerTabs: View {
     @State private var openNote: String?
     @State private var confirmingInviteAll = false
     @State private var inviteAllResult: String?
+    @State private var restoreFailure: Failure?
+
+    /// Archived (§6.11): read-only, so every write control is left out.
+    private var isArchived: Bool { data.kameti.status == .archived }
 
     struct RecordTarget: Identifiable {
         let id = UUID()
@@ -56,6 +60,12 @@ struct OwnerTabs: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if isArchived {
+                ArchivedBanner {
+                    Task { restoreFailure = await model.restore() }
+                }
+                .padding(.horizontal, KSpace.xl).padding(.vertical, KSpace.sm)
+            }
             KUnderlineTabs(titles, selection: $tab, inset: KSpace.xl)
                 .background(KColors.background)
             // The system paging view: swipe left or right between the tabs, or
@@ -75,7 +85,7 @@ struct OwnerTabs: View {
                     .modifier(PullToRefresh(isOn: page != .notes) { await model.load() })
                     // Notes keeps its composer pinned under the list.
                     .safeAreaInset(edge: .bottom, spacing: 0) {
-                        if page == .notes { NoteComposer(data: data, model: model) }
+                        if page == .notes, !isArchived { NoteComposer(data: data, model: model) }
                     }
                     .tag(page)
                 }
@@ -83,7 +93,7 @@ struct OwnerTabs: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.smooth(duration: 0.28), value: tab)
             .overlay(alignment: .bottomTrailing) {
-                if tab == .overview, data.current != nil {
+                if tab == .overview, data.current != nil, !isArchived {
                     Menu {
                         if let current = data.current, canPayOut(current) {
                             Button { payingOut = current.monthIndex } label: {
@@ -125,7 +135,7 @@ struct OwnerTabs: View {
                     .accessibilityLabel(searchingNotes ? Text("Close search", bundle: .module) : Text("Search notes", bundle: .module))
                 }
             }
-            if tab == .members, [.draft, .active].contains(data.kameti.status) {
+            if tab == .members, [.draft, .active].contains(data.kameti.status) {  // never archived
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { addingMember = true } label: {
                         Image(systemName: "person.badge.plus").foregroundStyle(KColors.brand)
@@ -135,6 +145,14 @@ struct OwnerTabs: View {
             }
         }
         .task { await startPendingAction() }
+        .alert(
+            String(localized: "Couldn't restore this kameti", bundle: .module),
+            isPresented: Binding(get: { restoreFailure != nil }, set: { if !$0 { restoreFailure = nil } })
+        ) {
+            Button(String(localized: "OK", bundle: .module)) {}
+        } message: {
+            Text(restoreFailure.map { KametiDetailView.message(for: $0) } ?? "")
+        }
         .alert(inviteAllTitle, isPresented: $confirmingInviteAll) {
             let people = AccessState.invitable(in: data)
             if people.isEmpty {
@@ -238,6 +256,7 @@ struct OwnerTabs: View {
     private func startPendingAction() async {
         guard let action = model.pendingAction else { return }
         model.pendingAction = nil
+        guard !isArchived else { return }
         try? await Task.sleep(for: .milliseconds(450))
         switch action {
         case .payOut: if let current = data.current, canPayOut(current) { payingOut = current.monthIndex }
@@ -249,11 +268,16 @@ struct OwnerTabs: View {
     @ViewBuilder
     private func content(for tab: Tab) -> some View {
         switch tab {
-        case .overview: OverviewTab(data: data) { recording = RecordTarget(memberId: $0) }
-        case .members: MembersTab(data: data, onSelect: { editingMember = $0 }, onInviteAll: { confirmingInviteAll = true })
-        case .schedule: ScheduleSection(data: data) { payingOut = $0 }
-        case .payments: PaymentsTab(data: data) { voiding = $0 }
-        case .notes: NotesTab(data: data, model: model, isSearching: searchingNotes, openNote: $openNote)
+        case .overview: OverviewTab(data: data) { if !isArchived { recording = RecordTarget(memberId: $0) } }
+        case .members:
+            MembersTab(
+                data: data,
+                onSelect: isArchived ? nil : { editingMember = $0 },
+                onInviteAll: isArchived ? nil : { confirmingInviteAll = true }
+            )
+        case .schedule: ScheduleSection(data: data) { if !isArchived { payingOut = $0 } }
+        case .payments: PaymentsTab(data: data) { if !isArchived { voiding = $0 } }
+        case .notes: NotesTab(data: data, model: model, isSearching: searchingNotes, openNote: $openNote, isReadOnly: isArchived)
         }
     }
 }
@@ -339,6 +363,8 @@ struct OverviewTab: View {
             }
             // Room for the floating action.
             Color.clear.frame(height: 56)
+        } else if let summary = DetailLogic.finalSummary(data) {
+            FinishedOverview(data: data, summary: summary)
         } else {
             ContentUnavailableView(
                 String(localized: "Not started yet", bundle: .module), systemImage: "hourglass",
@@ -443,7 +469,7 @@ struct MembersTab: View {
             .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
 
-            if notJoined > 0 {
+            if notJoined > 0, onInviteAll != nil {
                 HStack(spacing: KSpace.sm + 2) {
                     Image(systemName: "envelope").foregroundStyle(KColors.warning)
                     Text(notJoined == 1
@@ -680,5 +706,97 @@ private struct PullToRefresh: ViewModifier {
 
     func body(content: Content) -> some View {
         if isOn { content.refreshable { await action() } } else { content }
+    }
+}
+
+/// Shown above an archived kameti's tabs: what archived means, and Restore.
+struct ArchivedBanner: View {
+    let onRestore: () -> Void
+
+    var body: some View {
+        HStack(spacing: KSpace.md) {
+            Image(systemName: "archivebox.fill").foregroundStyle(KColors.textSecondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Archived", bundle: .module).kText(KTextToken.bodyStrong)
+                Text("Read-only for you and every member.", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+            }
+            Spacer(minLength: 0)
+            Button(String(localized: "Restore", bundle: .module), action: onRestore)
+                .buttonStyle(.glass)
+                .tint(KColors.brand)
+        }
+        .padding(KSpace.md)
+        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.card))
+    }
+}
+
+/// Overview once every month is over (§6.11 Completed): what was collected
+/// and paid out in total, and who still owes or is owed.
+struct FinishedOverview: View {
+    let data: KametiDetailData
+    let summary: DetailLogic.FinalSummary
+
+    private var title: String {
+        switch data.kameti.status {
+        case .cancelled: String(localized: "Cancelled", bundle: .module)
+        default: String(localized: "Finished", bundle: .module)
+        }
+    }
+
+    var body: some View {
+        let byId = Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        KCard {
+            VStack(alignment: .leading, spacing: KSpace.md) {
+                HStack {
+                    Text("\(DetailLogic.monthTitle(summary.firstMonth)) – \(DetailLogic.monthTitle(summary.lastMonth))".uppercased())
+                        .kText(KTextToken.label, color: KColors.textSecondary)
+                    Spacer()
+                    if summary.isSettled {
+                        KPill(String(localized: "Settled", bundle: .module), foreground: KColors.positive, background: KColors.positiveSubtle)
+                    } else {
+                        KPill(String(localized: "Balances open", bundle: .module), foreground: KColors.warning, background: KColors.warningSubtle)
+                    }
+                }
+                Text(title).kText(KTextToken.titleLg)
+                HStack(alignment: .top, spacing: KSpace.lg) {
+                    figure(String(localized: "Collected", bundle: .module), summary.collected.format())
+                    figure(String(localized: "Paid out", bundle: .module), summary.paidOut.format())
+                    figure(String(localized: "Payouts", bundle: .module), "\(summary.monthsPaidOut) of \(summary.months)")
+                }
+            }
+        }
+
+        if !summary.owing.isEmpty {
+            KSectionHeader(String(localized: "Still owes", bundle: .module))
+            rows(summary.owing, byId: byId) { $0.owes.format() }
+        }
+        if !summary.credit.isEmpty {
+            KSectionHeader(String(localized: "Is owed back", bundle: .module))
+            rows(summary.credit, byId: byId) { $0.credit.format() }
+        }
+    }
+
+    private func figure(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value).kText(KTextToken.bodyStrong)
+            Text(label).kText(KTextToken.bodySm, color: KColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func rows(_ items: [MemberBalanceRow], byId: [String: Member], amount: @escaping (MemberBalanceRow) -> String) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element.memberId) { index, row in
+                if let member = byId[row.memberId] {
+                    DetailRow(
+                        member: member, in: data.members,
+                        subtitle: String(localized: "Paid \(row.totalPaid.format()) of \(row.dueToDate.format(symbol: false))", bundle: .module),
+                        showsDivider: index < items.count - 1
+                    ) {
+                        Text(amount(row)).kText(KTextToken.bodyStrong)
+                    }
+                }
+            }
+        }
     }
 }

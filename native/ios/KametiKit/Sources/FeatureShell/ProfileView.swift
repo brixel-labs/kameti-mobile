@@ -8,10 +8,10 @@ import SwiftUI
 public struct ProfileView: View {
     @Bindable private var model: ProfileViewModel
     private let onOpenKameti: (String) -> Void
+    private let onOpenPast: () -> Void
     @Environment(\.openURL) private var openURL
     @State private var editingName = false
     @State private var showingPeople = false
-    @State private var showingPast = false
     @State private var showingSignIn = false
     @State private var deletingAccount = false
     @State private var confirmingSignOut = false
@@ -24,7 +24,8 @@ public struct ProfileView: View {
     @AppStorage("kameti.notify.reminders") private var remindersOn = true
     @AppStorage("kameti.notify.updates") private var updatesOn = true
 
-    public init(model: ProfileViewModel, onOpenKameti: @escaping (String) -> Void = { _ in }) {
+    public init(model: ProfileViewModel, onOpenKameti: @escaping (String) -> Void = { _ in }, onOpenPast: @escaping () -> Void = {}) {
+        self.onOpenPast = onOpenPast
         self.model = model
         self.onOpenKameti = onOpenKameti
     }
@@ -59,7 +60,7 @@ public struct ProfileView: View {
                     row(String(localized: "My people", bundle: .module), symbol: "person.2", tint: .green, value: "\(model.peopleCount)") { showingPeople = true }
                     row(String(localized: "Sign-in methods", bundle: .module), symbol: "key", tint: .grey,
                         value: model.signInMethods.first.map { SignInMethodsSheet.name($0.provider) }) { showingSignIn = true }
-                    row(String(localized: "Past kametis", bundle: .module), symbol: "archivebox", tint: .blue, value: "\(model.pastCount)", isLast: true) { showingPast = true }
+                    row(String(localized: "Past kametis", bundle: .module), symbol: "archivebox", tint: .blue, value: "\(model.pastCount)", isLast: true) { onOpenPast() }
                 }
                 group {
                     row(String(localized: "Support", bundle: .module), symbol: "questionmark.circle", tint: .green) {
@@ -109,7 +110,6 @@ public struct ProfileView: View {
             DeleteAccountSheet(model: model) { deletingAccount = false }
         }
         .navigationDestination(isPresented: $showingPeople) { PeopleListView(people: model.people) }
-        .navigationDestination(isPresented: $showingPast) { PastKametisView(kametis: model.pastKametis, onOpen: onOpenKameti) }
         .task { await model.load() }
         .refreshable { await model.load() }
     }

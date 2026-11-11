@@ -252,6 +252,15 @@ public enum SampleData {
         payment("op5", "office", "o1", 100_000, month: 11, day: 2), payment("op6", "office", "o3", 100_000, month: 11, day: 4),
     ]
 
+    /// Friends kameti 2025 (June–July 2025): both paid in full and both paid out.
+    static let pastPayments: [Payment] = [(1, 6), (2, 6), (1, 7), (2, 7)].enumerated().map { index, item in
+        let received = DateOnly.make(year: 2025, month: item.1, day: 5)
+        return Payment(
+            id: "pp\(index + 1)", kametiId: "past-2025", memberId: "p\(item.0)", amount: Money(100_000), receivedOn: received,
+            method: .cash, createdAt: received.addingTimeInterval(3_600)
+        )
+    }
+
     /// `month` is counted from year 2026 (13 = January 2027).
     static func date(_ month: Int) -> Date {
         month > 12 ? DateOnly.make(year: 2027, month: month - 12) : DateOnly.make(year: 2026, month: month)
@@ -324,6 +333,8 @@ final class SampleKametiRepository: KametiRepository {
             "cousins": SampleData.cousinsShares, "neighbours": SampleData.neighboursShares, "past-2025": SampleData.pastShares,
         ]
         var counter = 0
+        /// What each archived kameti was before, for restore.
+        var archivedFrom: [String: KametiStatus] = [:]
     }
 
     private let state = Mutex(State())
@@ -464,6 +475,46 @@ final class SampleKametiRepository: KametiRepository {
         }
     }
 
+    /// Mirrors `archive_kameti`: owner only, anything but an archived kameti.
+    func archiveKameti(id: String) async throws(Failure) -> Kameti {
+        try state.withLock { s throws(Failure) in
+            guard let index = s.kametis.firstIndex(where: { $0.id == id }) else { throw notFound }
+            let old = s.kametis[index]
+            guard old.ownerId == SampleData.userId else { throw Failure.server(code: "not_kameti_owner", detail: nil) }
+            guard old.status != .archived else { throw Failure.server(code: "kameti_already_archived", detail: nil) }
+            s.archivedFrom[id] = old.status
+            s.kametis[index] = Self.with(old, status: .archived)
+            return s.kametis[index]
+        }
+    }
+
+    /// Mirrors `restore_kameti`: back to what it was, if the name is still free.
+    func restoreKameti(id: String) async throws(Failure) -> Kameti {
+        try state.withLock { s throws(Failure) in
+            guard let index = s.kametis.firstIndex(where: { $0.id == id }) else { throw notFound }
+            let old = s.kametis[index]
+            guard old.ownerId == SampleData.userId else { throw Failure.server(code: "not_kameti_owner", detail: nil) }
+            guard old.status == .archived else { throw Failure.server(code: "kameti_not_archived", detail: nil) }
+            let to = s.archivedFrom[id] ?? .completed
+            if [.draft, .active].contains(to), s.kametis.contains(where: {
+                $0.id != id && $0.ownerId == old.ownerId && $0.name.lowercased() == old.name.lowercased() && [.draft, .active].contains($0.status)
+            }) {
+                throw Failure.server(code: "kameti_name_taken", detail: nil)
+            }
+            s.archivedFrom[id] = nil
+            s.kametis[index] = Self.with(old, status: to)
+            return s.kametis[index]
+        }
+    }
+
+    private static func with(_ k: Kameti, status: KametiStatus) -> Kameti {
+        Kameti(
+            id: k.id, ownerId: k.ownerId, name: k.name, description: k.description, startMonth: k.startMonth,
+            monthsN: k.monthsN, slotAmountC: k.slotAmountC, dueDay: k.dueDay, reminderDays: k.reminderDays,
+            maxSlotsPerMember: k.maxSlotsPerMember, status: status, startedAt: k.startedAt
+        )
+    }
+
     /// Mirrors `add_member`: the kameti must be a draft or active, a name of
     /// 1–80 characters, and the same person can't be added twice.
     func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member {
@@ -596,6 +647,7 @@ final class SampleKametiRepository: KametiRepository {
 final class SamplePaymentStore: Sendable {
     private let payments = Mutex([
         "family": SampleData.familyPayments, "friends": SampleData.friendsPayments, "office": SampleData.officePayments,
+        "past-2025": SampleData.pastPayments,
     ])
 
     private let payouts = Mutex([String: [Payout]]())
@@ -655,8 +707,11 @@ enum SampleLedger {
         return calendar
     }()
 
-    static func compute(kameti: Kameti, members: [Member], shares: [Share], slots: [Slot], payments: [Payment], payouts: [Payout], current: Int) -> Result {
+    static func compute(kameti: Kameti, members: [Member], shares: [Share], slots: [Slot], payments: [Payment], payouts: [Payout], current: Int, finished: Bool = false) -> Result {
         var result = Result()
+        // A finished kameti has no current month: every month is in the past.
+        func isBefore(_ month: Int) -> Bool { finished ? month <= current : month < current }
+        func isNow(_ month: Int) -> Bool { !finished && month == current }
         let valid = payments.filter { $0.voidedAt == nil }
         func monthIndex(of date: Date) -> Int {
             let parts = calendar.dateComponents([.month], from: kameti.startMonth, to: date)
@@ -679,7 +734,7 @@ enum SampleLedger {
                     ? (left > 0 && month == current ? .advance : .paid)
                     : (allocated == 0 ? (month < current ? .overdue : .unpaid) : .partial)
                 result.months.append(MemberMonthRow(
-                    kametiId: kameti.id, memberId: member.id, monthIndex: month, monthStart: start(month), isCurrent: month == current,
+                    kametiId: kameti.id, memberId: member.id, monthIndex: month, monthStart: start(month), isCurrent: isNow(month),
                     due: Money(due), allocated: Money(allocated), remaining: Money(due - allocated), status: status
                 ))
             }
@@ -695,13 +750,13 @@ enum SampleLedger {
             let received = valid.filter { monthIndex(of: $0.receivedOn) == month }.reduce(0) { $0 + $1.amount.rupees }
             let slotIds = Set(slots.filter { $0.payoutMonthIndex == month }.map(\.id))
             let paidOut = payouts.filter { $0.voidedAt == nil && slotIds.contains($0.slotId) }.reduce(0) { $0 + $1.amount.rupees }
-            var state: MonthCollectionState = month < current ? .paidOut : (month == current ? (received >= target ? .fullyCollected : .collecting) : .upcoming)
+            var state: MonthCollectionState = isBefore(month) ? .paidOut : (isNow(month) ? (received >= target ? .fullyCollected : .collecting) : .upcoming)
             if paidOut > 0 { state = paidOut >= target ? .paidOut : .paidOutShort }
             result.collections.append(MonthCollectionRow(
-                kametiId: kameti.id, monthIndex: month, monthStart: start(month), isCurrent: month == current, target: Money(target),
+                kametiId: kameti.id, monthIndex: month, monthStart: start(month), isCurrent: isNow(month), target: Money(target),
                 received: Money(received), covered: Money(allocatedByMonth[month] ?? 0), paidCount: paidCountByMonth[month] ?? 0, memberCount: payers,
-                payoutShortfall: Money(month <= current ? max(target - received, 0) : 0), paidOut: Money(paidOut > 0 ? paidOut : (month < current ? target : 0)),
-                recipients: 1, recipientsPaid: month < current ? 1 : 0,
+                payoutShortfall: Money(month <= current ? max(target - received, 0) : 0), paidOut: Money(paidOut > 0 ? paidOut : (isBefore(month) ? target : 0)),
+                recipients: 1, recipientsPaid: isBefore(month) ? 1 : 0,
                 paidOutShortBy: Money(paidOut > 0 ? max(target - paidOut, 0) : 0), state: state
             ))
         }
@@ -722,6 +777,8 @@ struct SampleLedgerRepository: LedgerRepository {
             return SampleLedger.compute(kameti: SampleData.office, members: SampleData.officeMembers, shares: SampleData.officeShares, slots: SampleData.officeSlots, payments: store.all("office"), payouts: store.payouts("office"), current: 2)
         case "cousins":
             return SampleLedger.compute(kameti: SampleData.cousins, members: SampleData.cousinsMembers, shares: SampleData.cousinsShares, slots: SampleData.cousinsSlots, payments: store.all("cousins"), payouts: store.payouts("cousins"), current: 1)
+        case "past-2025":
+            return SampleLedger.compute(kameti: SampleData.past, members: SampleData.pastMembers, shares: SampleData.pastShares, slots: SampleData.pastSlots, payments: store.all("past-2025"), payouts: store.payouts("past-2025"), current: 2, finished: true)
         default:
             return SampleLedger.Result()
         }
