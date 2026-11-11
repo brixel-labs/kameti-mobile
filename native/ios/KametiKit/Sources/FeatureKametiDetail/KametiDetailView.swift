@@ -9,11 +9,13 @@ import SwiftUI
 public struct KametiDetailView: View {
     private let model: KametiDetailViewModel
     private let onResumeDraft: ((String) -> Void)?
+    private let onOpenActivity: ((String) -> Void)?
     @State private var editing = false
 
-    public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil) {
+    public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil, onOpenActivity: ((String) -> Void)? = nil) {
         self.model = model
         self.onResumeDraft = onResumeDraft
+        self.onOpenActivity = onOpenActivity
     }
 
     public var body: some View {
@@ -38,11 +40,18 @@ public struct KametiDetailView: View {
         .toolbar {
             // The owner's ••• menu (board AE-2): Edit now; Activity and
             // Archive join it later.
-            if case .loaded(let data) = model.state, data.isOwner, data.kameti.status == .active {
+            if case .loaded(let data) = model.state, data.kameti.status != .draft, data.isOwner || onOpenActivity != nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button { editing = true } label: {
-                            Label(String(localized: "Edit kameti", bundle: .module), systemImage: "pencil")
+                        if data.isOwner, data.kameti.status == .active {
+                            Button { editing = true } label: {
+                                Label(String(localized: "Edit kameti", bundle: .module), systemImage: "pencil")
+                            }
+                        }
+                        if let onOpenActivity {
+                            Button { onOpenActivity(data.kameti.id) } label: {
+                                Label(data.isOwner ? String(localized: "Activity", bundle: .module) : String(localized: "Your activity", bundle: .module), systemImage: "clock.arrow.circlepath")
+                            }
                         }
                     } label: {
                         Image(systemName: "ellipsis")

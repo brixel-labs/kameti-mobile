@@ -12,13 +12,15 @@ public struct AuditEntry: Codable, Hashable, Identifiable, Sendable {
     public let memberId: String?
     public let actorId: String?
     public let entityId: String?
-    public let before: [String: JSONValue]?
-    public let after: [String: JSONValue]?
+    /// The row before and after the change. Usually an object, but a few
+    /// actions store a list (a slot's shares), so any JSON is accepted.
+    public let before: JSONValue?
+    public let after: JSONValue?
 
     public init(
         id: Int, kametiId: String, action: String, entity: String, at: Date,
         memberId: String? = nil, actorId: String? = nil, entityId: String? = nil,
-        before: [String: JSONValue]? = nil, after: [String: JSONValue]? = nil
+        before: JSONValue? = nil, after: JSONValue? = nil
     ) {
         self.id = id; self.kametiId = kametiId; self.action = action; self.entity = entity
         self.at = at; self.memberId = memberId; self.actorId = actorId

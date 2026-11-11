@@ -64,4 +64,10 @@ public enum JSONValue: Hashable, Sendable, Codable {
 
     public var intValue: Int? { if case .int(let v) = self { v } else { nil } }
     public var stringValue: String? { if case .string(let v) = self { v } else { nil } }
+    public var boolValue: Bool? { if case .bool(let v) = self { v } else { nil } }
+    public var arrayValue: [JSONValue]? { if case .array(let v) = self { v } else { nil } }
+    public var objectValue: [String: JSONValue]? { if case .object(let v) = self { v } else { nil } }
+
+    /// A field of an object; `nil` for anything else or a missing key.
+    public subscript(key: String) -> JSONValue? { objectValue?[key] }
 }
