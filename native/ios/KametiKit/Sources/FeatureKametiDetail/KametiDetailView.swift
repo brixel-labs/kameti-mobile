@@ -8,9 +8,11 @@ import SwiftUI
 /// no write controls at all.
 public struct KametiDetailView: View {
     private let model: KametiDetailViewModel
+    private let onResumeDraft: ((String) -> Void)?
 
-    public init(model: KametiDetailViewModel) {
+    public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil) {
         self.model = model
+        self.onResumeDraft = onResumeDraft
     }
 
     public var body: some View {
@@ -44,7 +46,6 @@ public struct KametiDetailView: View {
             }
         }
         .task { await model.load() }
-        .refreshable { await model.load() }
     }
 
     /// The kameti to name the screen after: the loaded one, else what Home passed.
@@ -64,13 +65,23 @@ public struct KametiDetailView: View {
 
     @ViewBuilder
     private func loaded(_ data: KametiDetailData) -> some View {
+        // Pull to refresh sits on the page content only: on the whole screen
+        // it would also attach to the owner's sideways tab row.
         if !data.isOwner {
             MemberView(data: data)
+                .refreshable { await model.load() }
         } else if data.kameti.status == .draft {
-            ContentUnavailableView(
-                String(localized: "This kameti is a draft", bundle: .module), systemImage: "pencil.and.list.clipboard",
-                description: Text("Finish setting it up to start collecting.", bundle: .module)
-            )
+            ContentUnavailableView {
+                Label(String(localized: "This kameti is a draft", bundle: .module), systemImage: "pencil.and.list.clipboard")
+            } description: {
+                Text("Finish setting it up to start collecting.", bundle: .module)
+            } actions: {
+                if let onResumeDraft {
+                    Button(String(localized: "Continue setting up", bundle: .module)) { onResumeDraft(data.kameti.id) }
+                        .buttonStyle(.glassProminent)
+                        .tint(KColors.brand)
+                }
+            }
         } else {
             OwnerTabs(data: data, model: model)
         }

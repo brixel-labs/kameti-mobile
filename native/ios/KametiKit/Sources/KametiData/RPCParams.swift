@@ -13,6 +13,20 @@ extension JSONValue {
 }
 
 enum Params {
+    static func addNote(kametiId: String, _ n: NewNote) -> RPCParams {
+        [
+            "p_kameti_id": .string(kametiId),
+            "p_body": .string(n.body),
+            "p_visibility": .string(n.visibility.rawValue),
+            "p_target_type": .string(n.targetType.rawValue),
+            "p_target_id": .opt(n.targetType == .kameti ? nil : n.targetId),
+        ]
+    }
+
+    static func updateNote(id: String, body: String?, visibility: NoteVisibility?) -> RPCParams {
+        ["p_note_id": .string(id), "p_body": .opt(body), "p_visibility": .opt(visibility?.rawValue)]
+    }
+
     static func createKameti(_ new: NewKameti) -> RPCParams {
         [
             "p_name": .string(new.name),

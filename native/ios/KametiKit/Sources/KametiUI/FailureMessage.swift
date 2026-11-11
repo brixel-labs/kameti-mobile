@@ -112,6 +112,18 @@ extension Failure {
             String(localized: "You run this kameti, so you can't join it as a member.", bundle: .module)
         case "member_already_linked":
             String(localized: "Your account is already linked to this kameti.", bundle: .module)
+        case "invalid_note_body":
+            String(localized: "A note must be 1 to 2,000 characters.", bundle: .module)
+        case "invalid_visibility":
+            String(localized: "Choose private or shared.", bundle: .module)
+        case "invalid_target":
+            String(localized: "Choose what the note is about.", bundle: .module)
+        case "target_not_found":
+            String(localized: "That item isn't in this kameti any more.", bundle: .module)
+        case "nothing_to_change":
+            String(localized: "Change the text or who can see it.", bundle: .module)
+        case "not_kameti_member":
+            String(localized: "You're not in this kameti.", bundle: .module)
         default:
             String(localized: "Something went wrong. Please try again.", bundle: .module)
         }

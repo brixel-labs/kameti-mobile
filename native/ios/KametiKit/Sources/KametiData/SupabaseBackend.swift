@@ -38,6 +38,7 @@ extension KametiBackend {
             profiles: SupabaseProfileRepository(client: client),
             contacts: SupabaseContactsRepository(client: client),
             auth: SupabaseAuthRepository(client: client, google: google, apple: apple),
+            notes: SupabaseNotesRepository(client: client),
             clock: clock
         )
     }

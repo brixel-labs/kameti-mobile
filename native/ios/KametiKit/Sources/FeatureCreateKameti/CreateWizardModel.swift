@@ -52,6 +52,10 @@ public final class CreateWizardModel {
 
     public private(set) var isBusy = false
     public private(set) var failure: Failure?
+    /// True while a saved draft is being read back in.
+    public private(set) var isLoadingDraft = false
+    /// Set when the wizard reopened a saved draft (not a new kameti).
+    public private(set) var isResumed = false
 
     private let userId: String
     private let dependencies: KametiDependencies
@@ -138,6 +142,42 @@ public final class CreateWizardModel {
     }
 
     public var isAtStart: Bool { step == .basics && editingSlotId == nil }
+
+    /// Where a reopened draft continues: members first, then filling every
+    /// slot, then the review (order is optional, so it isn't forced).
+    public nonisolated static func resumeStep(members: [Member], slots: [Slot], shares: [Share]) -> WizardStep {
+        if members.isEmpty { return .members }
+        let filled = Set(shares.map(\.slotId))
+        if slots.isEmpty || slots.contains(where: { !filled.contains($0.id) }) { return .slots }
+        return .review
+    }
+
+    /// Reopens a saved draft: fills every step from the server and continues
+    /// at the first unfinished one (FR-10, drafts are kept on the server).
+    public func resume(draftId: String) async {
+        isLoadingDraft = true
+        defer { isLoadingDraft = false }
+        do throws(Failure) {
+            let kameti = try await dependencies.kametis.kameti(id: draftId)
+            kametiId = kameti.id
+            name = kameti.name
+            amountText = String(kameti.slotAmountC.rupees)
+            months = kameti.monthsN
+            startMonth = kameti.startMonth
+            dueDay = kameti.dueDay
+            reminderDays = kameti.reminderDays
+            maxSlotsPerMember = kameti.maxSlotsPerMember
+            try await reload()
+            await loadContacts()
+            for member in members {
+                if let email = member.contactId.flatMap({ id in contacts.first { $0.id == id }?.email }) { emails[member.id] = email }
+            }
+            isResumed = true
+            step = Self.resumeStep(members: members, slots: slots, shares: shares)
+        } catch {
+            failure = error
+        }
+    }
 
     // MARK: Server writes
 
