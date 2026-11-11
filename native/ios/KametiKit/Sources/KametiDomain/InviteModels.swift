@@ -98,12 +98,20 @@ public struct InvitePreview: Codable, Hashable, Sendable {
     public let startMonth: Date?
     /// N, the number of months (and slots).
     public let monthsN: Int?
+    /// E39: the signed-in account is already in this kameti, on the member
+    /// record named `alreadyMemberName`, so accepting would fail.
+    public let alreadyMember: Bool?
+    public let alreadyMemberName: String?
+    /// The signed-in account runs this kameti.
+    public let isOwner: Bool?
 
     public init(
         inviteId: String, status: String, expired: Bool, expiresAt: Date, emailMatches: Bool,
         kametiName: String, ownerName: String, memberName: String, shares: [InviteShare] = [],
-        startMonth: Date? = nil, monthsN: Int? = nil
+        startMonth: Date? = nil, monthsN: Int? = nil,
+        alreadyMember: Bool? = nil, alreadyMemberName: String? = nil, isOwner: Bool? = nil
     ) {
+        self.alreadyMember = alreadyMember; self.alreadyMemberName = alreadyMemberName; self.isOwner = isOwner
         self.inviteId = inviteId; self.status = status; self.expired = expired
         self.expiresAt = expiresAt; self.emailMatches = emailMatches
         self.kametiName = kametiName; self.ownerName = ownerName
@@ -113,6 +121,9 @@ public struct InvitePreview: Codable, Hashable, Sendable {
 
     /// Still open: pending and not past its expiry.
     public var isOpen: Bool { status == "pending" && !expired }
+
+    /// Open, and nothing stops this account from joining.
+    public var canJoin: Bool { isOpen && alreadyMember != true && isOwner != true }
 }
 
 /// Row of `list_my_invitations()`: live invites addressed to the signed-in

@@ -5,6 +5,18 @@ import KametiDomain
 /// Small rules shared by the invite screens, kept apart from the views so
 /// they can be tested.
 public enum InviteLogic {
+    /// Why this account can't join, said up front (E39), or `nil`.
+    static func blockedReason(_ preview: InvitePreview) -> String? {
+        if preview.isOwner == true {
+            return String(localized: "You run this kameti, so you can't join it as a member.", bundle: .module)
+        }
+        if preview.alreadyMember == true {
+            let name = preview.alreadyMemberName ?? ""
+            return String(localized: "You're already a member of this kameti as \(name). If this invite is for you, ask \(preview.ownerName) to remove your app access from that record first.", bundle: .module)
+        }
+        return nil
+    }
+
     /// Whole days left before `expiresAt` (0 on the last day, never negative).
     public static func daysLeft(until expiresAt: Date, now: Date) -> Int {
         max(Int((expiresAt.timeIntervalSince(now) / 86_400).rounded(.down)), 0)

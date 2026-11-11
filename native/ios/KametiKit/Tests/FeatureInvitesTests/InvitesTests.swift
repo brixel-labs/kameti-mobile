@@ -116,3 +116,43 @@ struct JoiningTests {
         #expect(hira.profileId == nil)
     }
 }
+
+/// E39: an account already in the kameti is told up front and gets no Join button.
+@Suite("Invite preview blockers")
+struct InvitePreviewBlockerTests {
+    private func preview(alreadyMember: Bool? = nil, name: String? = nil, isOwner: Bool? = nil) -> InvitePreview {
+        InvitePreview(
+            inviteId: "i", status: "pending", expired: false, expiresAt: .distantFuture, emailMatches: false,
+            kametiName: "Demo Office Kameti", ownerName: "Demo Owner", memberName: "Muhammad Hassan",
+            alreadyMember: alreadyMember, alreadyMemberName: name, isOwner: isOwner
+        )
+    }
+
+    @Test func alreadyAMemberCantJoin() {
+        let p = preview(alreadyMember: true, name: "Demo Member")
+        #expect(!p.canJoin)
+        #expect(InviteLogic.blockedReason(p)?.contains("Demo Member") == true)
+    }
+
+    @Test func theOwnerCantJoin() {
+        let p = preview(isOwner: true)
+        #expect(!p.canJoin)
+        #expect(InviteLogic.blockedReason(p) != nil)
+    }
+
+    @Test func anOlderBackendStillAllowsJoining() {
+        let p = preview()
+        #expect(p.canJoin)
+        #expect(InviteLogic.blockedReason(p) == nil)
+    }
+
+    @Test func decodesTheNewFields() throws {
+        let json = #"{"invite_id":"i","status":"pending","expired":false,"expires_at":"2026-12-01T00:00:00Z","email_matches":false,"kameti_name":"K","owner_name":"O","member_name":"M","shares":[],"already_member":true,"already_member_name":"Demo Member","is_owner":false}"#
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.dateDecodingStrategy = .iso8601
+        let p = try decoder.decode(InvitePreview.self, from: Data(json.utf8))
+        #expect(p.alreadyMember == true && p.alreadyMemberName == "Demo Member" && p.isOwner == false)
+    }
+}
+

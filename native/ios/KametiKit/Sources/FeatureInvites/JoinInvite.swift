@@ -131,6 +131,13 @@ public struct JoinInviteView: View {
                     }
                     .padding(.top, KSpace.sm)
 
+                    if preview.isOpen, let reason = InviteLogic.blockedReason(preview) {
+                        Label(reason, systemImage: "person.crop.circle.badge.exclamationmark")
+                            .kText(KTextToken.bodySm, color: KColors.warning)
+                            .padding(KSpace.md)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: 12))
+                    }
                     if !preview.isOpen {
                         Label(
                             preview.expired
@@ -167,7 +174,7 @@ public struct JoinInviteView: View {
                     VStack(alignment: .leading, spacing: KSpace.md) {
                         Label(String(localized: "You'll see your dues, the schedule and who has paid. Only \(preview.ownerName) can make changes.", bundle: .module), systemImage: "eye")
                         Label(String(localized: "Other members see your name, never your email.", bundle: .module), systemImage: "lock")
-                        if !preview.emailMatches {
+                        if !preview.emailMatches, preview.canJoin {
                             Label(String(localized: "You're signed in with a different email than the invite, so \(preview.ownerName) will approve you first.", bundle: .module), systemImage: "person.badge.clock")
                         }
                     }
@@ -185,7 +192,7 @@ public struct JoinInviteView: View {
                 .padding(.horizontal, KSpace.xl)
                 .padding(.bottom, KSpace.xl)
             }
-            if preview.isOpen {
+            if preview.canJoin {
                 SplitRow(spacing: KSpace.md) {
                     Button { confirmingDecline = true } label: {
                         Text("Decline", bundle: .module).kText(KTextToken.bodyStrong)

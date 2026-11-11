@@ -127,7 +127,9 @@ final class SampleInvitesRepository: InvitesRepository {
             inviteId: invite.id, status: invite.status.rawValue, expired: invite.isExpired(at: SampleData.now), expiresAt: invite.expiresAt,
             emailMatches: invite.email?.lowercased() == SampleData.email, kametiName: kameti.name,
             ownerName: SampleData.ownerNames[kameti.ownerId] ?? "", memberName: member.name, shares: shares,
-            startMonth: kameti.startMonth, monthsN: kameti.monthsN
+            startMonth: kameti.startMonth, monthsN: kameti.monthsN,
+            alreadyMember: kametis.myMember(in: kameti.id) != nil, alreadyMemberName: kametis.myMember(in: kameti.id)?.name,
+            isOwner: kameti.ownerId == SampleData.userId
         )
     }
 
