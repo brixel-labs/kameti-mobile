@@ -29,9 +29,9 @@ public struct ProfileView: View {
         self.onOpenKameti = onOpenKameti
     }
 
-    /// The website pages the stores require (REQUIREMENTS §9.5).
-    private static let supportURL = URL(string: "https://www.fhbtechservices.com/kameti/support")
-    private static let privacyURL = URL(string: "https://www.fhbtechservices.com/kameti/privacy")
+    /// The website pages the stores require, on Kameti's own site (kameti-mobile/legal-site).
+    private static let supportURL = URL(string: "https://kameti.fhbtechservices.com/support")
+    private static let privacyURL = URL(string: "https://kameti.fhbtechservices.com/privacy")
 
     public var body: some View {
         ScrollView {
