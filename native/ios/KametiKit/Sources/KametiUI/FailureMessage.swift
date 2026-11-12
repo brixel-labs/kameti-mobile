@@ -44,6 +44,10 @@ extension Failure {
             String(localized: "Fill every slot and payout month before starting.", bundle: .module)
         case "kameti_not_editable":
             String(localized: "This kameti has ended, so it can't be changed.", bundle: .module)
+        case "kameti_already_running":
+            String(localized: "Its first month has started, so the setup can't change any more.", bundle: .module)
+        case "kameti_has_records":
+            String(localized: "Payments or changes are already recorded, so the setup can't change any more.", bundle: .module)
         case "kameti_name_taken":
             String(localized: "You already have a kameti with this name.", bundle: .module)
         case "invalid_name":

@@ -12,7 +12,14 @@ struct MemberView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: KSpace.lg) {
-                if let me = data.me {
+                if data.kameti.status == .draft {
+                    // The owner took it back to setup ("Edit setup"): turns and dues may change.
+                    KMessageCard(
+                        String(localized: "Being updated by the owner", bundle: .module),
+                        message: String(localized: "The owner is changing the setup. Your turn and dues may change; you'll get a notification when it starts again.", bundle: .module),
+                        symbol: "pencil.and.list.clipboard", tint: KColors.info
+                    )
+                } else if let me = data.me {
                     content(for: me)
                 } else {
                     ContentUnavailableView(
@@ -51,11 +58,26 @@ struct MemberView: View {
     private func dueCard(balance: MemberBalanceRow?) -> some View {
         let owes = balance?.owes ?? .zero
         let current = data.current
-        let month = (current?.monthStart).map { DetailLogic.monthTitle($0).split(separator: " ").first.map(String.init)?.uppercased() ?? "" } ?? ""
+        // Before the kameti starts there's no current month: name its first month.
+        let notStarted = current == nil && data.today < data.kameti.startMonth
+        let shownMonth = current?.monthStart ?? (notStarted ? data.kameti.startMonth : nil)
+        let month = shownMonth.map { DetailLogic.monthTitle($0).split(separator: " ").first.map(String.init)?.uppercased() ?? "" } ?? ""
         return VStack(alignment: .leading, spacing: KSpace.md) {
-            Text(String(localized: "\(month) · YOUR DUE", bundle: .module))
+            Text(month.isEmpty
+                 ? String(localized: "YOUR DUE", bundle: .module)
+                 : (notStarted ? String(localized: "STARTS \(month) · FIRST DUE", bundle: .module) : String(localized: "\(month) · YOUR DUE", bundle: .module)))
                 .kText(KTextToken.label, color: KColors.textOnBrand.opacity(0.85))
-            if owes.isPositive {
+            if notStarted, let monthly = balance?.monthlyDue, monthly.isPositive {
+                // Nothing is due before the first month: show the first payment.
+                // Paid ahead of the start counts toward it (credit shows as a negative balance).
+                let firstDue = monthly + owes
+                if firstDue.isPositive {
+                    KMoneyText(firstDue, style: .displayLg, tone: .onBrand)
+                    dueChip(DetailLogic.dueDate(of: data.kameti, monthIndex: 1))
+                } else {
+                    Text("Paid in advance", bundle: .module).kText(KTextToken.displayLg, color: KColors.textOnBrand)
+                }
+            } else if owes.isPositive {
                 KMoneyText(owes, style: .displayLg, tone: .onBrand)
             } else if balance?.monthlyDue.isPositive == false {
                 Text("No share yet", bundle: .module).kText(KTextToken.displayLg, color: KColors.textOnBrand)
@@ -65,19 +87,22 @@ struct MemberView: View {
                 Text("Paid up", bundle: .module).kText(KTextToken.displayLg, color: KColors.textOnBrand)
             }
             if let current, owes.isPositive {
-                let due = DetailLogic.dueDate(of: data.kameti, monthIndex: current.monthIndex)
-                Label {
-                    Text("\(dueLabel(due)) · pay the owner by cash or bank", bundle: .module)
-                } icon: { Image(systemName: "clock") }
-                    .kText(KTextToken.bodySm, color: KColors.textOnBrand)
-                    .padding(.horizontal, KSpace.md).padding(.vertical, KSpace.sm + 2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
+                dueChip(DetailLogic.dueDate(of: data.kameti, monthIndex: current.monthIndex))
             }
         }
         .padding(KSpace.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(KColors.brand, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    private func dueChip(_ due: Date) -> some View {
+        Label {
+            Text("\(dueLabel(due)) · pay the owner by cash or bank", bundle: .module)
+        } icon: { Image(systemName: "clock") }
+            .kText(KTextToken.bodySm, color: KColors.textOnBrand)
+            .padding(.horizontal, KSpace.md).padding(.vertical, KSpace.sm + 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
     }
 
     private func dueLabel(_ due: Date) -> String {

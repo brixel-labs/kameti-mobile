@@ -104,24 +104,17 @@ struct DateMethodBar: View {
 
     var body: some View {
         VStack(spacing: KSpace.md) {
-            HStack(spacing: KSpace.sm) {
-                Spacer(minLength: 0)
-                Text(prefix).kText(KTextToken.subtitle, color: KColors.textSubtitle)
-                Button { kDismissKeyboard(); picking = true } label: { pill(dateLabel, symbol: "calendar") }
-                    .buttonStyle(.plain)
-                Text("by", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle)
-                Menu {
-                    Picker(String(localized: "Method", bundle: .module), selection: $method) {
-                        Label(String(localized: "Cash", bundle: .module), systemImage: "banknote").tag(PaymentMethod.cash)
-                        Label(String(localized: "Bank transfer", bundle: .module), systemImage: "building.columns").tag(PaymentMethod.bankTransfer)
-                        Text("Other", bundle: .module).tag(PaymentMethod.other)
-                    }
-                } label: {
-                    pill(method.label, symbol: method == .cash ? "banknote" : (method == .bankTransfer ? "building.columns" : nil))
+            // One row when it fits; with large text, the method moves to a second
+            // row instead of squeezing the pills onto two lines.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: KSpace.sm) {
+                    datePart
+                    methodPart
                 }
-                // Keep Cash, Bank transfer, Other in this order even when the menu opens upward.
-                .menuOrder(.fixed)
-                Spacer(minLength: 0)
+                VStack(spacing: KSpace.sm) {
+                    HStack(spacing: KSpace.sm) { datePart }
+                    HStack(spacing: KSpace.sm) { methodPart }
+                }
             }
             .frame(maxWidth: .infinity)
             if method == .bankTransfer {
@@ -139,14 +132,37 @@ struct DateMethodBar: View {
         }
     }
 
+    @ViewBuilder private var datePart: some View {
+        Text(prefix).kText(KTextToken.subtitle, color: KColors.textSubtitle).lineLimit(1).fixedSize()
+        Button { kDismissKeyboard(); picking = true } label: { pill(dateLabel, symbol: "calendar") }
+            .buttonStyle(.plain)
+    }
+
+    @ViewBuilder private var methodPart: some View {
+        Text("by", bundle: .module).kText(KTextToken.subtitle, color: KColors.textSubtitle).lineLimit(1).fixedSize()
+        Menu {
+            Picker(String(localized: "Method", bundle: .module), selection: $method) {
+                Label(String(localized: "Cash", bundle: .module), systemImage: "banknote").tag(PaymentMethod.cash)
+                Label(String(localized: "Bank transfer", bundle: .module), systemImage: "building.columns").tag(PaymentMethod.bankTransfer)
+                Text("Other", bundle: .module).tag(PaymentMethod.other)
+            }
+        } label: {
+            pill(method.label, symbol: method == .cash ? "banknote" : (method == .bankTransfer ? "building.columns" : nil))
+        }
+        // Keep Cash, Bank transfer, Other in this order even when the menu opens upward.
+        .menuOrder(.fixed)
+    }
+
     private func pill(_ title: String, symbol: String?) -> some View {
         HStack(spacing: 6) {
             if let symbol { Image(systemName: symbol).font(.system(size: 13, weight: .semibold)) }
-            Text(title)
+            Text(title).lineLimit(1)
             Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
         }
         .kText(KTextStyle(size: 14, weight: .semibold))
-        .padding(.horizontal, 14).frame(height: 38)
+        // Never wraps: the pill is as wide as its label.
+        .fixedSize()
+        .padding(.horizontal, 14).frame(minHeight: 38)
         .background(KColors.surface, in: Capsule())
         .overlay(Capsule().stroke(KColors.border))
     }

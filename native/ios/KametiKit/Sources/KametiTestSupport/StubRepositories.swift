@@ -69,6 +69,7 @@ public struct StubKametiRepository: KametiRepository {
     public func updateKameti(id: String, changes: KametiChanges) async throws(Failure) -> Kameti { throw notStubbed }
     public func startKameti(id: String) async throws(Failure) -> Kameti { throw notStubbed }
     public func archiveKameti(id: String) async throws(Failure) -> Kameti { throw notStubbed }
+    public func reopenKameti(id: String) async throws(Failure) -> Kameti { throw notStubbed }
     public func restoreKameti(id: String) async throws(Failure) -> Kameti { throw notStubbed }
     public func duplicateKameti(id: String, name: String, startMonth: Date) async throws(Failure) -> Kameti { throw notStubbed }
     public func addMember(kametiId: String, _ new: NewMember) async throws(Failure) -> Member { throw notStubbed }

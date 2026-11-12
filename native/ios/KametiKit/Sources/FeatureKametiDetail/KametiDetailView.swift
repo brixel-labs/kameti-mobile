@@ -13,7 +13,7 @@ public struct KametiDetailView: View {
     @State private var editing = false
     @State private var confirmingArchive = false
     @State private var confirmingDuplicate = false
-    @State private var duplicating = false
+    @State private var confirmingEditSetup = false
     @State private var archiveFailure: Failure?
 
     public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil, onOpenActivity: ((String) -> Void)? = nil) {
@@ -64,6 +64,12 @@ public struct KametiDetailView: View {
                                 Label(String(localized: "Edit kameti", bundle: .module), systemImage: "pencil")
                             }
                         }
+                        // Before the first month, with nothing recorded: back to setup.
+                        if SetupLogic.canEditSetup(data), onResumeDraft != nil {
+                            Button { confirmingEditSetup = true } label: {
+                                Label(String(localized: "Edit setup", bundle: .module), systemImage: "pencil.and.list.clipboard")
+                            }
+                        }
                         if let onOpenActivity {
                             Button { onOpenActivity(data.kameti.id) } label: {
                                 Label(data.isOwner ? String(localized: "Activity", bundle: .module) : String(localized: "Your activity", bundle: .module), systemImage: "clock.arrow.circlepath")
@@ -73,7 +79,6 @@ public struct KametiDetailView: View {
                             Button { confirmingDuplicate = true } label: {
                                 Label(String(localized: "Duplicate kameti", bundle: .module), systemImage: "plus.square.on.square")
                             }
-                            .disabled(duplicating)
                         }
                         if data.isOwner {
                             if data.kameti.status == .archived {
@@ -101,50 +106,50 @@ public struct KametiDetailView: View {
         .onChange(of: KLiveUpdates.shared.revision) {
             if KLiveUpdates.shared.affects(model.kametiId) { Task { await model.load() } }
         }
-        .alert(
-            String(localized: "Archive \(title)?", bundle: .module),
-            isPresented: $confirmingArchive
+        .kConfirmSheet(
+            isPresented: $confirmingArchive, title: String(localized: "Archive \(title)?", bundle: .module),
+            message: String(localized: "It becomes read-only for you and every member and moves to Archived, at the end of Past on Home. You can restore it any time.", bundle: .module),
+            confirmTitle: String(localized: "Archive", bundle: .module), isDestructive: true
         ) {
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Archive", bundle: .module), role: .destructive) { archive() }
-        } message: {
-            Text("It becomes read-only for you and every member and moves to Archived, at the end of Past on Home. You can restore it any time.", bundle: .module)
+            guard let failure = await model.archive() else { return .dismiss }
+            return .result(KSheetMessage(String(localized: "Couldn't change this kameti", bundle: .module), message: Self.message(for: failure), tone: .error))
         }
-        .alert(
-            String(localized: "Duplicate \(title)?", bundle: .module),
-            isPresented: $confirmingDuplicate
+        .kConfirmSheet(
+            isPresented: $confirmingDuplicate, title: String(localized: "Duplicate \(title)?", bundle: .module),
+            message: String(localized: "A new draft with the same members, shares and payout order, and no payments. You can change the name and dates before you start it.", bundle: .module),
+            confirmTitle: String(localized: "Duplicate", bundle: .module)
         ) {
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Duplicate", bundle: .module)) { duplicate() }
-        } message: {
-            Text("A new draft with the same members, shares and payout order, and no payments. You can change the name and dates before you start it.", bundle: .module)
+            switch await model.duplicate() {
+            case .success(let id):
+                Task {
+                    // Let the sheet finish closing before the draft opens.
+                    try? await Task.sleep(for: .milliseconds(450))
+                    onResumeDraft?(id)
+                }
+                return .dismiss
+            case .failure(let failure):
+                return .result(KSheetMessage(String(localized: "Couldn't change this kameti", bundle: .module), message: Self.message(for: failure), tone: .error))
+            }
         }
-        .alert(
-            String(localized: "Couldn't change this kameti", bundle: .module),
-            isPresented: Binding(get: { archiveFailure != nil }, set: { if !$0 { archiveFailure = nil } })
+        .kConfirmSheet(
+            isPresented: $confirmingEditSetup, title: String(localized: "Edit the setup?", bundle: .module),
+            message: String(localized: "It goes back to setup until you start it again, so you can add people, add slots and change shares. Members who joined stay in, and they're told it's being updated.", bundle: .module),
+            confirmTitle: String(localized: "Edit setup", bundle: .module)
         ) {
-            Button(String(localized: "OK", bundle: .module)) {}
-        } message: {
-            Text(archiveFailure.map { Self.message(for: $0) } ?? "")
+            if let failure = await model.reopen() {
+                return .result(KSheetMessage(String(localized: "Can't edit the setup", bundle: .module), message: failure.userMessage, tone: .error))
+            }
+            Task {
+                // Let the sheet close, then open the setup steps.
+                try? await Task.sleep(for: .milliseconds(450))
+                onResumeDraft?(model.kametiId)
+            }
+            return .dismiss
         }
+        .kFailureSheet($archiveFailure, title: String(localized: "Couldn't change this kameti", bundle: .module)) { Self.message(for: $0) }
         .kBottomSheet(isPresented: $editing, title: String(localized: "Edit kameti", bundle: .module), detents: [.large]) {
             if case .loaded(let data) = model.state {
                 EditKametiView(data: data, model: model) { editing = false }
-            }
-        }
-    }
-
-    private func archive() {
-        Task { archiveFailure = await model.archive() }
-    }
-
-    private func duplicate() {
-        duplicating = true
-        Task {
-            defer { duplicating = false }
-            switch await model.duplicate() {
-            case .success(let id): onResumeDraft?(id)
-            case .failure(let failure): archiveFailure = failure
             }
         }
     }

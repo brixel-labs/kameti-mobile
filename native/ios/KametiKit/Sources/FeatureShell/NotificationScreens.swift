@@ -109,7 +109,16 @@ struct NotificationSettingsView: View {
         }
         .task {
             await push.refreshStatus()
-            do throws(Failure) { preferences = try await dependencies.notifications.preferences(userId: userId) } catch { failure = error }
+            // Saved settings show at once; the server is asked only the first time.
+            if let saved = ProfileCache.load(userId: userId).notificationPreferences {
+                preferences = saved
+            } else {
+                do throws(Failure) {
+                    let fetched = try await dependencies.notifications.preferences(userId: userId)
+                    preferences = fetched
+                    ProfileCache.update(userId: userId) { $0.notificationPreferences = fetched }
+                } catch { failure = error }
+            }
         }
     }
 
@@ -153,6 +162,7 @@ struct NotificationSettingsView: View {
                 Task {
                     do throws(Failure) {
                         try await dependencies.notifications.updatePreferences(userId: userId, updated)
+                        ProfileCache.update(userId: userId) { $0.notificationPreferences = updated }
                         failure = nil
                     } catch {
                         preferences = previous

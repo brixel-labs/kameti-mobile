@@ -65,6 +65,12 @@ public final class SupabaseKametiRepository: KametiRepository {
         }
     }
 
+    public func reopenKameti(id: String) async throws(Failure) -> Kameti {
+        try await run {
+            try await client.rpc("reopen_kameti", params: ["p_kameti_id": JSONValue.string(id)]).execute().value
+        }
+    }
+
     public func restoreKameti(id: String) async throws(Failure) -> Kameti {
         try await run {
             try await client.rpc("restore_kameti", params: ["p_kameti_id": JSONValue.string(id)]).execute().value

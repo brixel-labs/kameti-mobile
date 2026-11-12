@@ -44,7 +44,7 @@ public struct ProfileView: View {
                     ContentUnavailableView {
                         Label(failure.userMessage, systemImage: "exclamationmark.triangle")
                     } actions: {
-                        Button(String(localized: "Try again", bundle: .module)) { Task { await model.load() } }
+                        Button(String(localized: "Try again", bundle: .module)) { Task { await model.refresh() } }
                     }
                 } else {
                     ProgressView().frame(maxWidth: .infinity).padding(.vertical, KSpace.xl)
@@ -82,11 +82,13 @@ public struct ProfileView: View {
         }
         .background(KColors.background)
         .navigationTitle(String(localized: "Profile", bundle: .module))
-        .alert(String(localized: "Sign out of Kameti?", bundle: .module), isPresented: $confirmingSignOut) {
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Sign out", bundle: .module), role: .destructive) { Task { await model.signOut() } }
-        } message: {
-            Text("You'll need to sign in again to see your kametis.", bundle: .module)
+        .kConfirmSheet(
+            isPresented: $confirmingSignOut, title: String(localized: "Sign out of Kameti?", bundle: .module),
+            message: String(localized: "You'll need to sign in again to see your kametis.", bundle: .module),
+            confirmTitle: String(localized: "Sign out", bundle: .module), isDestructive: true
+        ) {
+            await model.signOut()
+            return .dismiss
         }
         // Sized to its content, so the sheet has no empty space below.
         .kBottomSheet(
@@ -113,7 +115,7 @@ public struct ProfileView: View {
             NotificationSettingsView(userId: model.userId, dependencies: model.dependencies)
         }
         .task { await model.load() }
-        .refreshable { await model.load() }
+        .refreshable { await model.refresh() }
     }
 
     // MARK: Pieces

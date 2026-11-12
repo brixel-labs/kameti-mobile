@@ -186,36 +186,27 @@ public struct InboxView: View {
                 )
             }
         }
-        .alert(
-            String(localized: "Decline this invite?", bundle: .module),
-            isPresented: Binding(get: { declining != nil }, set: { if !$0 { declining = nil } }), presenting: declining
+        .kConfirmSheet(
+            item: $declining, title: { _ in String(localized: "Decline this invite?", bundle: .module) },
+            message: { String(localized: "\($0.ownerName) will see that you declined \($0.kametiName).", bundle: .module) },
+            confirmTitle: String(localized: "Decline", bundle: .module), isDestructive: true
         ) { invitation in
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Decline", bundle: .module), role: .destructive) {
-                Task { actionFailure = await model.decline(invitation) }
-            }
-        } message: { invitation in
-            Text("\(invitation.ownerName) will see that you declined \(invitation.kametiName).", bundle: .module)
+            Self.outcome(await model.decline(invitation))
         }
-        .alert(
-            String(localized: "Decline \(rejecting?.member.name ?? "")'s request?", bundle: .module),
-            isPresented: Binding(get: { rejecting != nil }, set: { if !$0 { rejecting = nil } }), presenting: rejecting
+        .kConfirmSheet(
+            item: $rejecting, title: { String(localized: "Decline \($0.member.name)'s request?", bundle: .module) },
+            message: { String(localized: "They won't be linked to \($0.kametiName). You can invite them again later.", bundle: .module) },
+            confirmTitle: String(localized: "Decline", bundle: .module), isDestructive: true
         ) { request in
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Decline", bundle: .module), role: .destructive) {
-                Task { actionFailure = await model.reject(request) }
-            }
-        } message: { request in
-            Text("They won't be linked to \(request.kametiName). You can invite them again later.", bundle: .module)
+            Self.outcome(await model.reject(request))
         }
-        .alert(
-            String(localized: "Something went wrong", bundle: .module),
-            isPresented: Binding(get: { actionFailure != nil }, set: { if !$0 { actionFailure = nil } }), presenting: actionFailure
-        ) { _ in
-            Button(String(localized: "OK", bundle: .module)) {}
-        } message: { failure in
-            Text(failure.userMessage)
-        }
+        .kFailureSheet($actionFailure, title: String(localized: "Something went wrong", bundle: .module))
+    }
+
+    /// Closes on success; shows what went wrong in the sheet otherwise.
+    private static func outcome(_ failure: Failure?) -> KConfirmOutcome {
+        guard let failure else { return .dismiss }
+        return .result(KSheetMessage(String(localized: "Something went wrong", bundle: .module), message: failure.userMessage, tone: .error))
     }
 
     // MARK: Pieces
@@ -250,15 +241,15 @@ public struct InboxView: View {
                 Button(action: onDecline) {
                     Text("Decline", bundle: .module).kText(KTextToken.bodyStrong)
                         .frame(maxWidth: .infinity, minHeight: 42)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(KColors.border))
-                        .contentShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(Capsule().strokeBorder(KColors.border))
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 Button(action: onPrimary) {
                     Text(primary).kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
                         .frame(maxWidth: .infinity, minHeight: 42)
-                        .background(KColors.brand, in: RoundedRectangle(cornerRadius: 12))
-                        .contentShape(RoundedRectangle(cornerRadius: 12))
+                        .background(KColors.brand, in: Capsule())
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
@@ -330,6 +321,7 @@ enum InboxLogic {
         case "payment_void", "declined", "join_declined": Style(symbol: "xmark", tint: KColors.negative, background: KColors.negativeSubtle)
         case "joined": Style(symbol: "person.fill", tint: KColors.brand, background: KColors.brandSubtle)
         case "join_request": Style(symbol: "person.badge.clock", tint: KColors.info, background: KColors.infoSubtle)
+        case "setup_reopened", "setup_restarted": Style(symbol: "pencil.and.list.clipboard", tint: KColors.info, background: KColors.infoSubtle)
         case "invite": Style(symbol: "envelope", tint: KColors.brand, background: KColors.brandSubtle)
         case "reminder", "broadcast": Style(symbol: "bell", tint: KColors.warning, background: KColors.warningSubtle)
         case "overdue", "owner_digest": Style(symbol: "exclamationmark.circle", tint: KColors.negative, background: KColors.negativeSubtle)

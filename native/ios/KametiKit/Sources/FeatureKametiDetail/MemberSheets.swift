@@ -250,13 +250,19 @@ struct EditMemberSheet: View {
             .padding(.bottom, KSpace.xl)
         }
         .kDismissesKeyboard()
-        .alert(
-            String(localized: "Remove \(member.name)?", bundle: .module), isPresented: $confirmingRemove
+        .kConfirmSheet(
+            isPresented: $confirmingRemove, title: String(localized: "Remove \(member.name)?", bundle: .module),
+            message: String(localized: "They have no shares or payments, so nothing on the ledger changes. This can't be undone.", bundle: .module),
+            confirmTitle: String(localized: "Remove", bundle: .module), isDestructive: true
         ) {
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Remove", bundle: .module), role: .destructive, action: remove)
-        } message: {
-            Text("They have no shares or payments, so nothing on the ledger changes. This can't be undone.", bundle: .module)
+            guard let failure = await model.removeMember(id: member.id) else {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(350))
+                    onDone()
+                }
+                return .dismiss
+            }
+            return .result(KSheetMessage(String(localized: "Couldn't remove \(member.name)", bundle: .module), message: failure.userMessage, tone: .error))
         }
         .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind \(MemberLogic.firstName(member.name))", bundle: .module), detents: [.medium, .large]) {
             RemindSheet(kameti: data.kameti, dependencies: model.dependencies, onlyMemberId: member.id) { reminding = false }

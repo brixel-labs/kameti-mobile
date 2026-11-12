@@ -82,12 +82,10 @@ public struct CreateKametiView: View {
         .onChange(of: model.isResumed) { _, resumed in
             if resumed { shownStep = model.step }
         }
-        .alert(
-            model.failure?.userMessage ?? "",
-            isPresented: Binding(get: { model.failure != nil }, set: { if !$0 { model.clearFailure() } })
-        ) {
-            Button(String(localized: "OK", bundle: .module), role: .cancel) {}
-        }
+        .kMessageSheet(Binding(
+            get: { model.failure.map { KSheetMessage(String(localized: "Something went wrong", bundle: .module), message: $0.userMessage, tone: .error) } },
+            set: { if $0 == nil { model.clearFailure() } }
+        ))
     }
 }
 
