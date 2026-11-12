@@ -93,6 +93,8 @@
         },
       ],
       "build-settings": {
+        "ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES": "AppIcon-Midnight AppIcon-Monogram AppIcon-Turns",
+        "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "CODE_SIGN_ENTITLEMENTS": "Kameti.entitlements",
         "CODE_SIGN_STYLE": "Automatic",
         "CURRENT_PROJECT_VERSION": "1",

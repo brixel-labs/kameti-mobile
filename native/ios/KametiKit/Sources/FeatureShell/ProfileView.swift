@@ -17,6 +17,9 @@ public struct ProfileView: View {
     @State private var confirmingSignOut = false
     @State private var choosingAppearance = false
     @State private var appearanceHeight: CGFloat = 260
+    @State private var choosingIcon = false
+    @State private var iconHeight: CGFloat = 200
+    @State private var appIcon = KAppIcon.current
     @State private var nameSheetHeight: CGFloat = 200
     @AppStorage(KAppearance.storageKey) private var appearance = KAppearance.system.rawValue
     // Stored on the phone for now; push notifications arrive with the
@@ -53,7 +56,11 @@ public struct ProfileView: View {
                     row(String(localized: "Notifications", bundle: .module), symbol: "bell", tint: .amber,
                         value: PushCenter.shared.isAllowed ? String(localized: "On", bundle: .module) : String(localized: "Off", bundle: .module)) { showingNotifications = true }
                     row(String(localized: "Appearance", bundle: .module), symbol: "moon", tint: .purple,
-                        value: (KAppearance(rawValue: appearance) ?? .system).title, isLast: true) { choosingAppearance = true }
+                        value: (KAppearance(rawValue: appearance) ?? .system).title) { choosingAppearance = true }
+                    if KAppIcon.isSupported {
+                        row(String(localized: "App icon", bundle: .module), symbol: "app", tint: .green,
+                            value: appIcon.title, isLast: true) { choosingIcon = true }
+                    }
                 }
                 group {
                     row(String(localized: "My people", bundle: .module), symbol: "person.2", tint: .green, value: "\(model.peopleCount)") { showingPeople = true }
@@ -98,6 +105,13 @@ public struct ProfileView: View {
         ) {
             AppearancePicker(selection: $appearance)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { appearanceHeight = $0 }
+        }
+        .kBottomSheet(
+            isPresented: $choosingIcon, title: String(localized: "App icon", bundle: .module),
+            detents: [.height(iconHeight + 58)]
+        ) {
+            AppIconPicker(selection: $appIcon)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { iconHeight = $0 }
         }
         // Sized to its content, so Save sits right under the field.
         .kBottomSheet(isPresented: $editingName, title: String(localized: "Your name", bundle: .module), detents: [.height(nameSheetHeight + 58)]) {
