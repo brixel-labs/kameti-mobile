@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<!-- Invite links open the app: kameti.fhbtechservices.com/join/<token>, and the
+		     first links sent on www (fhbtechservices.com/kameti/join/<token>). -->
+		<string>applinks:kameti.fhbtechservices.com</string>
+		<string>applinks:www.fhbtechservices.com</string>
+	</array>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>

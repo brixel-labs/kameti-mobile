@@ -1,0 +1,94 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Run your kameti.\nTrack every turn.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run your kameti.\nTrack every turn."
+          }
+        }
+      }
+    },
+    "Record who paid, see whose turn is next, and remind members, all in one place.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record who paid, see whose turn is next, and remind members, all in one place."
+          }
+        }
+      }
+    },
+    "Continue with Apple": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue with Apple"
+          }
+        }
+      }
+    },
+    "Continue with Google": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue with Google"
+          }
+        }
+      }
+    },
+    "Dev: sign in as owner": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dev: sign in as owner"
+          }
+        }
+      }
+    },
+    "Dev: sign in as member": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dev: sign in as member"
+          }
+        }
+      }
+    },
+    "This build isn't connected to the Kameti service, so sign-in is turned off.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This build isn't connected to the Kameti service, so sign-in is turned off."
+          }
+        }
+      }
+    },
+    "Developers: run native/ios/scripts/use-env.sh dev (or prod), then build again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Developers: run native/ios/scripts/use-env.sh dev (or prod), then build again."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

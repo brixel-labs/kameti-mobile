@@ -1,0 +1,963 @@
+import KametiCore
+import KametiDomain
+import KametiUI
+import SwiftUI
+
+/// The owner's view of a running kameti (boards A-Overview, A2-*-Tab):
+/// Overview, Members, Schedule and Payments. Recording actions arrive with
+/// the payments slice.
+struct OwnerTabs: View {
+    enum Tab: Hashable, CaseIterable { case overview, members, schedule, payments, notes }
+
+    let data: KametiDetailData
+    let model: KametiDetailViewModel
+    @State private var tab = Tab.overview
+    @State private var recording: RecordTarget?
+    @State private var collecting = false
+    @State private var voiding: VoidTarget?
+    @State private var payingOut: Int?
+    @State private var addingMember = false
+    @State private var editingMember: Member?
+    @State private var searchingNotes = false
+    /// The note row showing its swipe actions, if any.
+    @State private var openNote: String?
+    @State private var confirmingInviteAll = false
+    /// Who Invite all goes to, fixed when its sheet opens, so the list and
+    /// title don't change under the person while the invites go out.
+    @State private var inviteBatch: [InviteList.Row] = []
+    @State private var inviteBatchMissingEmail = 0
+    @State private var sendingInvites = false
+    /// Set when the server answered, so the last row slides out before the result.
+    @State private var invitesFinished = false
+    @State private var restoreFailure: Failure?
+    @State private var reminding = false
+
+    /// Archived (§6.11): read-only, so every write control is left out.
+    private var isArchived: Bool { data.kameti.status == .archived }
+
+    struct RecordTarget: Identifiable {
+        let id = UUID()
+        let memberId: String?
+    }
+
+    private var payingOutMonthName: String {
+        guard let month = payingOut else { return "" }
+        return DetailLogic.monthTitle(DetailLogic.monthStart(of: data.kameti, monthIndex: month)).split(separator: " ").first.map(String.init) ?? ""
+    }
+
+    /// A payout can be recorded once the month has recipients and isn't paid out.
+    /// Pay out shows once every member has paid this month (and it isn't paid out yet).
+    private func canPayOut(_ row: MonthCollectionRow) -> Bool {
+        row.memberCount > 0 && row.paidCount >= row.memberCount
+            && !CollectionStatePill.isPaidOut(row.state)
+            && !DetailLogic.recipients(kameti: data.kameti, monthIndex: row.monthIndex, slots: data.slots, shares: data.shares, members: data.members).isEmpty
+    }
+
+    private var monthName: String {
+        data.current.map { DetailLogic.monthTitle($0.monthStart).split(separator: " ").first.map(String.init) ?? "" } ?? ""
+    }
+
+    private var titles: [(tab: Tab, title: String)] {
+        [
+            (.overview, String(localized: "Overview", bundle: .module)),
+            (.members, String(localized: "Members", bundle: .module)),
+            (.schedule, String(localized: "Schedule", bundle: .module)),
+            (.payments, String(localized: "Payments", bundle: .module)),
+            (.notes, String(localized: "Notes", bundle: .module)),
+        ]
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if isArchived {
+                ArchivedBanner {
+                    Task { restoreFailure = await model.restore() }
+                }
+                .padding(.horizontal, KSpace.xl).padding(.vertical, KSpace.sm)
+            }
+            KUnderlineTabs(titles, selection: $tab, inset: KSpace.xl)
+                .background(KColors.background)
+            // The system paging view: swipe left or right between the tabs, or
+            // tap a tab; the page moves the way you'd expect.
+            TabView(selection: $tab) {
+                ForEach(Tab.allCases, id: \.self) { page in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: KSpace.lg) {
+                            content(for: page)
+                        }
+                        .padding(.horizontal, KSpace.xl)
+                        .padding(.top, KSpace.lg)
+                        // Room under the last row for the floating Record payment button.
+                        .padding(.bottom, page == .notes || page == .overview ? KSpace.xl : 84)
+                    }
+                    // Not on Notes: its rows swipe sideways, and a refresh control
+                    // would attach to them too. Notes reload after every change.
+                    .modifier(PullToRefresh(isOn: page != .notes) { await model.load() })
+                    // Notes keeps its composer pinned under the list.
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        if page == .notes, !isArchived { NoteComposer(data: data, model: model) }
+                    }
+                    .tag(page)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.smooth(duration: 0.28), value: tab)
+            .overlay(alignment: .bottomTrailing) {
+                // On every tab but Notes, whose composer sits at the bottom.
+                if tab != .notes, data.current != nil, !isArchived {
+                    Menu {
+                        if let current = data.current, canPayOut(current) {
+                            Button { payingOut = current.monthIndex } label: {
+                                Label(String(localized: "Pay out \(monthName)", bundle: .module), systemImage: "arrow.up.right")
+                            }
+                        }
+                        Button { recording = RecordTarget(memberId: nil) } label: {
+                            Label(String(localized: "Record one payment", bundle: .module), systemImage: "plus")
+                        }
+                        Button { collecting = true } label: {
+                            Label(String(localized: "Collect \(monthName) (tap to settle)", bundle: .module), systemImage: "checklist")
+                        }
+                    } label: {
+                        Label(String(localized: "Record payment", bundle: .module), systemImage: "plus")
+                            .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                            .padding(.horizontal, KSpace.lg)
+                            .frame(minHeight: 52)
+                            .background(KColors.brand, in: RoundedRectangle(cornerRadius: KRadius.card))
+                            .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+                    }
+                    .padding(KSpace.xl)
+                    .transition(.opacity)
+                }
+            }
+        }
+        .animation(.smooth(duration: 0.2), value: tab)
+        // A tap anywhere closes an open note row; buttons still work as usual.
+        .simultaneousGesture(TapGesture().onEnded { if openNote != nil { openNote = nil } })
+        // So does moving to another tab (tapped or swiped).
+        .onChange(of: tab) { openNote = nil }
+        .toolbar {
+            if tab == .notes {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        withAnimation(.smooth(duration: 0.2)) { searchingNotes.toggle() }
+                    } label: {
+                        Image(systemName: searchingNotes ? "xmark" : "magnifyingglass")
+                    }
+                    .accessibilityLabel(searchingNotes ? Text("Close search", bundle: .module) : Text("Search notes", bundle: .module))
+                }
+            }
+            // Members are added while it is a draft; once started the line-up is fixed (v1).
+            if tab == .members, data.kameti.status == .draft {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { addingMember = true } label: {
+                        Image(systemName: "person.badge.plus").foregroundStyle(KColors.brand)
+                    }
+                    .accessibilityLabel(Text("Add member", bundle: .module))
+                }
+            }
+        }
+        .task { await startPendingAction() }
+        .kFailureSheet($restoreFailure, title: String(localized: "Couldn't restore this kameti", bundle: .module)) {
+            KametiDetailView.message(for: $0)
+        }
+        .kConfirmSheet(
+            isPresented: $confirmingInviteAll, title: inviteAllTitle, message: inviteAllMessage,
+            confirmTitle: String(localized: "Send", bundle: .module),
+            details: { InviteList(people: inviteBatch, sent: sendingInvites ? model.invitedThisRun : [], finished: invitesFinished) }
+        ) {
+            await inviteAll()
+        }
+        .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind members", bundle: .module), detents: [.large]) {
+            RemindSheet(kameti: data.kameti, dependencies: model.dependencies) { reminding = false }
+        }
+        .kBottomSheet(isPresented: $addingMember, title: String(localized: "Add member", bundle: .module), detents: [.large]) {
+            AddMemberSheet(data: data, model: model) {
+                addingMember = false
+                openAddedMember()
+            }
+        }
+        .kBottomSheet(
+            isPresented: Binding(get: { editingMember != nil }, set: { if !$0 { editingMember = nil } }),
+            title: String(localized: "Edit member", bundle: .module), detents: [.large]
+        ) {
+            if let member = editingMember {
+                EditMemberSheet(data: data, model: model, member: member) { editingMember = nil }.id(member.id)
+            }
+        }
+        .kBottomSheet(
+            isPresented: Binding(get: { recording != nil }, set: { if !$0 { recording = nil } }),
+            title: String(localized: "Record payment", bundle: .module), detents: [.large]
+        ) {
+            if let target = recording {
+                RecordPaymentSheet(data: data, model: model, preselected: target.memberId) { recording = nil }
+                    .id(target.id)
+            }
+        }
+        .kBottomSheet(isPresented: $collecting, title: String(localized: "Collect \(monthName) Kameti", bundle: .module), detents: [.large]) {
+            // No condition here: the sheet is only built while it is presented.
+            CollectMonthSheet(data: data, model: model) { collecting = false }
+        }
+        .kBottomSheet(
+            isPresented: Binding(get: { voiding != nil }, set: { if !$0 { voiding = nil } }),
+            title: voiding?.isPayout == true ? String(localized: "Void payout", bundle: .module) : String(localized: "Void payment", bundle: .module),
+            detents: [.medium]
+        ) {
+            if let target = voiding { VoidSheet(target: target, model: model) { voiding = nil } }
+        }
+        .kBottomSheet(
+            isPresented: Binding(get: { payingOut != nil }, set: { if !$0 { payingOut = nil } }),
+            title: String(localized: "Pay out \(payingOutMonthName) Kameti", bundle: .module), detents: [.large]
+        ) {
+            if let month = payingOut { PayoutSheet(data: data, model: model, monthIndex: month) { payingOut = nil }.id(month) }
+        }
+    }
+
+    // MARK: Invite all
+
+    private var noEmailCount: Int {
+        data.members.filter {
+            if case .notInvited(let email, _) = AccessState.of($0, in: data) { return email == nil }
+            return false
+        }.count
+    }
+
+    private var inviteAllTitle: String {
+        let count = inviteBatch.count
+        return count == 0
+            ? String(localized: "No one to invite", bundle: .module)
+            : (count == 1 ? String(localized: "Send 1 invite?", bundle: .module) : String(localized: "Send \(count) invites?", bundle: .module))
+    }
+
+    private var inviteAllMessage: String {
+        let missing = inviteBatchMissingEmail
+        let base = inviteBatch.isEmpty
+            ? String(localized: "Everyone with an email already has an invite or has joined.", bundle: .module)
+            : String(localized: "Each person gets an email with a link and a code to join this kameti in the app.", bundle: .module)
+        guard missing > 0 else { return base }
+        return base + " " + (missing == 1
+            ? String(localized: "1 person has no email yet: add one in their member sheet.", bundle: .module)
+            : String(localized: "\(missing) people have no email yet: add one in their member sheet.", bundle: .module))
+    }
+
+    /// Sends the invites, then says what happened in the same sheet.
+    private func inviteAll() async -> KConfirmOutcome {
+        let ids = inviteBatch.map(\.id)
+        withAnimation { sendingInvites = true }
+        let result = await model.inviteAll(memberIds: ids)
+        defer { sendingInvites = false }
+        // The last row slides out, then the result shows.
+        if result.invited > 0 {
+            // The last row shows its tick, fades, then the result shows.
+            invitesFinished = true
+            try? await Task.sleep(for: InviteList.tickHold + .milliseconds(420))
+        }
+        let emailed = ids.contains { model.sentInvites[$0]?.emailed == true }
+        if result.invited == 0 {
+            return .result(KSheetMessage(
+                String(localized: "Invites weren't sent", bundle: .module),
+                message: result.failure?.userMessage ?? String(localized: "Please try again.", bundle: .module), tone: .error
+            ))
+        }
+        let who = result.invited == 1
+            ? String(localized: "1 member", bundle: .module)
+            : String(localized: "\(result.invited) members", bundle: .module)
+        var message = emailed
+            ? String(localized: "\(who) will get an email with a link and a code to join. They show as Invited until they accept.", bundle: .module)
+            : String(localized: "Invites made for \(who). Email isn't set up yet, so open each member to share their code or link.", bundle: .module)
+        if let failure = result.failure {
+            message += "\n\n" + String(localized: "\(ids.count - result.invited) couldn't be sent: \(failure.userMessage)", bundle: .module)
+        }
+        let title = result.invited == 1
+            ? String(localized: "1 invite sent", bundle: .module)
+            : String(localized: "\(result.invited) invites sent", bundle: .module)
+        return .result(KSheetMessage(title, message: message, tone: result.failure == nil ? .success : .warning))
+    }
+
+    /// The people Invite all will email, with the address it goes to.
+    private var inviteRows: [InviteList.Row] {
+        AccessState.invitable(in: data).map { member in
+            var email: String?
+            if case .notInvited(let address, _) = AccessState.of(member, in: data) { email = address }
+            return InviteList.Row(id: member.id, name: member.name, email: email, colorIndex: Int(member.color ?? "") ?? max(data.members.firstIndex(of: member) ?? 0, 0))
+        }
+    }
+
+    /// After adding someone, open their sheet so the invite is one tap away.
+    private func openAddedMember() {
+        guard let id = model.lastAddedMemberId else { return }
+        Task {
+            // Let the add sheet finish closing first.
+            try? await Task.sleep(for: .milliseconds(450))
+            guard case .loaded(let current) = model.state, let member = current.members.first(where: { $0.id == id }) else { return }
+            editingMember = member
+        }
+    }
+
+    /// Home's Record payment opens the kameti and starts the chosen action.
+    private func startPendingAction() async {
+        guard let action = model.pendingAction else { return }
+        model.pendingAction = nil
+        guard !isArchived else { return }
+        try? await Task.sleep(for: .milliseconds(450))
+        switch action {
+        case .payOut: if let current = data.current, canPayOut(current) { payingOut = current.monthIndex }
+        case .recordOne: recording = RecordTarget(memberId: nil)
+        case .collect: collecting = true
+        }
+    }
+
+    @ViewBuilder
+    private func content(for tab: Tab) -> some View {
+        switch tab {
+        case .overview:
+            OverviewTab(
+                data: data, onRemind: isArchived || data.kameti.status != .active ? nil : { reminding = true },
+                onPayOut: isArchived ? nil : data.current.flatMap { current in canPayOut(current) ? { payingOut = current.monthIndex } : nil }
+            ) {
+                if !isArchived { recording = RecordTarget(memberId: $0) }
+            }
+        case .members:
+            MembersTab(
+                data: data,
+                onSelect: isArchived ? nil : { editingMember = $0 },
+                onInviteAll: isArchived ? nil : {
+                    inviteBatch = inviteRows
+                    inviteBatchMissingEmail = noEmailCount
+                    invitesFinished = false
+                    confirmingInviteAll = true
+                }
+            )
+        case .schedule: ScheduleSection(data: data) { if !isArchived { payingOut = $0 } }
+        case .payments: PaymentsTab(data: data) { if !isArchived { voiding = $0 } }
+        case .notes: NotesTab(data: data, model: model, isSearching: searchingNotes, openNote: $openNote, isReadOnly: isArchived)
+        }
+    }
+}
+
+/// This month's pot, who has paid, the recipients and every member's status
+/// (board A · Kameti overview).
+struct OverviewTab: View {
+    let data: KametiDetailData
+    var onRemind: (() -> Void)?
+    /// Set once everyone has paid: "Pay out <month>" on the This month row.
+    var onPayOut: (() -> Void)?
+    let onRecord: (String) -> Void
+
+    var body: some View {
+        if let current = data.current {
+            let recipients = DetailLogic.recipients(
+                kameti: data.kameti, monthIndex: current.monthIndex, slots: data.slots, shares: data.shares, members: data.members
+            )
+            let counts = DetailLogic.statusCounts(data.months, monthIndex: current.monthIndex)
+            let rows = data.months.filter { $0.monthIndex == current.monthIndex }
+            let owing = DetailLogic.owing(data.months, monthIndex: current.monthIndex)
+            let byId = Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            let toGo = current.target - current.received
+
+            KCard {
+                VStack(alignment: .leading, spacing: KSpace.md) {
+                    HStack {
+                        Text("\(DetailLogic.monthTitle(current.monthStart)) · month \(current.monthIndex)".uppercased())
+                            .kText(KTextToken.label, color: KColors.textSecondary)
+                        Spacer()
+                        CollectionStatePill(state: current.state)
+                    }
+                    // Received (cash this month) drives the pot and payout; covered
+                    // drives member statuses.
+                    KPotProgress(
+                        collected: current.received, target: current.target,
+                        caption: toGo.isPositive
+                            ? String(localized: "collected of \(current.target.format()) · \(toGo.format()) to go", bundle: .module)
+                            : String(localized: "collected of \(current.target.format())", bundle: .module),
+                        headline: .none, captionAboveBar: true
+                    )
+                    KFlowLayout {
+                        KStatusChip(.paid, label: String(localized: "\(counts.paid) paid", bundle: .module))
+                        KStatusChip(.partial, label: String(localized: "\(counts.partial) partial", bundle: .module))
+                        KStatusChip(.unpaid, label: String(localized: "\(counts.unpaid) unpaid", bundle: .module))
+                    }
+                    if !recipients.isEmpty {
+                        if CollectionStatePill.isPaidOut(current.state) {
+                            paidOutStrip(current, recipients)
+                        } else {
+                            recipientsBox(recipients)
+                        }
+                    }
+                }
+            }
+
+            if !owing.isEmpty, let onRemind {
+                Button(action: onRemind) {
+                    Label(String(localized: "Remind \(owing.count) members who owe", bundle: .module), systemImage: "bell")
+                        .kText(KTextToken.bodyStrong, color: KColors.brand)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .overlay(Capsule().stroke(KColors.brand, lineWidth: 1.5))
+                }
+                .buttonStyle(.plain)
+            }
+
+            KSectionHeader(
+                String(localized: "This month", bundle: .module),
+                actionTitle: onPayOut == nil ? nil : String(localized: "Pay out \(DetailLogic.monthTitle(current.monthStart).split(separator: " ").first.map(String.init) ?? "")", bundle: .module),
+                showsChevron: true, action: onPayOut
+            )
+            .animation(.smooth(duration: 0.25), value: onPayOut == nil)
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.memberId) { index, row in
+                    if let member = byId[row.memberId] {
+                        let owes = row.remaining.isPositive
+                        Button { if owes { onRecord(member.id) } } label: {
+                        DetailRow(
+                            member: member, in: data.members,
+                            subtitle: row.status == .advance
+                                ? String(localized: "Covered by credit", bundle: .module)
+                                : String(localized: "\(row.allocated.format()) of \(row.due.format(symbol: false))", bundle: .module),
+                            showsDivider: index < rows.count - 1
+                        ) {
+                            StatusTextPill(status: row.status)
+                        }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            // Room for the floating action.
+            Color.clear.frame(height: 56)
+        } else if let summary = DetailLogic.finalSummary(data) {
+            FinishedOverview(data: data, summary: summary)
+        } else {
+            ContentUnavailableView(
+                String(localized: "Not started yet", bundle: .module), systemImage: "hourglass",
+                description: Text("Collections begin when the kameti starts.", bundle: .module)
+            )
+        }
+    }
+
+    private func colorIndex(_ member: Member) -> Int {
+        Int(member.color ?? "") ?? max(data.members.firstIndex(of: member) ?? 0, 0)
+    }
+
+    private func paidOutStrip(_ current: MonthCollectionRow, _ recipients: [DetailLogic.Recipient]) -> some View {
+        let short = current.state == .paidOutShort && current.paidOutShortBy.isPositive
+        let names = recipients.map { $0.member.id == data.me?.id ? String(localized: "You", bundle: .module) : $0.member.name }.joined(separator: " + ")
+        let slotIds = Set(data.slots.filter { $0.payoutMonthIndex == current.monthIndex }.map(\.id))
+        let paidOn = data.payouts.filter { $0.voidedAt == nil && slotIds.contains($0.slotId) }.map(\.paidOn).max()
+        return KPaidOutStrip(
+            people: recipients.map { ($0.member.name, colorIndex($0.member)) },
+            title: short
+                ? String(localized: "Paid out · \(current.paidOut.format()) · short \(current.paidOutShortBy.format())", bundle: .module)
+                : String(localized: "Paid out · \(current.paidOut.format())", bundle: .module),
+            subtitle: paidOn.map { "\(names) · \(DetailLogic.dayMonth($0))" } ?? names,
+            isShort: short
+        )
+    }
+
+    private func recipientsBox(_ recipients: [DetailLogic.Recipient]) -> some View {
+        let same = Set(recipients.map(\.payout)).count == 1
+        return HStack(spacing: KSpace.md) {
+            KAvatarStack(recipients.map { recipient in
+                (recipient.member.name, Int(recipient.member.color ?? "") ?? max(data.members.firstIndex(of: recipient.member) ?? 0, 0))
+            })
+            VStack(alignment: .leading, spacing: 2) {
+                Text(recipients.map { $0.member.id == data.me?.id ? String(localized: "You", bundle: .module) : $0.member.name }.joined(separator: " + "))
+                    .kText(KTextToken.bodyStrong)
+                if recipients.count > 1 {
+                    Text(same
+                         ? String(localized: "\(recipients[0].payout.format()) each · shared slot", bundle: .module)
+                         : String(localized: "Shared slot", bundle: .module))
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
+                } else {
+                    Text("Receives \(recipients[0].payout.format())", bundle: .module)
+                        .kText(KTextToken.subtitle, color: KColors.textSubtitle)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(KSpace.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.input))
+    }
+}
+
+/// A month status as a plain coloured pill (no icon), as on the overview rows.
+struct StatusTextPill: View {
+    let status: MonthStatusCode
+
+    var body: some View {
+        let style = Self.style(for: status)
+        KPill(status.chip.label, foreground: style.foreground, background: style.background)
+    }
+
+    nonisolated static func style(for status: MonthStatusCode) -> (foreground: Color, background: Color) {
+        switch status {
+        case .paid: (KColors.positive, KColors.positiveSubtle)
+        case .partial: (KColors.warning, KColors.warningSubtle)
+        case .unpaid, .overdue: (KColors.negative, KColors.negativeSubtle)
+        case .advance: (KColors.info, KColors.infoSubtle)
+        case .upcoming: (KColors.textSecondary, KColors.surfaceSunken)
+        }
+    }
+}
+
+/// Members (board A v2 · Members): search, a heads-up for people who haven't
+/// joined, and one row per member with slots, balance and join state.
+struct MembersTab: View {
+    let data: KametiDetailData
+    /// Opens the edit sheet for a member (owner only, so always set here).
+    var onSelect: ((Member) -> Void)?
+    var onInviteAll: (() -> Void)?
+    @State private var search = ""
+
+    var body: some View {
+        let balances = Dictionary(data.balances.map { ($0.memberId, $0) }, uniquingKeysWith: { first, _ in first })
+        let notJoined = data.members.filter { $0.joinStatus != .joined && $0.profileId == nil }.count
+        let list = data.members.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) }
+        if data.members.isEmpty {
+            ContentUnavailableView(
+                String(localized: "No members yet", bundle: .module), systemImage: "person.2",
+                description: Text("Members you add will show here.", bundle: .module)
+            )
+        } else {
+            HStack(spacing: KSpace.sm) {
+                Image(systemName: "magnifyingglass").foregroundStyle(KColors.textSecondary)
+                TextField(String(localized: "Search \(data.members.count) members", bundle: .module), text: $search)
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
+            }
+            .padding(.horizontal, KSpace.md)
+            .frame(minHeight: 44)
+            .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(KColors.border))
+            .kDismissesKeyboard()
+
+            if notJoined > 0, onInviteAll != nil {
+                // Only offer "Invite" when someone can actually be invited (has an
+                // email and no live invite); otherwise say what's missing.
+                let invitable = AccessState.invitable(in: data).count
+                HStack(spacing: KSpace.sm + 2) {
+                    Image(systemName: "envelope").foregroundStyle(KColors.warning)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(notJoined == 1
+                             ? String(localized: "1 person hasn't joined the app yet", bundle: .module)
+                             : String(localized: "\(notJoined) people haven't joined the app yet", bundle: .module))
+                            .kText(KTextToken.bodySm, color: KColors.warning)
+                        if invitable == 0 {
+                            Text("Add an email in their member sheet to invite them.", bundle: .module)
+                                .kText(KTextToken.caption, color: KColors.warning)
+                        }
+                    }
+                    Spacer(minLength: KSpace.sm)
+                    if invitable > 0 {
+                        Button { onInviteAll?() } label: {
+                            Text(invitable == notJoined ? String(localized: "Invite all", bundle: .module) : String(localized: "Invite \(invitable)", bundle: .module))
+                                .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.textOnBrand)
+                                .padding(.horizontal, KSpace.md).frame(height: 32)
+                                .background(KColors.warning, in: RoundedRectangle(cornerRadius: 8))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(KSpace.md)
+                .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: 12))
+            }
+
+            VStack(spacing: 0) {
+                ForEach(Array(list.enumerated()), id: \.element.id) { index, member in
+                    let balance = balances[member.id]
+                    let slots = DetailLogic.slotCount(of: member, shares: data.shares)
+                    Button { onSelect?(member) } label: { DetailRow(
+                        member: member, in: data.members,
+                        subtitle: slots == 0 ? String(localized: "No slot yet", bundle: .module) : balance.map {
+                            slots == 1
+                                ? String(localized: "1 slot · \($0.monthlyDue.format())/mo", bundle: .module)
+                                : String(localized: "\(slots) slots · \($0.monthlyDue.format())/mo", bundle: .module)
+                        },
+                        showsDivider: index < list.count - 1
+                    ) {
+                        VStack(alignment: .trailing, spacing: 4) {
+                            if let balance { BalanceChip(balance: balance) }
+                            joinCaption(member.joinStatus)
+                        }
+                    } }
+                    .buttonStyle(.plain)
+                    .disabled(onSelect == nil)
+                    .accessibilityHint(Text("Edit or remove", bundle: .module))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func joinCaption(_ status: JoinStatus) -> some View {
+        switch status {
+        case .joined: Text("Joined", bundle: .module).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+        case .invited: Text("Invited", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.warning)
+        case .pendingApproval: Text("Needs approval", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.info)
+        case .notInvited: Text("Not invited", bundle: .module).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+        case .declined: Text("Declined", bundle: .module).kText(KTextToken.caption, color: KColors.negative)
+        }
+    }
+}
+
+/// "Owes Rs 4,50,000", "Settled" or "Credit Rs 1,25,000" as a small pill.
+struct BalanceChip: View {
+    let balance: MemberBalanceRow
+
+    var body: some View {
+        if balance.owes.isPositive {
+            KPill(String(localized: "Owes \(balance.owes.format())", bundle: .module), foreground: KColors.negative, background: KColors.negativeSubtle)
+        } else if balance.credit.isPositive {
+            KPill(String(localized: "Credit \(balance.credit.format())", bundle: .module), foreground: KColors.info, background: KColors.infoSubtle)
+        } else {
+            KPill(String(localized: "Settled", bundle: .module), foreground: KColors.positive, background: KColors.positiveSubtle)
+        }
+    }
+}
+
+/// Payments (board A v2 · Payments): a month and Received / Paid out filter,
+/// two summary cards, and the money list grouped by day.
+struct PaymentsTab: View {
+    enum Kind: Hashable { case received, paidOut }
+
+    let data: KametiDetailData
+    let onVoid: (VoidTarget) -> Void
+    @State private var monthIndex: Int?
+    @State private var kind = Kind.received
+    @State private var pickingMonth = false
+
+    private var month: Int {
+        monthIndex ?? data.current?.monthIndex ?? DetailLogic.monthIndex(of: data.today, kameti: data.kameti) ?? 1
+    }
+
+    var body: some View {
+        let kameti = data.kameti
+        let start = DetailLogic.monthStart(of: kameti, monthIndex: month)
+        let inMonth: (Date) -> Bool = { DetailLogic.monthIndex(of: $0, kameti: kameti) == month }
+        let payments = DetailLogic.newestFirst(data.payments.filter { inMonth($0.receivedOn) })
+        let payouts = data.payouts.filter { inMonth($0.paidOn) }.sorted { $0.paidOn > $1.paidOn }
+        let row = data.collections.first { $0.monthIndex == month }
+        let valid = payments.filter { $0.voidedAt == nil }.count
+        let owing = DetailLogic.owing(data.months, monthIndex: month).count
+        let stillDue = row.map { max($0.target.rupees - $0.received.rupees, 0) } ?? 0
+        let byId = Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        HStack(spacing: KSpace.sm) {
+            Button { pickingMonth = true } label: {
+                HStack(spacing: 6) {
+                    Text(DetailLogic.monthTitle(start)).kText(KTextStyle(size: 13, weight: .semibold))
+                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
+                }
+                .padding(.horizontal, KSpace.md).frame(height: 34)
+                .background(KColors.surface, in: Capsule())
+                .overlay(Capsule().stroke(KColors.border))
+            }
+            .buttonStyle(.plain)
+            filterChip(String(localized: "Received", bundle: .module), .received)
+            filterChip(String(localized: "Paid out", bundle: .module), .paidOut)
+            Spacer(minLength: 0)
+        }
+
+        HStack(spacing: KSpace.md) {
+            summaryCard(String(localized: "Received", bundle: .module), amount: row?.received ?? .zero,
+                        note: String(localized: "\(valid) payments", bundle: .module), tone: .neutral)
+            summaryCard(String(localized: "Still due", bundle: .module), amount: Money(stillDue),
+                        note: String(localized: "\(owing) members", bundle: .module), tone: .negative)
+        }
+
+        let entries: [Entry] = kind == .received
+            ? payments.map { payment in
+                Entry(
+                    id: payment.id, date: payment.receivedOn, kind: .received,
+                    title: byId[payment.memberId]?.name ?? "",
+                    subtitle: payment.voidedAt != nil
+                        ? String(localized: "Voided · \(payment.voidReason ?? "")", bundle: .module)
+                        : DetailLogic.paymentSubtitle(payment, methodLabel: payment.method.label) { String(localized: "paid by \($0)", bundle: .module) },
+                    amount: payment.amount, methodLabel: payment.method.label, isVoided: payment.voidedAt != nil
+                )
+            }
+            : payouts.map { payout in
+                Entry(
+                    id: payout.id, date: payout.paidOn, kind: .paidOut,
+                    title: byId[payout.memberId]?.name ?? "",
+                    subtitle: payout.voidedAt != nil
+                        ? String(localized: "Voided · \(payout.voidReason ?? "")", bundle: .module)
+                        : [payout.method.label, payout.reference].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "),
+                    amount: payout.amount, methodLabel: payout.method.label, isVoided: payout.voidedAt != nil
+                )
+            }
+
+        if entries.isEmpty {
+            ContentUnavailableView(
+                kind == .received ? String(localized: "No payments yet", bundle: .module) : String(localized: "No payouts yet", bundle: .module),
+                systemImage: "receipt",
+                description: Text("Nothing recorded in \(DetailLogic.monthTitle(start)).", bundle: .module)
+            )
+        } else {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(groupedByDay(entries), id: \.day) { group in
+                    Text(dayTitle(group.day).uppercased())
+                        .kText(KTextToken.label, color: KColors.textSecondary)
+                        .padding(.top, KSpace.md).padding(.bottom, 2)
+                    ForEach(Array(group.entries.enumerated()), id: \.element.id) { index, entry in
+                        Button {
+                            if !entry.isVoided {
+                                onVoid(VoidTarget(id: entry.id, name: entry.title, amount: entry.amount, subtitle: "\(DetailLogic.dayMonth(entry.date)) · \(entry.methodLabel)", isPayout: entry.kind == .paidOut))
+                            }
+                        } label: {
+                            PaymentRow(
+                                kind: entry.kind == .received ? .received : .paidOut, title: entry.title, subtitle: entry.subtitle,
+                                amount: entry.amount, isVoided: entry.isVoided, showsDivider: index < group.entries.count - 1
+                            )
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: Pieces
+
+    private struct Entry: Identifiable {
+        let id: String
+        let date: Date
+        let kind: Kind
+        let title: String
+        let subtitle: String
+        let amount: Money
+        let methodLabel: String
+        let isVoided: Bool
+    }
+
+    private func groupedByDay(_ entries: [Entry]) -> [(day: Date, entries: [Entry])] {
+        var result: [(day: Date, entries: [Entry])] = []
+        for entry in entries {
+            if let last = result.indices.last, result[last].day == entry.date { result[last].entries.append(entry) }
+            else { result.append((entry.date, [entry])) }
+        }
+        return result
+    }
+
+    private func dayTitle(_ day: Date) -> String {
+        day == data.today
+            ? String(localized: "Today · \(DetailLogic.dayMonth(day))", bundle: .module)
+            : DetailLogic.dayMonth(day)
+    }
+
+    private func filterChip(_ title: String, _ value: Kind) -> some View {
+        let isOn = kind == value
+        return Button { withAnimation(.smooth(duration: 0.2)) { kind = value } } label: {
+            Text(title)
+                .kText(KTextStyle(size: 13, weight: isOn ? .semibold : .medium), color: isOn ? KColors.onBrandSubtle : KColors.textPrimary)
+                .padding(.horizontal, KSpace.md).frame(height: 34)
+                .background(isOn ? KColors.brandSubtle : KColors.surface, in: Capsule())
+                .overlay(Capsule().stroke(isOn ? KColors.brand : KColors.border))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    private func summaryCard(_ title: String, amount: Money, note: String, tone: KMoneyText.Tone) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+            KMoneyText(amount, style: .title, tone: tone)
+            Text(note).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+        }
+        .padding(KSpace.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(KColors.surface, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(KColors.border))
+    }
+}
+
+/// `.refreshable` that can be left off for one page.
+private struct PullToRefresh: ViewModifier {
+    let isOn: Bool
+    let action: @Sendable () async -> Void
+
+    func body(content: Content) -> some View {
+        if isOn { content.refreshable { await action() } } else { content }
+    }
+}
+
+/// Shown above an archived kameti's tabs: what archived means, and Restore.
+struct ArchivedBanner: View {
+    let onRestore: () -> Void
+
+    var body: some View {
+        HStack(spacing: KSpace.md) {
+            Image(systemName: "archivebox.fill").foregroundStyle(KColors.textSecondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Archived", bundle: .module).kText(KTextToken.bodyStrong)
+                Text("Read-only for you and every member.", bundle: .module).kText(KTextToken.bodySm, color: KColors.textSecondary)
+            }
+            Spacer(minLength: 0)
+            Button(String(localized: "Restore", bundle: .module), action: onRestore)
+                .buttonStyle(.glass)
+                .tint(KColors.brand)
+        }
+        .padding(KSpace.md)
+        .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: KRadius.card))
+    }
+}
+
+/// Overview once every month is over (§6.11 Completed): what was collected
+/// and paid out in total, and who still owes or is owed.
+struct FinishedOverview: View {
+    let data: KametiDetailData
+    let summary: DetailLogic.FinalSummary
+
+    private var title: String {
+        switch data.kameti.status {
+        case .cancelled: String(localized: "Cancelled", bundle: .module)
+        default: String(localized: "Finished", bundle: .module)
+        }
+    }
+
+    var body: some View {
+        let byId = Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        KCard {
+            VStack(alignment: .leading, spacing: KSpace.md) {
+                HStack {
+                    Text("\(DetailLogic.monthTitle(summary.firstMonth)) – \(DetailLogic.monthTitle(summary.lastMonth))".uppercased())
+                        .kText(KTextToken.label, color: KColors.textSecondary)
+                    Spacer()
+                    if summary.isSettled {
+                        KPill(String(localized: "Settled", bundle: .module), foreground: KColors.positive, background: KColors.positiveSubtle)
+                    } else {
+                        KPill(String(localized: "Balances open", bundle: .module), foreground: KColors.warning, background: KColors.warningSubtle)
+                    }
+                }
+                Text(title).kText(KTextToken.titleLg)
+                HStack(alignment: .top, spacing: KSpace.lg) {
+                    figure(String(localized: "Collected", bundle: .module), summary.collected.format())
+                    figure(String(localized: "Paid out", bundle: .module), summary.paidOut.format())
+                    figure(String(localized: "Payouts", bundle: .module), "\(summary.monthsPaidOut) of \(summary.months)")
+                }
+            }
+        }
+
+        if !summary.owing.isEmpty {
+            KSectionHeader(String(localized: "Still owes", bundle: .module))
+            rows(summary.owing, byId: byId) { $0.owes.format() }
+        }
+        if !summary.credit.isEmpty {
+            KSectionHeader(String(localized: "Is owed back", bundle: .module))
+            rows(summary.credit, byId: byId) { $0.credit.format() }
+        }
+    }
+
+    private func figure(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value).kText(KTextToken.bodyStrong)
+            Text(label).kText(KTextToken.bodySm, color: KColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func rows(_ items: [MemberBalanceRow], byId: [String: Member], amount: @escaping (MemberBalanceRow) -> String) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element.memberId) { index, row in
+                if let member = byId[row.memberId] {
+                    DetailRow(
+                        member: member, in: data.members,
+                        subtitle: String(localized: "Paid \(row.totalPaid.format()) of \(row.dueToDate.format(symbol: false))", bundle: .module),
+                        showsDivider: index < items.count - 1
+                    ) {
+                        Text(amount(row)).kText(KTextToken.bodyStrong)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The people an invite goes to: avatar, name and email. While sending, a
+/// row whose invite went out turns green and says "Invite sent" with a tick,
+/// then fades and the gap closes (board AX-4). The last row stays until the
+/// server answers (`finished`), then leaves the same way before the result.
+struct InviteList: View {
+    struct Row: Identifiable, Equatable {
+        let id: String
+        let name: String
+        let email: String?
+        let colorIndex: Int
+    }
+    let people: [Row]
+    var sent: Set<String> = []
+    var finished = false
+    /// Rows that have shown their tick and left.
+    @State private var removed: Set<String> = []
+
+    /// How long a row shows "Invite sent" before it fades.
+    static let tickHold: Duration = .milliseconds(450)
+
+    private var visible: [Row] {
+        let left = people.filter { !removed.contains($0.id) }
+        if finished || !left.isEmpty { return left }
+        return Array(people.suffix(1))
+    }
+
+    var body: some View {
+        if !people.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(visible) { person in
+                    let isSent = sent.contains(person.id)
+                    VStack(spacing: 0) {
+                        if person.id != visible.first?.id { Divider() }
+                        HStack(spacing: KSpace.md) {
+                            KAvatar(name: person.name, colorIndex: person.colorIndex, size: .medium)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(person.name).kText(KTextToken.bodyStrong)
+                                if isSent {
+                                    Label {
+                                        Text("Invite sent", bundle: .module)
+                                    } icon: {
+                                        Image(systemName: "checkmark").font(.system(size: 12, weight: .bold))
+                                    }
+                                    .labelStyle(.titleAndIcon)
+                                    .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.brand)
+                                    .transition(.opacity)
+                                } else if let email = person.email {
+                                    Text(email).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+                                        .transition(.opacity)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.vertical, KSpace.sm)
+                        .padding(.horizontal, KSpace.md)
+                        .background(isSent ? KColors.brandSubtle : Color.clear)
+                    }
+                    // Fades while the rows below move up into its place.
+                    .transition(.opacity)
+                }
+            }
+            .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
+            .overlay(RoundedRectangle(cornerRadius: KRadius.card).stroke(KColors.border))
+            .clipShape(RoundedRectangle(cornerRadius: KRadius.card))
+            .opacity(visible.isEmpty ? 0 : 1)
+            .animation(.smooth(duration: 0.25), value: sent)
+            .animation(.smooth(duration: 0.35), value: visible)
+            .onChange(of: sent) { old, new in
+                // Each newly sent row shows its tick, then leaves, except the last
+                // one, which waits for `finished`.
+                for id in new.subtracting(old) where id != people.last?.id || finished {
+                    leave(id)
+                }
+            }
+            .onChange(of: finished) { _, done in
+                guard done else { return }
+                for person in people where sent.contains(person.id) && !removed.contains(person.id) { leave(person.id) }
+            }
+        }
+    }
+
+    private func leave(_ id: String) {
+        Task {
+            try? await Task.sleep(for: Self.tickHold)
+            removed.insert(id)
+        }
+    }
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Merged with the keys Xcode generates from the build settings. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Google Sign-In: the iOS OAuth client ID, reversed. -->
+				<string>com.googleusercontent.apps.49896499675-e3dda5vd7njt8pacuqs00rnieurh37rq</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Firebase: the app delegate hands over the APNs token itself (no swizzling). -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>GIDClientID</key>
+	<string>49896499675-e3dda5vd7njt8pacuqs00rnieurh37rq.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>49896499675-r8jb7a7nv59kctk04rbb4g1i8o5lvh67.apps.googleusercontent.com</string>
+</dict>
+</plist>
