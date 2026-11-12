@@ -80,24 +80,13 @@ public struct HomeView: View {
             .scrollBounceBehavior(.basedOnSize)
             .kDismissesKeyboard()
         }
-        .alert(
-            String(localized: "Decline this invite?", bundle: .module),
-            isPresented: Binding(get: { declining != nil }, set: { if !$0 { declining = nil } }), presenting: declining
+        .kConfirmSheet(
+            item: $declining, title: { _ in String(localized: "Decline this invite?", bundle: .module) },
+            message: { String(localized: "\($0.ownerName) will see that you declined \($0.kametiName).", bundle: .module) },
+            confirmTitle: String(localized: "Decline", bundle: .module), isDestructive: true
         ) { invitation in
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Decline", bundle: .module), role: .destructive) {
-                Task { declineFailure = await model.decline(invitation) }
-            }
-        } message: { invitation in
-            Text("\(invitation.ownerName) will see that you declined \(invitation.kametiName).", bundle: .module)
-        }
-        .alert(
-            String(localized: "Couldn't decline", bundle: .module),
-            isPresented: Binding(get: { declineFailure != nil }, set: { if !$0 { declineFailure = nil } }), presenting: declineFailure
-        ) { _ in
-            Button(String(localized: "OK", bundle: .module)) {}
-        } message: { failure in
-            Text(failure.userMessage)
+            guard let failure = await model.decline(invitation) else { return .dismiss }
+            return .result(KSheetMessage(String(localized: "Couldn't decline", bundle: .module), message: failure.userMessage, tone: .error))
         }
     }
 
@@ -238,6 +227,7 @@ public struct HomeView: View {
 /// pot and recipients, or for a kameti I'm a member of, what I owe and my turn.
 struct HomeKametiCard: View {
     let item: HomeKametiSummary
+    @State private var showsPeople = false
 
     private var isPast: Bool { [.completed, .archived, .cancelled].contains(item.kameti.status) }
 
@@ -256,9 +246,43 @@ struct HomeKametiCard: View {
                         rolePill
                     }
                     if item.isOwner { ownerBody } else { memberBody }
+                    peopleRow
                 }
             }
         }
+    }
+
+    // MARK: People
+
+    /// Everyone in it: up to five faces in turn order, "+N" for the rest, and
+    /// the count.
+    @ViewBuilder private var peopleRow: some View {
+        if !item.people.isEmpty {
+            Divider()
+            // Its own tap: the members sheet. The rest of the card opens the kameti.
+            Button { showsPeople = true } label: {
+                HStack(spacing: KSpace.md) {
+                    KAvatarStack(item.people.map { ($0.name, $0.colorIndex) }, limit: 5, showsOverflow: true, size: .small)
+                    Text(memberCountText).kText(KTextToken.bodyStrong, color: KColors.brand)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(KColors.textSecondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("Shows everyone in this kameti", bundle: .module))
+            .kBottomSheet(isPresented: $showsPeople, title: String(localized: "Members", bundle: .module)) {
+                HomeMembersSheet(item: item, countText: memberCountText)
+            }
+        }
+    }
+
+    private var memberCountText: String {
+        item.people.count == 1
+            ? String(localized: "1 member", bundle: .module)
+            : String(localized: "\(item.people.count) members", bundle: .module)
     }
 
     // MARK: Owner
@@ -307,8 +331,26 @@ struct HomeKametiCard: View {
 
     // MARK: Member
 
+    /// Before its first month nothing is due yet, so it isn't "paid up".
+    private var startsLater: Bool {
+        item.currentMonth == nil && item.kameti.status == .active && item.kameti.startMonth > KametiClock().currentMonth()
+    }
+
     @ViewBuilder private var memberBody: some View {
-        if let owes = item.owes {
+        if item.kameti.status == .draft {
+            // Back in setup ("Edit setup"): nothing is due until it starts again.
+            KPill(String(localized: "Being updated by the owner", bundle: .module), foreground: KColors.info, background: KColors.infoSubtle)
+        } else if startsLater, let first = item.monthlyDue, first.isPositive {
+            let due = DetailLogic.dueDate(of: item.kameti, monthIndex: 1)
+            HStack {
+                Label(String(localized: "First due \(first.format())", bundle: .module), systemImage: "calendar")
+                    .kText(KTextToken.bodyStrong, color: KColors.info)
+                Spacer()
+                Text("By \(DetailLogic.dayMonth(due))", bundle: .module).kText(KTextToken.body, color: KColors.info)
+            }
+            .padding(KSpace.md)
+            .background(KColors.infoSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
+        } else if let owes = item.owes {
             if owes.isPositive {
                 HStack {
                     Label(String(localized: "You owe \(owes.format())", bundle: .module), systemImage: "clock")
@@ -327,7 +369,7 @@ struct HomeKametiCard: View {
                 KStatusChip(.paid, label: String(localized: "Paid up", bundle: .module))
             }
         }
-        if let turn = item.nextTurn {
+        if item.kameti.status != .draft, let turn = item.nextTurn {
             (Text("Your turn: ", bundle: .module).foregroundStyle(KColors.textSecondary)
                 + Text(DetailLogic.monthTitle(turn.month)).fontWeight(.semibold)
                 + Text(" · \(turn.payout.format())").foregroundStyle(KColors.textSecondary))
@@ -381,6 +423,46 @@ struct HomeKametiCard: View {
         } else {
             KPill(String(localized: "View only", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)
         }
+    }
+}
+
+/// Everyone in a kameti, in turn order (tapped from a card's avatar row):
+/// face, name, turn month(s) and payout; "This month" on the current recipients.
+struct HomeMembersSheet: View {
+    let item: HomeKametiSummary
+    let countText: String
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("\(item.kameti.name) · \(countText)").kText(KTextToken.body, color: KColors.textSecondary)
+                    .padding(.bottom, KSpace.sm)
+                ForEach(Array(item.people.enumerated()), id: \.offset) { index, person in
+                    if index > 0 { Divider() }
+                    HStack(spacing: KSpace.md) {
+                        KAvatar(name: person.name, colorIndex: person.colorIndex, size: .medium)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(person.name).kText(KTextToken.bodyStrong)
+                            Text(detail(person)).kText(KTextToken.bodySm, color: KColors.textSecondary)
+                        }
+                        Spacer(minLength: KSpace.sm)
+                        if person.isThisMonth {
+                            KPill(String(localized: "This month", bundle: .module), foreground: KColors.textOnBrand, background: KColors.brand)
+                        }
+                    }
+                    .padding(.vertical, KSpace.md)
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .padding(.horizontal, KSpace.xl)
+            .padding(.bottom, KSpace.xl)
+        }
+    }
+
+    private func detail(_ person: HomeKametiSummary.Person) -> String {
+        guard !person.turns.isEmpty else { return String(localized: "No share yet", bundle: .module) }
+        let months = person.turns.map(DetailLogic.monthTitle).joined(separator: " + ")
+        return "\(months) · \(person.payout.format())"
     }
 }
 

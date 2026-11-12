@@ -195,12 +195,12 @@ public struct JoinInviteView: View {
             if preview.canJoin {
                 SplitRow(spacing: KSpace.md) {
                     Button { confirmingDecline = true } label: {
-                        Text("Decline", bundle: .module).kText(KTextToken.bodyStrong)
-                            .frame(maxWidth: .infinity, minHeight: 52)
-                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(KColors.border))
-                            .contentShape(RoundedRectangle(cornerRadius: 14))
+                        Text("Decline", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.textPrimary)
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
+                    // Same capsule as Join kameti beside it.
+                    .buttonStyle(.glass)
+                    .controlSize(.large)
                     Button {
                         Task { if let id = await model.accept() { onJoined(id) } }
                     } label: {
@@ -220,11 +220,13 @@ public struct JoinInviteView: View {
                 .padding(.vertical, KSpace.md)
             }
         }
-        .alert(String(localized: "Decline this invite?", bundle: .module), isPresented: $confirmingDecline) {
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Decline", bundle: .module), role: .destructive) { Task { await model.decline() } }
-        } message: {
-            Text("\(preview.ownerName) will see that you declined. They can invite you again later.", bundle: .module)
+        .kConfirmSheet(
+            isPresented: $confirmingDecline, title: String(localized: "Decline this invite?", bundle: .module),
+            message: String(localized: "\(preview.ownerName) will see that you declined. They can invite you again later.", bundle: .module),
+            confirmTitle: String(localized: "Decline", bundle: .module), isDestructive: true
+        ) {
+            await model.decline()
+            return .dismiss
         }
     }
 

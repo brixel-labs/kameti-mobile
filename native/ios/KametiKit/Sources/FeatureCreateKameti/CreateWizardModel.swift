@@ -49,6 +49,8 @@ public final class CreateWizardModel {
     public private(set) var contactsLoaded = false
     /// The owner's first name, for the reminder preview.
     public private(set) var ownerName: String?
+    /// The owner's full name, for their own row before the server confirms it.
+    private var ownerFullName: String?
 
     public private(set) var isBusy = false
     public private(set) var failure: Failure?
@@ -86,6 +88,7 @@ public final class CreateWizardModel {
         guard ownerName == nil else { return }
         if let profile = try? await dependencies.profiles.myProfile(userId: userId) {
             ownerName = profile.displayName.split(separator: " ").first.map(String.init)
+            ownerFullName = profile.displayName
         }
     }
 
@@ -213,57 +216,124 @@ public final class CreateWizardModel {
         }
     }
 
-    public func addMember(name: String, email: String?) async {
-        guard let id = kametiId else { return }
+    // Member changes are optimistic: the row appears or disappears at once and
+    // the server call runs behind it, so the step never freezes. A row the
+    // server hasn't confirmed yet has a temporary id; a failure undoes the
+    // change and shows the error.
+
+    /// Rows added here that the server hasn't confirmed yet.
+    public private(set) var pendingMemberIds: Set<String> = []
+    /// Member saves still running; "Next" waits for them.
+    public private(set) var memberSavesInFlight = 0
+    public var isSavingMembers: Bool { memberSavesInFlight > 0 }
+    public func isPending(_ member: Member) -> Bool { pendingMemberIds.contains(member.id) }
+    /// Saved id → the temporary id its row was first shown with, so the row
+    /// keeps one identity and doesn't animate out and back in when it saves.
+    private var rowKeys: [String: String] = [:]
+    public func rowKey(_ member: Member) -> String { rowKeys[member.id] ?? member.id }
+
+    public func addMember(name: String, email: String?, phone: String? = nil) async {
+        let cleanName = name.trimmingCharacters(in: .whitespaces)
         let cleanEmail = email?.trimmingCharacters(in: .whitespaces).nilIfEmpty
-        await write { () async throws(Failure) in
-            let member = try await self.dependencies.kametis.addMember(
-                kametiId: id, NewMember(name: name.trimmingCharacters(in: .whitespaces), email: cleanEmail)
-            )
-            if let cleanEmail { self.emails[member.id] = cleanEmail }
-            try await self.reload()
-        }
+        let cleanPhone = phone?.trimmingCharacters(in: .whitespaces).nilIfEmpty
+        await addOptimistic(name: cleanName, email: cleanEmail, new: NewMember(name: cleanName, email: cleanEmail, phone: cleanPhone))
     }
 
     /// Adds a saved person from "My people".
     public func addMember(from contact: Contact) async {
-        guard let id = kametiId else { return }
-        await write { () async throws(Failure) in
-            let member = try await self.dependencies.kametis.addMember(kametiId: id, NewMember(contactId: contact.id))
-            if let email = contact.email { self.emails[member.id] = email }
-            try await self.reload()
-        }
+        await addOptimistic(name: contact.name, email: contact.email, contactId: contact.id, new: NewMember(contactId: contact.id))
     }
 
     /// Adds several saved people at once ("Select all").
     public func addMembers(from contacts: [Contact]) async {
-        guard let id = kametiId, !contacts.isEmpty else { return }
-        await write { () async throws(Failure) in
-            for contact in contacts {
-                let member = try await self.dependencies.kametis.addMember(kametiId: id, NewMember(contactId: contact.id))
-                if let email = contact.email { self.emails[member.id] = email }
-            }
-            try await self.reload()
+        // Show every row at once, in order, then save them together.
+        let staged = contacts.compactMap { contact in
+            stageAdd(name: contact.name, email: contact.email, contactId: contact.id).map { ($0, NewMember(contactId: contact.id)) }
+        }
+        await withTaskGroup(of: Void.self) { group in
+            for (tempId, new) in staged { group.addTask { await self.commitAdd(tempId: tempId, new: new) } }
         }
     }
 
     /// "I'm also a member": adds or removes the owner's own member row.
     public func setSelfMember(included: Bool) async {
-        guard let id = kametiId else { return }
         if included, selfMember == nil {
-            await write { () async throws(Failure) in
-                _ = try await self.dependencies.kametis.addMember(kametiId: id, NewMember(isSelf: true))
-                try await self.reload()
-            }
-        } else if !included, let me = selfMember {
+            await addOptimistic(name: ownerFullName ?? ownerName ?? "", email: nil, profileId: userId, new: NewMember(isSelf: true))
+        } else if !included, let me = selfMember, !isPending(me) {
             await removeMember(me.id)
         }
     }
 
     public func removeMember(_ memberId: String) async {
-        await write { () async throws(Failure) in
+        guard !pendingMemberIds.contains(memberId), let index = members.firstIndex(where: { $0.id == memberId }) else { return }
+        let removed = members[index]
+        let removedShares = shares.filter { $0.memberId == memberId }
+        let email = emails[memberId]
+        members.remove(at: index)
+        shares.removeAll { $0.memberId == memberId }
+        emails[memberId] = nil
+        await saveMembers { () async throws(Failure) in
             try await self.dependencies.kametis.removeMember(id: memberId)
-            self.emails[memberId] = nil
+        } undo: {
+            self.members.insert(removed, at: min(index, self.members.count))
+            self.shares.append(contentsOf: removedShares)
+            self.emails[memberId] = email
+        }
+    }
+
+    private func addOptimistic(name: String, email: String?, contactId: String? = nil, profileId: String? = nil, new: NewMember) async {
+        guard let tempId = stageAdd(name: name, email: email, contactId: contactId, profileId: profileId) else { return }
+        await commitAdd(tempId: tempId, new: new)
+    }
+
+    /// Shows a not-yet-saved row at once; returns its temporary id.
+    private func stageAdd(name: String, email: String?, contactId: String? = nil, profileId: String? = nil) -> String? {
+        guard let id = kametiId else { return nil }
+        let tempId = "pending-\(UUID().uuidString)"
+        members.append(Member(id: tempId, kametiId: id, name: name, joinStatus: .notInvited, contactId: contactId, profileId: profileId))
+        pendingMemberIds.insert(tempId)
+        if let email { emails[tempId] = email }
+        return tempId
+    }
+
+    /// Saves a staged row and swaps in the server's member, or undoes it.
+    private func commitAdd(tempId: String, new: NewMember) async {
+        guard let id = kametiId else { return }
+        let email = emails[tempId]
+        await saveMembers { () async throws(Failure) in
+            let saved = try await self.dependencies.kametis.addMember(kametiId: id, new)
+            self.rowKeys[saved.id] = tempId
+            if let i = self.members.firstIndex(where: { $0.id == tempId }) { self.members[i] = saved }
+            self.pendingMemberIds.remove(tempId)
+            self.emails[tempId] = nil
+            if let email { self.emails[saved.id] = email }
+        } undo: {
+            self.members.removeAll { $0.id == tempId }
+            self.pendingMemberIds.remove(tempId)
+            self.emails[tempId] = nil
+        }
+    }
+
+    private func saveMembers(_ body: () async throws(Failure) -> Void, undo: () -> Void) async {
+        memberSavesInFlight += 1
+        failure = nil
+        defer { memberSavesInFlight -= 1 }
+        do throws(Failure) { try await body() } catch {
+            undo()
+            failure = error
+        }
+    }
+
+    /// Adds one month (one slot) to a draft, for a person who isn't in any
+    /// slot yet. The slot amount stays the same; the pot grows by one slot.
+    public var canAddSlot: Bool { months < WizardLimits.maxMonths }
+
+    public func addSlot() async {
+        guard let id = kametiId, canAddSlot else { return }
+        let next = months + 1
+        await write { () async throws(Failure) in
+            _ = try await self.dependencies.kametis.updateKameti(id: id, changes: KametiChanges(months: next))
+            self.months = next
             try await self.reload()
         }
     }

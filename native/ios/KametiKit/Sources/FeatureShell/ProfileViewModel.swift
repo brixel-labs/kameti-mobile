@@ -24,9 +24,20 @@ public final class ProfileViewModel {
     public init(userId: String, dependencies: KametiDependencies) {
         self.userId = userId
         self.dependencies = dependencies
+        apply(ProfileCache.load(userId: userId))
     }
 
+    /// Shows what's saved on the phone. Calls the server only when nothing is
+    /// saved yet (first sign-in on this phone); pull to refresh fetches fresh.
     public func load() async {
+        let cached = ProfileCache.load(userId: userId)
+        apply(cached)
+        guard cached.profile == nil || cached.kametis == nil || cached.people == nil else { return }
+        await refresh()
+    }
+
+    /// Fetches everything from the server and saves it on the phone.
+    public func refresh() async {
         guard !isLoading else { return }
         isLoading = true
         failure = nil
@@ -34,25 +45,60 @@ public final class ProfileViewModel {
         do throws(Failure) {
             let me = try await dependencies.profiles.myProfile(userId: userId)
             let all = try await dependencies.kametis.listKametis()
-            self.profile = me
-            runningCount = all.filter { $0.isOwned(by: userId) }.count
-            memberCount = all.count - runningCount
-            // Archived kametis live on Home (Past → Archived), not here.
-            pastKametis = all.filter { [.completed, .cancelled].contains($0.status) }
-            pastCount = pastKametis.count
-            people = ((try? await dependencies.contacts.contacts()) ?? [])
-                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-            peopleCount = people.count
-            signInMethods = await dependencies.auth.signInMethods()
+            let contacts = (try? await dependencies.contacts.contacts()) ?? people
+            let methods = await dependencies.auth.signInMethods()
+            ProfileCache.update(userId: userId) {
+                $0.profile = me
+                $0.kametis = all
+                $0.people = contacts
+            }
+            ProfileCache.setSignInMethods(userId: userId, methods)
+            apply(ProfileCache.load(userId: userId))
         } catch {
             failure = error
         }
     }
 
+    private func apply(_ snapshot: ProfileSnapshot) {
+        if let me = snapshot.profile { profile = me }
+        if let all = snapshot.kametis {
+            runningCount = all.filter { $0.isOwned(by: userId) }.count
+            memberCount = all.count - runningCount
+            // Archived kametis live on Home (Past → Archived), not here.
+            pastKametis = all.filter { [.completed, .cancelled].contains($0.status) }
+            pastCount = pastKametis.count
+        }
+        if let contacts = snapshot.people {
+            people = contacts.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            peopleCount = people.count
+        }
+        if let methods = snapshot.signInMethods { signInMethods = methods }
+    }
+
+    /// True when this Apple or Google sign-in hasn't been asked for a name yet.
+    public var needsNamePrompt: Bool {
+        guard profile != nil, ProfileCache.load(userId: userId).namePrompted != true else { return false }
+        return signInMethods.contains { $0.provider == .apple || $0.provider == .google }
+    }
+
+    /// The name looks made up by sign-up (no name from Apple or Google).
+    public var nameIsPlaceholder: Bool {
+        guard let name = profile?.displayName.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return true }
+        if name == "Kameti user" { return true }
+        let emailPrefixes = signInMethods.compactMap { $0.email?.split(separator: "@").first.map(String.init) }
+        return emailPrefixes.contains(name)
+    }
+
+    public func markNamePrompted() {
+        ProfileCache.update(userId: userId) { $0.namePrompted = true }
+    }
+
     /// Saves the name other people see. Returns the failure to show, or `nil`.
     public func updateName(_ name: String) async -> Failure? {
         do throws(Failure) {
-            profile = try await dependencies.profiles.updateDisplayName(userId: userId, name)
+            let saved = try await dependencies.profiles.updateDisplayName(userId: userId, name)
+            profile = saved
+            ProfileCache.update(userId: userId) { $0.profile = saved }
         } catch {
             return error
         }
@@ -67,7 +113,7 @@ public final class ProfileViewModel {
     /// Archives a kameti that blocks account deletion (§6.11, D5).
     public func archiveKameti(id: String) async -> Failure? {
         do throws(Failure) { _ = try await dependencies.kametis.archiveKameti(id: id) } catch { return error }
-        await load()
+        await refresh()
         return nil
     }
 
@@ -79,6 +125,7 @@ public final class ProfileViewModel {
             return error
         }
         // The sign-in is gone on the server; clear it on the phone too.
+        ProfileCache.clear(userId: userId)
         try? await dependencies.auth.signOut()
         return nil
     }
@@ -91,6 +138,7 @@ public final class ProfileViewModel {
         }
         do throws(Failure) {
             try await dependencies.auth.signOut()
+            ProfileCache.clear(userId: userId)
         } catch {
             failure = error
         }

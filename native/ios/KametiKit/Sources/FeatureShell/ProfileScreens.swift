@@ -71,6 +71,83 @@ struct EditNameSheet: View {
     }
 }
 
+/// After signing in with Apple or Google: confirm or set the name others
+/// see. Apple's "Hide My Email" gives no name, so the account may only have a
+/// placeholder.
+struct NamePromptSheet: View {
+    let current: String
+    let save: (String) async -> Failure?
+    let onDone: () -> Void
+
+    @State private var name: String
+    @State private var isBusy = false
+    @State private var failure: Failure?
+    @FocusState private var focused: Bool
+
+    init(current: String, isPlaceholder: Bool, save: @escaping (String) async -> Failure?, onDone: @escaping () -> Void) {
+        self.current = current
+        self.save = save
+        self.onDone = onDone
+        _name = State(initialValue: isPlaceholder ? "" : current)
+    }
+
+    private var trimmed: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var isValid: Bool { (1...80).contains(trimmed.count) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: KSpace.md) {
+            Text("Members see this name on kametis you run, and owners see it when you join.", bundle: .module)
+                .kText(KTextToken.body, color: KColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            TextField(String(localized: "Your full name", bundle: .module), text: $name)
+                .textInputAutocapitalization(.words)
+                .textContentType(.name)
+                .submitLabel(.done)
+                .onSubmit(submit)
+                .focused($focused)
+                .padding(.horizontal, KSpace.md)
+                .frame(minHeight: 48)
+                .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(isValid || name.isEmpty ? KColors.border : KColors.negative))
+            if let failure {
+                Label(failure.userMessage, systemImage: "exclamationmark.triangle").kText(KTextToken.bodySm, color: KColors.negative)
+            }
+            Button(action: submit) {
+                ZStack {
+                    Text("Save", bundle: .module).opacity(isBusy ? 0 : 1)
+                    if isBusy { ProgressView().controlSize(.small).tint(KColors.textOnBrand) }
+                }
+                .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.glassProminent)
+            .tint(KColors.brand)
+            .controlSize(.large)
+            .disabled(!isValid)
+            .allowsHitTesting(!isBusy)
+            .padding(.top, KSpace.sm)
+        }
+        .padding(.horizontal, KSpace.xl)
+        .padding(.top, KSpace.xxs)
+        .padding(.bottom, KSpace.lg)
+        .interactiveDismissDisabled(isBusy)
+        .onAppear { focused = true }
+    }
+
+    private func submit() {
+        guard isValid, !isBusy else { return }
+        // Unchanged: nothing to save.
+        if trimmed == current { onDone(); return }
+        isBusy = true
+        failure = nil
+        Task {
+            let result = await save(trimmed)
+            isBusy = false
+            if let result { failure = result } else { onDone() }
+        }
+    }
+}
+
 /// Which sign-in methods the account has, and the email each uses.
 struct SignInMethodsSheet: View {
     let methods: [SignInMethod]
@@ -258,28 +335,15 @@ struct DeleteAccountSheet: View {
         }
         .kDismissesKeyboard()
         .task { await load() }
-        .alert(
-            String(localized: "Archive \(archiving?.name ?? "")?", bundle: .module),
-            isPresented: Binding(get: { archiving != nil }, set: { if !$0 { archiving = nil } }),
-            presenting: archiving
+        .kConfirmSheet(
+            item: $archiving, title: { String(localized: "Archive \($0.name)?", bundle: .module) },
+            message: { _ in String(localized: "It becomes read-only for you and every member and moves to Archived, at the end of Past on Home. You can restore it any time.", bundle: .module) },
+            confirmTitle: String(localized: "Archive", bundle: .module), isDestructive: true
         ) { kameti in
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Archive", bundle: .module), role: .destructive) {
-                Task {
-                    archiveFailure = await model.archiveKameti(id: kameti.id)
-                    await load()
-                }
-            }
-        } message: { _ in
-            Text("It becomes read-only for you and every member and moves to Archived, at the end of Past on Home. You can restore it any time.", bundle: .module)
-        }
-        .alert(
-            String(localized: "Couldn't archive this kameti", bundle: .module),
-            isPresented: Binding(get: { archiveFailure != nil }, set: { if !$0 { archiveFailure = nil } })
-        ) {
-            Button(String(localized: "OK", bundle: .module)) {}
-        } message: {
-            Text(archiveFailure?.userMessage ?? "")
+            let failure = await model.archiveKameti(id: kameti.id)
+            await load()
+            guard let failure else { return .dismiss }
+            return .result(KSheetMessage(String(localized: "Couldn't archive this kameti", bundle: .module), message: failure.userMessage, tone: .error))
         }
     }
 

@@ -177,6 +177,17 @@ public enum DetailLogic {
     }
 }
 
+/// "Edit setup" (mirrors `reopen_kameti`): the owner can take a started kameti
+/// back to setup until its first month arrives, while nothing is recorded.
+public enum SetupLogic {
+    public static func canEditSetup(_ data: KametiDetailData) -> Bool {
+        data.isOwner && data.kameti.status == .active
+            && data.today < data.kameti.startMonth
+            && data.payments.isEmpty && data.payouts.isEmpty
+            && !data.shares.contains { $0.effectiveFromMonth > 1 || $0.effectiveToMonth != nil }
+    }
+}
+
 /// Name and start month for a duplicated kameti (FR-13).
 public enum DuplicateLogic {
     /// "Office Kameti (copy)", then "(copy 2)", … kept within the 40-character limit.

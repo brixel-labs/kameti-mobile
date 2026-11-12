@@ -230,7 +230,9 @@ struct EditKametiView: View {
                 "\(kameti.monthsN) · \(kameti.startMonth.formatted(short)) → \(last.formatted(short))"
             )
             fixedRow(String(localized: "Most slots per person", bundle: .module), "\(kameti.maxSlotsPerMember)", last: true)
-            Text("Changing these would change every payout. To change them, end this kameti and start a new one.", bundle: .module)
+            Text(SetupLogic.canEditSetup(data)
+                 ? String(localized: "Changing these would change every payout. Until the first month, use Edit setup in the ⋯ menu to change them.", bundle: .module)
+                 : String(localized: "Changing these would change every payout. To change them, end this kameti and start a new one.", bundle: .module))
                 .kText(KTextToken.caption, color: KColors.textSecondary)
                 .padding(.top, KSpace.xs)
         }

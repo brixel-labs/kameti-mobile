@@ -77,16 +77,13 @@ struct NotesTab: View {
         ) {
             if let note = editing { EditNoteSheet(note: note, model: model) { editing = nil }.id(note.id) }
         }
-        .alert(
-            String(localized: "Delete this note?", bundle: .module),
-            isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), presenting: deleting
+        .kConfirmSheet(
+            item: $deleting, title: { _ in String(localized: "Delete this note?", bundle: .module) },
+            message: { _ in String(localized: "It's removed for everyone who could see it. This can't be undone.", bundle: .module) },
+            confirmTitle: String(localized: "Delete", bundle: .module), isDestructive: true
         ) { note in
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Delete", bundle: .module), role: .destructive) {
-                Task { failure = await model.deleteNote(id: note.id) }
-            }
-        } message: { _ in
-            Text("It's removed for everyone who could see it. This can't be undone.", bundle: .module)
+            guard let failure = await model.deleteNote(id: note.id) else { return .dismiss }
+            return .result(KSheetMessage(String(localized: "Couldn't delete this note", bundle: .module), message: failure.userMessage, tone: .error))
         }
     }
 

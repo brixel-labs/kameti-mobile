@@ -18,12 +18,21 @@ struct MembersStep: View {
     @State private var chosenMode = false
     @State private var newName = ""
     @State private var newEmail = ""
+    @State private var newPhone = ""
     @State private var submitted = false
     @State private var removing: Member?
 
     private var emailValid: Bool {
         let trimmed = newEmail.trimmingCharacters(in: .whitespaces)
         return trimmed.isEmpty || (trimmed.contains("@") && trimmed.contains(".") && !trimmed.contains(" "))
+    }
+    /// Same rule as the member sheet: digits, spaces, dashes, one leading +, 7 to 15 digits.
+    private var phoneValid: Bool {
+        let value = newPhone.trimmingCharacters(in: .whitespaces)
+        guard !value.isEmpty else { return true }
+        let allowed = CharacterSet(charactersIn: "+0123456789 -")
+        guard value.unicodeScalars.allSatisfy(allowed.contains), !value.dropFirst().contains("+") else { return false }
+        return (7...15).contains(value.filter(\.isNumber).count)
     }
     private var nameValid: Bool { !newName.trimmingCharacters(in: .whitespaces).isEmpty }
 
@@ -52,7 +61,7 @@ struct MembersStep: View {
             }
             WizardFooter(
                 primaryTitle: String(localized: "Next: slots", bundle: .module), isEnabled: !model.members.isEmpty,
-                onBack: { model.back() }
+                isLoading: model.isSavingMembers, onBack: { model.back() }
             ) { model.goTo(.slots) }
         }
         .task {
@@ -60,14 +69,14 @@ struct MembersStep: View {
             // Start on My people only when there is someone saved to pick.
             if !chosenMode, !model.availableContacts.isEmpty { mode = .fromPeople }
         }
-        .alert(
-            String(localized: "Remove this person?", bundle: .module), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }),
-            presenting: removing
+        .kConfirmSheet(
+            item: $removing, title: { _ in String(localized: "Remove this person?", bundle: .module) },
+            message: { String(localized: "\($0.name) will be taken out of this kameti. Slots they were in will need filling again.", bundle: .module) },
+            confirmTitle: String(localized: "Remove", bundle: .module), isDestructive: true
         ) { member in
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-            Button(String(localized: "Remove", bundle: .module), role: .destructive) { Task { await model.removeMember(member.id) } }
-        } message: { member in
-            Text("\(member.name) will be taken out of this kameti. Slots they were in will need filling again.", bundle: .module)
+            // Optimistic: the row goes at once and saves behind it.
+            Task { await model.removeMember(member.id) }
+            return .dismiss
         }
     }
 
@@ -113,6 +122,11 @@ struct MembersStep: View {
                 error: submitted && !emailValid ? String(localized: "Enter a valid email, or leave it empty.", bundle: .module) : nil,
                 keyboard: .emailAddress, capitalization: .never
             )
+            PlainField(
+                prompt: String(localized: "Phone for WhatsApp reminders (optional)", bundle: .module), text: $newPhone,
+                error: submitted && !phoneValid ? String(localized: "Enter a valid phone number, or leave it empty.", bundle: .module) : nil,
+                keyboard: .phonePad, capitalization: .never
+            )
             Button(action: add) {
                 Text(nameValid ? String(localized: "Add \(firstName)", bundle: .module) : String(localized: "Add person", bundle: .module))
                     .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
@@ -121,7 +135,6 @@ struct MembersStep: View {
             .buttonStyle(.glassProminent)
             .tint(KColors.brand)
             .controlSize(.large)
-            .disabled(model.isBusy)
         }
         .padding(KSpace.lg)
         .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
@@ -145,7 +158,6 @@ struct MembersStep: View {
                         Task { await model.addMembers(from: list) }
                     }
                     .kText(KTextToken.bodyStrong, color: KColors.brand)
-                    .disabled(model.isBusy)
                 }
             }
             if model.contacts.isEmpty {
@@ -176,7 +188,6 @@ struct MembersStep: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .disabled(model.isBusy)
                         if index < list.count - 1 { Divider() }
                     }
                 }
@@ -220,7 +231,7 @@ struct MembersStep: View {
             }
             .toggleStyle(KCheckboxStyle())
             .fixedSize()
-            .disabled(model.isBusy)
+            .disabled(model.selfMember.map(model.isPending) ?? false)
         }
     }
 
@@ -232,9 +243,9 @@ struct MembersStep: View {
                 .padding(.vertical, KSpace.lg)
         } else {
             VStack(spacing: 0) {
-                ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
-                    memberRow(member, divider: index < model.members.count - 1)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                ForEach(model.members.map { (key: model.rowKey($0), member: $0) }, id: \.key) { entry in
+                    memberRow(entry.member, divider: entry.member.id != model.members.last?.id)
+                        .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: -8)), removal: .opacity))
                 }
             }
         }
@@ -256,7 +267,9 @@ struct MembersStep: View {
                     }
                 }
                 Spacer()
-                if member.profileId == nil {
+                ZStack {
+                    ProgressView().controlSize(.small).opacity(model.isPending(member) ? 1 : 0)
+                    if member.profileId == nil, !model.isPending(member) {
                     Button { removing = member } label: {
                         Image(systemName: "xmark").font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(KColors.textSecondary)
@@ -265,7 +278,11 @@ struct MembersStep: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(Text("Remove", bundle: .module))
+                    }
                 }
+                // Fixed size, so the spinner and the ✕ swap without moving the row.
+                .frame(width: 36, height: 36)
+                .animation(.easeInOut(duration: 0.15), value: model.isPending(member))
             }
             .padding(.vertical, KSpace.md)
             if divider { Divider() }
@@ -274,10 +291,10 @@ struct MembersStep: View {
 
     private func add() {
         submitted = true
-        guard nameValid, emailValid else { return }
-        let name = newName, email = newEmail
-        newName = ""; newEmail = ""; submitted = false
-        Task { await model.addMember(name: name, email: email) }
+        guard nameValid, emailValid, phoneValid else { return }
+        let name = newName, email = newEmail, phone = newPhone
+        newName = ""; newEmail = ""; newPhone = ""; submitted = false
+        Task { await model.addMember(name: name, email: email, phone: phone) }
     }
 }
 
@@ -336,7 +353,7 @@ struct SlotsStep: View {
                 VStack(alignment: .leading, spacing: KSpace.lg) {
                     WizardHeading(
                         title: String(localized: "Fill the \(slots.count) slots", bundle: .module),
-                        subtitle: String(localized: "Each slot is \(amount.format()) a month. Give it to one person or share it between up to 3.", bundle: .module)
+                        subtitle: String(localized: "Each slot is \(amount.format()) a month. Give it to one person or share it between up to 3. Pot \(model.pot.format()).", bundle: .module)
                     )
                     VStack(spacing: KSpace.sm) {
                         HStack {
@@ -367,6 +384,28 @@ struct SlotsStep: View {
                         .padding(KSpace.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(KColors.warningSubtle, in: RoundedRectangle(cornerRadius: KRadius.input))
+                        // A slot of their own: one more month, same monthly amount, bigger pot.
+                        if model.canAddSlot {
+                            Button { Task { await model.addSlot() } } label: {
+                                HStack(spacing: KSpace.sm) {
+                                    Image(systemName: "plus.circle.fill").foregroundStyle(KColors.brand)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Add a slot", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
+                                        Text("\(model.months + 1) months · pot becomes \((amount * (model.months + 1)).format())", bundle: .module)
+                                            .kText(KTextToken.bodySm, color: KColors.textSecondary)
+                                    }
+                                    Spacer(minLength: 0)
+                                    if model.isBusy { ProgressView().controlSize(.small) }
+                                }
+                                .padding(KSpace.md)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                                .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
+                                .contentShape(RoundedRectangle(cornerRadius: KRadius.input))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(model.isBusy)
+                        }
                     }
                     VStack(alignment: .leading, spacing: KSpace.sm) {
                         ForEach(slots) { slot in

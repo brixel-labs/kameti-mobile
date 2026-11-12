@@ -28,3 +28,16 @@ public enum Failure: Error, Sendable, Equatable {
     case signIn(SignInProblem, detail: String?)
     case unknown(description: String)
 }
+
+/// Runs a call and keeps its typed `Failure`, so several calls can run at once
+/// with `async let` (which would otherwise lose the error type):
+///
+///     async let a = attempt { try await repo.members(kametiId: id) }
+///     let members = try await a.get()
+/// The repositories only throw `Failure`; anything else (it shouldn't happen)
+/// becomes `.unknown`.
+public func attempt<T: Sendable>(_ work: @Sendable () async throws -> T) async -> Result<T, Failure> {
+    do { return .success(try await work()) } catch let failure as Failure { return .failure(failure) } catch {
+        return .failure(.unknown(description: String(describing: error)))
+    }
+}

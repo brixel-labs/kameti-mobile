@@ -68,25 +68,40 @@ public final class KametiDetailViewModel {
         isRefreshing = true
         defer { isRefreshing = false }
         do throws(Failure) {
-            // Sequential: `async let` would drop the typed error.
-            let kameti = try await dependencies.kametis.kameti(id: kametiId)
+            // Two waves of calls run at once, instead of thirteen in a row.
+            let deps = dependencies, id = kametiId, userId = userId
+            async let kametiCall = attempt { try await deps.kametis.kameti(id: id) }
+            async let membersCall = attempt { try await deps.kametis.members(kametiId: id) }
+            async let slotsCall = attempt { try await deps.kametis.slots(kametiId: id) }
+            async let sharesCall = attempt { try await deps.kametis.shares(kametiId: id) }
+            async let collectionsCall = attempt { try await deps.ledger.monthCollections(kametiId: id) }
+            async let balancesCall = attempt { try await deps.ledger.memberBalances(kametiId: id) }
+            async let paymentsCall = attempt { try await deps.payments.payments(kametiId: id) }
+            async let payoutsCall = attempt { try await deps.payments.payouts(kametiId: id) }
+            // Notes are extra: if they fail to load, the rest still shows.
+            async let notesCall = attempt { try await deps.notes.notes(kametiId: id) }
+            let kameti = try await kametiCall.get()
+            let members = try await membersCall.get()
             let owner = kameti.isOwned(by: userId)
-            let members = try await dependencies.kametis.members(kametiId: kametiId)
-            let slots = try await dependencies.kametis.slots(kametiId: kametiId)
-            let shares = try await dependencies.kametis.shares(kametiId: kametiId)
-            let collections = try await dependencies.ledger.monthCollections(kametiId: kametiId)
-            let balances = try await dependencies.ledger.memberBalances(kametiId: kametiId)
             // Owners see every member's months; a member only their own.
             let mine = DetailLogic.myMember(in: members, userId: userId)
-            let months = owner
-                ? try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: nil)
-                : (mine == nil ? [] : try await dependencies.ledger.memberMonths(kametiId: kametiId, memberId: mine?.id))
-            let payments = try await dependencies.payments.payments(kametiId: kametiId)
-            let payouts = (try? await dependencies.payments.payouts(kametiId: kametiId)) ?? []
-            let contacts = owner ? ((try? await dependencies.contacts.contacts()) ?? []) : []
-            let invites = owner ? ((try? await dependencies.invites.invites(kametiId: kametiId)) ?? []) : []
-            // Notes are extra: if they fail to load, the rest still shows.
-            let notes = (try? await dependencies.notes.notes(kametiId: kametiId)) ?? []
+            let monthsFor: String?? = owner ? .some(nil) : (mine.map { .some($0.id) } ?? nil)
+            async let monthsCall = attempt { () async throws -> [MemberMonthRow] in
+                guard let memberId = monthsFor else { return [] }
+                return try await deps.ledger.memberMonths(kametiId: id, memberId: memberId)
+            }
+            async let contactsCall = attempt { owner ? try await deps.contacts.contacts() : [] }
+            async let invitesCall = attempt { owner ? try await deps.invites.invites(kametiId: id) : [] }
+            let slots = try await slotsCall.get()
+            let shares = try await sharesCall.get()
+            let collections = try await collectionsCall.get()
+            let balances = try await balancesCall.get()
+            let payments = try await paymentsCall.get()
+            let payouts = (try? await payoutsCall.get()) ?? []
+            let notes = (try? await notesCall.get()) ?? []
+            let months = try await monthsCall.get()
+            let contacts = (try? await contactsCall.get()) ?? []
+            let invites = (try? await invitesCall.get()) ?? []
             state = .loaded(KametiDetailData(
                 kameti: kameti, userId: userId, members: members, slots: slots, shares: shares,
                 collections: collections, balances: balances, months: months, payments: payments,
@@ -267,14 +282,20 @@ public final class KametiDetailViewModel {
 
     /// Invites everyone given, one by one. Returns how many were invited and
     /// the first failure, if any.
+    /// Members invited by the Invite all that is running now, in order, so its
+    /// sheet can take each row away as that invite goes out.
+    public private(set) var invitedThisRun: Set<String> = []
+
     public func inviteAll(memberIds: [String]) async -> (invited: Int, failure: Failure?) {
         var invited = 0
         var failure: Failure?
+        invitedThisRun = []
         for id in memberIds {
             do throws(Failure) {
                 let link = try await dependencies.invites.createInvite(memberId: id)
                 let emailed = (try? await dependencies.invites.sendInviteEmail(link)) ?? false
                 sentInvites[id] = SentInvite(link: link, emailed: emailed)
+                invitedThisRun.insert(id)
                 invited += 1
             } catch {
                 failure = failure ?? error
@@ -352,6 +373,13 @@ public final class KametiDetailViewModel {
 
     public func archive() async -> Failure? {
         do throws(Failure) { _ = try await dependencies.kametis.archiveKameti(id: kametiId) } catch { return error }
+        await load()
+        return nil
+    }
+
+    /// "Edit setup": back to a draft (the backend re-checks every condition).
+    public func reopen() async -> Failure? {
+        do throws(Failure) { _ = try await dependencies.kametis.reopenKameti(id: kametiId) } catch { return error }
         await load()
         return nil
     }

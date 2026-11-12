@@ -337,6 +337,7 @@ public extension View {
     func kBottomSheet<Content: View>(
         isPresented: Binding<Bool>, title: String,
         detents: Set<PresentationDetent> = [.medium, .large],
+        dismissDisabled: Bool = false,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         sheet(isPresented: isPresented) {
@@ -355,6 +356,10 @@ public extension View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(Text("Close", bundle: .module))
+                    // While something is saving, the sheet can't be closed.
+                    .opacity(dismissDisabled ? 0.35 : 1)
+                    .disabled(dismissDisabled)
+                    .animation(.easeInOut(duration: 0.2), value: dismissDisabled)
                 }
                 .padding(.horizontal, KSpace.xl)
                 // Same title position with or without a grabber, clear of it.
@@ -362,6 +367,8 @@ public extension View {
                 .padding(.bottom, KSpace.md)
                 content()
             }
+            // Pin to the top: short content (a calendar) was centred, leaving a gap above the title.
+            .frame(maxHeight: .infinity, alignment: .top)
             .toolbar(.hidden, for: .navigationBar)
             }
             .frame(maxHeight: .infinity, alignment: .top)
@@ -379,6 +386,8 @@ public extension View {
             .background(KColors.background)
             .presentationDetents(detents)
             .presentationDragIndicator(.hidden)
+            // No swipe down or tap outside while something is saving.
+            .interactiveDismissDisabled(dismissDisabled)
             .presentationBackground(KColors.background)
         }
     }

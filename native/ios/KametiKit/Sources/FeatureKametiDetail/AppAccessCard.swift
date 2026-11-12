@@ -77,17 +77,19 @@ struct AppAccessCard: View {
             }
             .padding(KSpace.lg)
             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(KColors.border))
-            .alert(String(localized: "Revoke \(firstName)'s invite?", bundle: .module), isPresented: $confirmingRevoke) {
-                Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-                Button(String(localized: "Revoke", bundle: .module), role: .destructive) { run { await model.revokeInvite(memberId: member.id) } }
-            } message: {
-                Text("The link and code stop working. You can send a new invite later.", bundle: .module)
+            .kConfirmSheet(
+                isPresented: $confirmingRevoke, title: String(localized: "Revoke \(firstName)'s invite?", bundle: .module),
+                message: String(localized: "The link and code stop working. You can send a new invite later.", bundle: .module),
+                confirmTitle: String(localized: "Revoke", bundle: .module), isDestructive: true
+            ) {
+                Self.outcome(await model.revokeInvite(memberId: member.id))
             }
-            .alert(String(localized: "Remove \(firstName)'s app access?", bundle: .module), isPresented: $confirmingUnlink) {
-                Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-                Button(String(localized: "Remove access", bundle: .module), role: .destructive) { run { await model.unlinkMember(memberId: member.id) } }
-            } message: {
-                Text("\(firstName) stops seeing this kameti in the app. Their payments and history stay, and you can invite them again later.", bundle: .module)
+            .kConfirmSheet(
+                isPresented: $confirmingUnlink, title: String(localized: "Remove \(firstName)'s app access?", bundle: .module),
+                message: String(localized: "\(firstName) stops seeing this kameti in the app. Their payments and history stay, and you can invite them again later.", bundle: .module),
+                confirmTitle: String(localized: "Remove access", bundle: .module), isDestructive: true
+            ) {
+                Self.outcome(await model.unlinkMember(memberId: member.id))
             }
             .kBottomSheet(isPresented: $reviewing, title: String(localized: "Join request", bundle: .module), detents: [.large]) {
                 if case .needsApproval(let invited, let accepted) = state {
@@ -259,6 +261,12 @@ struct AppAccessCard: View {
 
     private func shareText(_ link: InviteLink) -> String {
         String(localized: "Join \(data.kameti.name) on Kameti: \(link.link)\nOr open the app and enter the code \(link.code).", bundle: .module)
+    }
+
+    /// Closes on success; shows what went wrong in the sheet otherwise.
+    private static func outcome(_ failure: Failure?) -> KConfirmOutcome {
+        guard let failure else { return .dismiss }
+        return .result(KSheetMessage(String(localized: "Something went wrong", bundle: .module), message: failure.userMessage, tone: .error))
     }
 
     private func run(_ work: @escaping () async -> Failure?) {

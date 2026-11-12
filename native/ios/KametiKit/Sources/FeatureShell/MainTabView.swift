@@ -18,6 +18,10 @@ struct MainTabView: View {
     @State private var homeModel: HomeViewModel
     @State private var inboxModel: InboxViewModel
     @State private var askingPush = false
+    @State private var askingName = false
+    /// The push prompt waits until the name prompt is closed.
+    @State private var pushAfterName = false
+    @State private var nameSheetHeight: CGFloat = 260
     @Environment(\.scenePhase) private var scenePhase
     private var push: PushCenter { .shared }
 
@@ -38,7 +42,9 @@ struct MainTabView: View {
                         model: homeModel,
                         // A draft reopens the wizard where it was left.
                         onOpen: { id in
-                            router.push(homeModel.kameti(id: id)?.status == .draft ? .resumeDraft(id: id) : .kametiDetail(id: id))
+                            // Only the owner edits a draft; a member sees it as "being updated".
+                            let kameti = homeModel.kameti(id: id)
+                            router.push(kameti?.status == .draft && kameti?.isOwned(by: userId) == true ? .resumeDraft(id: id) : .kametiDetail(id: id))
                         },
                         onRecord: { router.push(.kametiAction(id: $0, action: $1)) },
                         onCreate: { router.push(.createKameti) },
@@ -78,7 +84,16 @@ struct MainTabView: View {
         .tint(KColors.brand)
         // Keeps the Inbox badge current from the first launch.
         .task { await inboxModel.load() }
-        .task { await startPush() }
+        // After sign-in: save the profile and settings on the phone (no-op once
+        // saved), ask for a name if Apple or Google didn't give one, then push.
+        .task {
+            await profileModel.load()
+            if profileModel.needsNamePrompt {
+                try? await Task.sleep(for: .milliseconds(600))
+                askingName = true
+            }
+            await startPush()
+        }
         // Live updates (FR-86-adjacent): screens refresh themselves.
         .task {
             await dependencies.live.start { change in
@@ -96,6 +111,25 @@ struct MainTabView: View {
         }
         .onChange(of: inboxModel.badgeCount) { _, count in push.setBadge(count) }
         .onChange(of: push.pendingTap) { _, tap in if let tap { open(tap) } }
+        .kBottomSheet(
+            isPresented: $askingName, title: String(localized: "What should we call you?", bundle: .module),
+            detents: [.height(nameSheetHeight + 58)]
+        ) {
+            NamePromptSheet(
+                current: profileModel.profile?.displayName ?? "", isPlaceholder: profileModel.nameIsPlaceholder,
+                save: { await profileModel.updateName($0) }
+            ) { askingName = false }
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { nameSheetHeight = $0 }
+        }
+        // Closed by Save or a swipe: don't ask again on this sign-in, then push.
+        .onChange(of: askingName) { _, open in
+            guard !open else { return }
+            profileModel.markNamePrompted()
+            if pushAfterName {
+                pushAfterName = false
+                Task { try? await Task.sleep(for: .milliseconds(500)); askingPush = true }
+            }
+        }
         .kBottomSheet(isPresented: $askingPush, title: "", detents: [.large]) {
             PushPermissionSheet(
                 onAllow: { askingPush = false; Task { await push.requestPermission() } },
@@ -118,6 +152,7 @@ struct MainTabView: View {
         // Ask once, soon after signing in (board AN-4): members need it as much as
         // owners, and many join before they have any kameti of their own.
         if push.status == .notDetermined, !push.hasAsked {
+            if askingName { pushAfterName = true; return }
             try? await Task.sleep(for: .seconds(1))
             askingPush = true
         }

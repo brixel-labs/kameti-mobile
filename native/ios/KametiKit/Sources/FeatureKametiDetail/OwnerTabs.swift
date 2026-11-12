@@ -22,7 +22,13 @@ struct OwnerTabs: View {
     /// The note row showing its swipe actions, if any.
     @State private var openNote: String?
     @State private var confirmingInviteAll = false
-    @State private var inviteAllResult: String?
+    /// Who Invite all goes to, fixed when its sheet opens, so the list and
+    /// title don't change under the person while the invites go out.
+    @State private var inviteBatch: [InviteList.Row] = []
+    @State private var inviteBatchMissingEmail = 0
+    @State private var sendingInvites = false
+    /// Set when the server answered, so the last row slides out before the result.
+    @State private var invitesFinished = false
     @State private var restoreFailure: Failure?
     @State private var reminding = false
 
@@ -40,8 +46,10 @@ struct OwnerTabs: View {
     }
 
     /// A payout can be recorded once the month has recipients and isn't paid out.
+    /// Pay out shows once every member has paid this month (and it isn't paid out yet).
     private func canPayOut(_ row: MonthCollectionRow) -> Bool {
-        !CollectionStatePill.isPaidOut(row.state)
+        row.memberCount > 0 && row.paidCount >= row.memberCount
+            && !CollectionStatePill.isPaidOut(row.state)
             && !DetailLogic.recipients(kameti: data.kameti, monthIndex: row.monthIndex, slots: data.slots, shares: data.shares, members: data.members).isEmpty
     }
 
@@ -138,7 +146,8 @@ struct OwnerTabs: View {
                     .accessibilityLabel(searchingNotes ? Text("Close search", bundle: .module) : Text("Search notes", bundle: .module))
                 }
             }
-            if tab == .members, [.draft, .active].contains(data.kameti.status) {  // never archived
+            // Members are added while it is a draft; once started the line-up is fixed (v1).
+            if tab == .members, data.kameti.status == .draft {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { addingMember = true } label: {
                         Image(systemName: "person.badge.plus").foregroundStyle(KColors.brand)
@@ -148,32 +157,15 @@ struct OwnerTabs: View {
             }
         }
         .task { await startPendingAction() }
-        .alert(
-            String(localized: "Couldn't restore this kameti", bundle: .module),
-            isPresented: Binding(get: { restoreFailure != nil }, set: { if !$0 { restoreFailure = nil } })
-        ) {
-            Button(String(localized: "OK", bundle: .module)) {}
-        } message: {
-            Text(restoreFailure.map { KametiDetailView.message(for: $0) } ?? "")
+        .kFailureSheet($restoreFailure, title: String(localized: "Couldn't restore this kameti", bundle: .module)) {
+            KametiDetailView.message(for: $0)
         }
-        .alert(inviteAllTitle, isPresented: $confirmingInviteAll) {
-            let people = AccessState.invitable(in: data)
-            if people.isEmpty {
-                Button(String(localized: "OK", bundle: .module)) {}
-            } else {
-                Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
-                Button(String(localized: "Send \(people.count)", bundle: .module)) { inviteAll(people) }
-            }
-        } message: {
-            Text(inviteAllMessage)
-        }
-        .alert(
-            String(localized: "Invites", bundle: .module),
-            isPresented: Binding(get: { inviteAllResult != nil }, set: { if !$0 { inviteAllResult = nil } })
+        .kConfirmSheet(
+            isPresented: $confirmingInviteAll, title: inviteAllTitle, message: inviteAllMessage,
+            confirmTitle: String(localized: "Send", bundle: .module),
+            details: { InviteList(people: inviteBatch, sent: sendingInvites ? model.invitedThisRun : [], finished: invitesFinished) }
         ) {
-            Button(String(localized: "OK", bundle: .module)) {}
-        } message: {
-            Text(inviteAllResult ?? "")
+            await inviteAll()
         }
         .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind members", bundle: .module), detents: [.large]) {
             RemindSheet(kameti: data.kameti, dependencies: model.dependencies) { reminding = false }
@@ -230,34 +222,63 @@ struct OwnerTabs: View {
     }
 
     private var inviteAllTitle: String {
-        let count = AccessState.invitable(in: data).count
+        let count = inviteBatch.count
         return count == 0
             ? String(localized: "No one to invite", bundle: .module)
             : (count == 1 ? String(localized: "Send 1 invite?", bundle: .module) : String(localized: "Send \(count) invites?", bundle: .module))
     }
 
     private var inviteAllMessage: String {
-        let people = AccessState.invitable(in: data)
-        let missing = noEmailCount
-        let names = people.map { MemberLogic.firstName($0.name) }.joined(separator: ", ")
-        let base = people.isEmpty
+        let missing = inviteBatchMissingEmail
+        let base = inviteBatch.isEmpty
             ? String(localized: "Everyone with an email already has an invite or has joined.", bundle: .module)
-            : String(localized: "Invites go to \(names).", bundle: .module)
+            : String(localized: "Each person gets an email with a link and a code to join this kameti in the app.", bundle: .module)
         guard missing > 0 else { return base }
         return base + " " + (missing == 1
             ? String(localized: "1 person has no email yet: add one in their member sheet.", bundle: .module)
             : String(localized: "\(missing) people have no email yet: add one in their member sheet.", bundle: .module))
     }
 
-    private func inviteAll(_ people: [Member]) {
-        Task {
-            let result = await model.inviteAll(memberIds: people.map(\.id))
-            let emailed = people.compactMap { model.sentInvites[$0.id] }.contains { $0.emailed }
-            var message = emailed
-                ? String(localized: "Invites emailed to \(result.invited) of \(people.count).", bundle: .module)
-                : String(localized: "\(result.invited) invites made. Email isn't set up yet, so open each member to share their code or link.", bundle: .module)
-            if let failure = result.failure { message += "\n" + failure.userMessage }
-            inviteAllResult = message
+    /// Sends the invites, then says what happened in the same sheet.
+    private func inviteAll() async -> KConfirmOutcome {
+        let ids = inviteBatch.map(\.id)
+        withAnimation { sendingInvites = true }
+        let result = await model.inviteAll(memberIds: ids)
+        defer { sendingInvites = false }
+        // The last row slides out, then the result shows.
+        if result.invited > 0 {
+            // The last row shows its tick, fades, then the result shows.
+            invitesFinished = true
+            try? await Task.sleep(for: InviteList.tickHold + .milliseconds(420))
+        }
+        let emailed = ids.contains { model.sentInvites[$0]?.emailed == true }
+        if result.invited == 0 {
+            return .result(KSheetMessage(
+                String(localized: "Invites weren't sent", bundle: .module),
+                message: result.failure?.userMessage ?? String(localized: "Please try again.", bundle: .module), tone: .error
+            ))
+        }
+        let who = result.invited == 1
+            ? String(localized: "1 member", bundle: .module)
+            : String(localized: "\(result.invited) members", bundle: .module)
+        var message = emailed
+            ? String(localized: "\(who) will get an email with a link and a code to join. They show as Invited until they accept.", bundle: .module)
+            : String(localized: "Invites made for \(who). Email isn't set up yet, so open each member to share their code or link.", bundle: .module)
+        if let failure = result.failure {
+            message += "\n\n" + String(localized: "\(ids.count - result.invited) couldn't be sent: \(failure.userMessage)", bundle: .module)
+        }
+        let title = result.invited == 1
+            ? String(localized: "1 invite sent", bundle: .module)
+            : String(localized: "\(result.invited) invites sent", bundle: .module)
+        return .result(KSheetMessage(title, message: message, tone: result.failure == nil ? .success : .warning))
+    }
+
+    /// The people Invite all will email, with the address it goes to.
+    private var inviteRows: [InviteList.Row] {
+        AccessState.invitable(in: data).map { member in
+            var email: String?
+            if case .notInvited(let address, _) = AccessState.of(member, in: data) { email = address }
+            return InviteList.Row(id: member.id, name: member.name, email: email, colorIndex: Int(member.color ?? "") ?? max(data.members.firstIndex(of: member) ?? 0, 0))
         }
     }
 
@@ -289,14 +310,22 @@ struct OwnerTabs: View {
     private func content(for tab: Tab) -> some View {
         switch tab {
         case .overview:
-            OverviewTab(data: data, onRemind: isArchived || data.kameti.status != .active ? nil : { reminding = true }) {
+            OverviewTab(
+                data: data, onRemind: isArchived || data.kameti.status != .active ? nil : { reminding = true },
+                onPayOut: isArchived ? nil : data.current.flatMap { current in canPayOut(current) ? { payingOut = current.monthIndex } : nil }
+            ) {
                 if !isArchived { recording = RecordTarget(memberId: $0) }
             }
         case .members:
             MembersTab(
                 data: data,
                 onSelect: isArchived ? nil : { editingMember = $0 },
-                onInviteAll: isArchived ? nil : { confirmingInviteAll = true }
+                onInviteAll: isArchived ? nil : {
+                    inviteBatch = inviteRows
+                    inviteBatchMissingEmail = noEmailCount
+                    invitesFinished = false
+                    confirmingInviteAll = true
+                }
             )
         case .schedule: ScheduleSection(data: data) { if !isArchived { payingOut = $0 } }
         case .payments: PaymentsTab(data: data) { if !isArchived { voiding = $0 } }
@@ -310,6 +339,8 @@ struct OwnerTabs: View {
 struct OverviewTab: View {
     let data: KametiDetailData
     var onRemind: (() -> Void)?
+    /// Set once everyone has paid: "Pay out <month>" on the This month row.
+    var onPayOut: (() -> Void)?
     let onRecord: (String) -> Void
 
     var body: some View {
@@ -365,7 +396,12 @@ struct OverviewTab: View {
                 .buttonStyle(.plain)
             }
 
-            KSectionHeader(String(localized: "This month", bundle: .module))
+            KSectionHeader(
+                String(localized: "This month", bundle: .module),
+                actionTitle: onPayOut == nil ? nil : String(localized: "Pay out \(DetailLogic.monthTitle(current.monthStart).split(separator: " ").first.map(String.init) ?? "")", bundle: .module),
+                showsChevron: true, action: onPayOut
+            )
+            .animation(.smooth(duration: 0.25), value: onPayOut == nil)
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element.memberId) { index, row in
                     if let member = byId[row.memberId] {
@@ -833,6 +869,95 @@ struct FinishedOverview: View {
                     }
                 }
             }
+        }
+    }
+}
+
+/// The people an invite goes to: avatar, name and email. While sending, a
+/// row whose invite went out turns green and says "Invite sent" with a tick,
+/// then fades and the gap closes (board AX-4). The last row stays until the
+/// server answers (`finished`), then leaves the same way before the result.
+struct InviteList: View {
+    struct Row: Identifiable, Equatable {
+        let id: String
+        let name: String
+        let email: String?
+        let colorIndex: Int
+    }
+    let people: [Row]
+    var sent: Set<String> = []
+    var finished = false
+    /// Rows that have shown their tick and left.
+    @State private var removed: Set<String> = []
+
+    /// How long a row shows "Invite sent" before it fades.
+    static let tickHold: Duration = .milliseconds(450)
+
+    private var visible: [Row] {
+        let left = people.filter { !removed.contains($0.id) }
+        if finished || !left.isEmpty { return left }
+        return Array(people.suffix(1))
+    }
+
+    var body: some View {
+        if !people.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(visible) { person in
+                    let isSent = sent.contains(person.id)
+                    VStack(spacing: 0) {
+                        if person.id != visible.first?.id { Divider() }
+                        HStack(spacing: KSpace.md) {
+                            KAvatar(name: person.name, colorIndex: person.colorIndex, size: .medium)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(person.name).kText(KTextToken.bodyStrong)
+                                if isSent {
+                                    Label {
+                                        Text("Invite sent", bundle: .module)
+                                    } icon: {
+                                        Image(systemName: "checkmark").font(.system(size: 12, weight: .bold))
+                                    }
+                                    .labelStyle(.titleAndIcon)
+                                    .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.brand)
+                                    .transition(.opacity)
+                                } else if let email = person.email {
+                                    Text(email).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+                                        .transition(.opacity)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.vertical, KSpace.sm)
+                        .padding(.horizontal, KSpace.md)
+                        .background(isSent ? KColors.brandSubtle : Color.clear)
+                    }
+                    // Fades while the rows below move up into its place.
+                    .transition(.opacity)
+                }
+            }
+            .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.card))
+            .overlay(RoundedRectangle(cornerRadius: KRadius.card).stroke(KColors.border))
+            .clipShape(RoundedRectangle(cornerRadius: KRadius.card))
+            .opacity(visible.isEmpty ? 0 : 1)
+            .animation(.smooth(duration: 0.25), value: sent)
+            .animation(.smooth(duration: 0.35), value: visible)
+            .onChange(of: sent) { old, new in
+                // Each newly sent row shows its tick, then leaves, except the last
+                // one, which waits for `finished`.
+                for id in new.subtracting(old) where id != people.last?.id || finished {
+                    leave(id)
+                }
+            }
+            .onChange(of: finished) { _, done in
+                guard done else { return }
+                for person in people where sent.contains(person.id) && !removed.contains(person.id) { leave(person.id) }
+            }
+        }
+    }
+
+    private func leave(_ id: String) {
+        Task {
+            try? await Task.sleep(for: Self.tickHold)
+            removed.insert(id)
         }
     }
 }

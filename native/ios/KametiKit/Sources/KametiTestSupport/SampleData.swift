@@ -491,6 +491,19 @@ final class SampleKametiRepository: KametiRepository {
         }
     }
 
+    /// Mirrors `reopen_kameti` (sample data has no payment check): a running
+    /// kameti whose first month hasn't come goes back to a draft.
+    func reopenKameti(id: String) async throws(Failure) -> Kameti {
+        try state.withLock { s throws(Failure) in
+            guard let index = s.kametis.firstIndex(where: { $0.id == id }) else { throw notFound }
+            let old = s.kametis[index]
+            guard old.ownerId == SampleData.userId else { throw Failure.server(code: "not_kameti_owner", detail: nil) }
+            guard old.status == .active else { throw Failure.server(code: "kameti_not_active", detail: nil) }
+            s.kametis[index] = Self.with(old, status: .draft)
+            return s.kametis[index]
+        }
+    }
+
     /// Mirrors `restore_kameti`: back to what it was, if the name is still free.
     func restoreKameti(id: String) async throws(Failure) -> Kameti {
         try state.withLock { s throws(Failure) in

@@ -36,15 +36,15 @@ public struct InvitationCard: View {
                 Button(action: onDecline) {
                     Text("Decline", bundle: .module).kText(KTextToken.bodyStrong)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(KColors.border))
-                        .contentShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(Capsule().strokeBorder(KColors.border))
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 Button(action: onReview) {
                     Text("Review and join", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(KColors.brand, in: RoundedRectangle(cornerRadius: 12))
-                        .contentShape(RoundedRectangle(cornerRadius: 12))
+                        .background(KColors.brand, in: Capsule())
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
