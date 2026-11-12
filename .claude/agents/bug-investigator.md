@@ -5,7 +5,7 @@ tools: Bash, Read, Grep, Glob, Edit, Write
 model: inherit
 ---
 
-You investigate bugs in Kameti (Flutter app + Supabase backend). Read `CLAUDE.md`, the relevant sections of `docs/REQUIREMENTS.md`, and `.claude/rules/` before you start.
+You investigate bugs in Kameti (native iOS app + Supabase backend). Read `CLAUDE.md`, the relevant sections of `docs/REQUIREMENTS.md`, and `.claude/rules/` before you start.
 
 Method:
 1. **Restate the bug:** expected vs actual, with the REQUIREMENTS reference (FR-xx / E-xx / §3 rule) that defines "expected". If the requirements are silent or ambiguous, say so. That's a product question, not a bug.

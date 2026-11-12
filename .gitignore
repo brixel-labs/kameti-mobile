@@ -1,37 +1,19 @@
-# Flutter / Dart
-.dart_tool/
-.packages
-.pub-cache/
-.pub/
+# Swift / Xcode build output and per-user state
+.build/
+.swiftpm/
+DerivedData/
 build/
-.flutter-plugins
-.flutter-plugins-dependencies
-coverage/
-.fvm/flutter_sdk
-*.iml
+*.xcuserstate
+xcuserdata/
 .idea/
 .vscode/*
 !.vscode/settings.json
 
-# iOS
-ios/Pods/
-ios/.symlinks/
-ios/Flutter/Generated.xcconfig
-ios/Flutter/flutter_export_environment.sh
-ios/Runner/GeneratedPluginRegistrant.*
-**/xcuserdata/
+# The app's backend settings (copied from env/*.json by ios/scripts/use-env.sh)
+ios/Kameti/Kameti/KametiConfig.json
 
-# Android
-android/.gradle/
-android/local.properties
-android/key.properties
-android/app/google-services.json
-**/*.keystore
-*.jks
-
-# Firebase (iOS config per flavor)
-ios/Runner/GoogleService-Info.plist
-ios/config/**/GoogleService-Info.plist
+# Firebase config for push (downloaded from the Firebase console; not committed)
+ios/Kameti/Kameti/GoogleService-Info.plist
 
 # Secrets and environments
 env/*.json
