@@ -20,6 +20,6 @@ You review Kameti code. Read `CLAUDE.md` and every file in `.claude/rules/` firs
 6. Check **architecture:** layer boundaries, writes only through RPCs, `Result` errors, `KametiClock` for time, l10n strings.
 7. For **UI**, defer to the `design-system-guardian` checklist and flag obvious violations.
 8. Check **tests:** new logic is tested, bug fixes come with a regression test, owner and member roles are both covered, and no test was weakened or skipped.
-9. Run `flutter analyze` and `flutter test` (or `supabase test db` in the backend) and report the results.
+9. Build the app and run the KametiKit tests (or `supabase test db` in the backend) and report the results.
 
 Return findings ordered by severity (blocking / should fix / nit), each with file:line, the problem and a concrete fix. End with **Approve** or **Request changes**.

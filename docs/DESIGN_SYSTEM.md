@@ -1,32 +1,26 @@
 # Kameti Design System (KDS)
 
-Every screen in the app is built from these components. A screen never styles raw Flutter widgets itself.
+Every screen in the app is built from these components. A screen never styles raw SwiftUI views itself.
 
 > **Status:** direction **A "Ledger"** chosen (2026-11-09), with a dark mode. Token values below come from the design board: https://claude.ai/artifact/CU8Y4xmfhCPFHoMyavyf6e (row A).
 
 ## 1. Where things live
 
 ```
-lib/design_system/
-  tokens/
-    k_colors.dart        # semantic colour tokens (light + dark)
-    k_typography.dart    # text styles
-    k_spacing.dart       # spacing scale
-    k_radius.dart        # corner radii
-    k_elevation.dart     # shadows
-    k_motion.dart        # durations, curves
-    k_icons.dart         # icon set mapping
-  theme/
-    k_theme.dart         # ThemeExtension<KTheme> holding all tokens; light() / dark()
-    k_theme_x.dart       # BuildContext extension: context.k.colors.surface …
-  components/
-    buttons/  inputs/  money/  display/  feedback/  navigation/  layout/  kameti/
-  design_system.dart     # single barrel export
-widgetbook/              # Widgetbook app: every component, every state, light/dark
-test/design_system/      # golden + widget tests
+design-tokens/
+  tokens.json            # the single source of truth (light + dark)
+  generate.py            # writes KametiUI/Generated/Tokens.generated.swift
+ios/KametiKit/Sources/KametiUI/
+  Generated/             # KColors, KSpace, KRadius, KTextToken … (do not edit by hand)
+  Components/            # K* views and modifiers: KInputs (buttons, fields, kBottomSheet),
+                         # KLayout (KCard, KAvatar, KAvatarStack, section headers),
+                         # KConfirmSheet, KPill, KMoneyText, KPotProgress, KStates, …
+  KTextStyle.swift       # .kText(token, color:)
+  KAppearance.swift      # System / Light / Dark
+ios/KametiKit/Tests/KametiUITests/
 ```
 
-Feature code imports **only** `package:kameti/design_system/design_system.dart`.
+Feature code imports `KametiUI` and uses its tokens and components. The component tables below were written for the original Flutter app; the SwiftUI components keep the same names and roles, and their exact APIs are in `KametiUI/Components`.
 
 ## 2. Tokens
 

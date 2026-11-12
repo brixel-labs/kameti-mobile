@@ -14,7 +14,7 @@ Follow `.claude/rules/git-workflow.md`.
 3. The version is the latest tag's patch + 1: `v1.2.0 → 1.2.1`. Then `git switch -c hotfix/1.2.1`.
 4. Reproduce it with a **failing regression test** (use the `bug-investigator` agent if the cause isn't obvious).
 5. Make the **smallest possible fix**. No refactors and no unrelated changes.
-6. Bump the version (`pubspec.yaml` `1.2.1+<build+1>` / backend `VERSION`) and add a `CHANGELOG.md` entry.
+6. Bump the version (`MARKETING_VERSION` 1.2.1, `CURRENT_PROJECT_VERSION` build+1 / backend `VERSION`) and add a `CHANGELOG.md` entry.
 7. Run the full local checks and the reference-sheet tests.
 8. When the user asks: commit (`fix(<scope>): …`, then `chore(release): 1.2.1`), push, and open a PR `hotfix/1.2.1 → main` labelled **hotfix**.
 9. **With the user's explicit approval only:** merge with a merge commit, then tag `v1.2.1` on main and push the tag.

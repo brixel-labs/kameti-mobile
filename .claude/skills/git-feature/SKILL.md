@@ -26,7 +26,7 @@ Follow `.claude/rules/git-workflow.md`. Branch: `feature/<issue>-<slug>` from `d
 
 1. `git fetch origin && git rebase origin/develop`. Resolve conflicts carefully; never drop the other side's changes without asking.
 2. Run the local checks:
-   - mobile: `dart format --set-exit-if-changed . && flutter analyze && flutter test`
+   - mobile: build the app and run the KametiKit tests (see CLAUDE.md commands)
    - backend: `supabase db lint && supabase test db`
 3. Fix anything that fails. Don't skip or delete tests to make them pass.
 4. Ask the `code-reviewer` agent to review the diff against `develop`, and address its findings.

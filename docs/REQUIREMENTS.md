@@ -360,7 +360,13 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
 
 ## 9. Tech stack recommendation
 
-### 9.1 Mobile: **Flutter (Dart)**, cross-platform (decided 2026-11-09)
+### 9.1 Mobile: **native iOS (SwiftUI)** (decided 2026-11-12; replaces Flutter)
+
+The app was rebuilt natively in SwiftUI (Swift 6, iOS 26, supabase-swift) and the Flutter app was removed on 2026-11-12. Android comes later as its own native app. Layout and layers: see the README; architecture rules: `.claude/rules/ios-architecture.md`.
+
+The original decision is kept below for the record.
+
+#### Original decision: Flutter (Dart), cross-platform (2026-11-09, superseded)
 
 | Option | Verdict |
 |---|---|
@@ -406,7 +412,7 @@ Firebase is a valid choice, and we still use **Firebase Cloud Messaging** (only)
 ### 9.3 Proposed architecture
 
 ```
-Flutter app (iOS/Android)
+iOS app (SwiftUI)
   ├─ Supabase Auth (Google, Apple)
   ├─ PostgREST reads (RLS-protected views)
   └─ RPC calls for all writes (record_payment, record_payout, reorder_slots, …)

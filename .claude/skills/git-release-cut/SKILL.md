@@ -24,7 +24,7 @@ A release covers **both repos** when the backend changed. Cut, tag and ship them
    Tell the user the proposed version and the reason. Use theirs if they gave one.
 5. `git switch -c release/X.Y.Z`.
 6. Bump the version:
-   - mobile: `pubspec.yaml` `version: X.Y.Z+<build>`, with build = previous build + 1;
+   - mobile: `MARKETING_VERSION` X.Y.Z and `CURRENT_PROJECT_VERSION` = previous build + 1 in `ios/Kameti/Kameti.xcodeproj`;
    - backend: the `VERSION` file.
 7. Generate `CHANGELOG.md` for the new version from the Conventional Commits, grouped as Added (feat), Fixed (fix), Changed (refactor/perf), and skipping chore/ci/style/test.
 8. Commit `chore(release): X.Y.Z` (when the user has asked you to commit), push, and open a PR `release/X.Y.Z → main` titled `Release X.Y.Z` that includes the changelog and the QA checklist below.

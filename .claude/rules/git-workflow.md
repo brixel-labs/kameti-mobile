@@ -39,7 +39,7 @@ These rules apply to **kameti-mobile** and **kameti-backend**. Both use the same
 - `release/*` and `hotfix/*` → `main`: **merge commit** (`--no-ff`), never squash, so the tag points at a real merge.
 - Back-merges (`release/*` or `hotfix/*` → `develop`): merge commit.
 - Before opening a PR the branch must be **rebased on its target** and pass the local checks:
-  - mobile: `dart format --set-exit-if-changed .`, `flutter analyze`, `flutter test`
+  - mobile: the app builds (`xcodebuild … -scheme Kameti build`) and the KametiKit tests pass
   - backend: `supabase db lint`, `supabase test db`, function tests
 - The PR body has: **What**, **Why**, **How to test**, **Screenshots** (UI changes, light + dark), **Checklist**, and `Closes #<issue>`.
 - A PR touching money maths (ledger, balances, payouts, splits) must include or update tests that reproduce the reference sheet (REQUIREMENTS §3.3).
@@ -47,7 +47,7 @@ These rules apply to **kameti-mobile** and **kameti-backend**. Both use the same
 ## Versioning
 
 - SemVer `X.Y.Z`. `feat` → minor, `fix` → patch, `BREAKING CHANGE` → major (before 1.0.0, breaking → minor).
-- Mobile: `pubspec.yaml` `version: X.Y.Z+<build>`. The build number is one integer that **only ever increases**, shared by iOS and Android.
+- Mobile: `MARKETING_VERSION` (X.Y.Z) and `CURRENT_PROJECT_VERSION` (build) in `ios/Kameti/Kameti.xcodeproj`. The build number is one integer that **only ever increases**.
 - Tags: `vX.Y.Z` on `main`, annotated (`git tag -a`), in both repos for a joint release.
 - `CHANGELOG.md` in "Keep a Changelog" format, generated from the Conventional Commits since the previous tag.
 
