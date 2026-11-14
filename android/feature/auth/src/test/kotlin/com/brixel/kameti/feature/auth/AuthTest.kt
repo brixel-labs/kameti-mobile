@@ -76,9 +76,9 @@ class SignInViewModelTest {
     @Test
     fun closingTheSheetIsNotAnError() = runTest {
         val auth = FakeAuthRepository()
-        auth.setApple(Attempt.Success(false))
+        auth.setGoogle(Attempt.Success(false))
         val model = SignInViewModel(auth)
-        model.signIn(SignInProvider.Apple)
+        model.signIn(SignInProvider.Google)
         assertNull(model.state.value.failure)
         assertNull(auth.currentUserId)
     }

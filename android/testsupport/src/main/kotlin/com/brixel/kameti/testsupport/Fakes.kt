@@ -17,7 +17,6 @@ class FakeAuthRepository(userId: String? = null) : AuthRepository {
     private val lock = Any()
     private val user = MutableStateFlow(userId)
     private var google: Attempt<Boolean> = Attempt.Success(true)
-    private var apple: Attempt<Boolean> = Attempt.Success(true)
     private var password: Attempt<Unit> = Attempt.Success(Unit)
     private var signOut: Attempt<Unit> = Attempt.Success(Unit)
     private val called = mutableListOf<String>()
@@ -25,7 +24,6 @@ class FakeAuthRepository(userId: String? = null) : AuthRepository {
     // Configure
 
     fun setGoogle(result: Attempt<Boolean>) = synchronized(lock) { google = result }
-    fun setApple(result: Attempt<Boolean>) = synchronized(lock) { apple = result }
     fun setPassword(result: Attempt<Unit>) = synchronized(lock) { password = result }
     fun setSignOut(result: Attempt<Unit>) = synchronized(lock) { signOut = result }
 
@@ -49,18 +47,12 @@ class FakeAuthRepository(userId: String? = null) : AuthRepository {
         return signedIn
     }
 
-    override suspend fun signInWithApple(): Boolean {
-        val signedIn = synchronized(lock) { called += "apple"; apple }.get()
-        if (signedIn) emit("apple-user")
-        return signedIn
-    }
-
     override suspend fun signInWithPassword(email: String, password: String) {
         synchronized(lock) { called += "password:$email"; this.password }.get()
         emit("password-user")
     }
 
-    /** The demo account signs in with Apple. */
+    /** The demo account was made with Apple on iOS (as in the iOS demo). */
     override suspend fun signInMethods(): List<SignInMethod> =
         if (currentUserId == null) emptyList() else listOf(SignInMethod(SignInMethod.Provider.Apple, "demo@kameti.test"))
 

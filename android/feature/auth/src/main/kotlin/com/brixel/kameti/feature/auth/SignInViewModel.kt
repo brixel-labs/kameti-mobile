@@ -24,7 +24,8 @@ enum class DevAccount(val email: String) {
     }
 }
 
-enum class SignInProvider { Apple, Google }
+/** The ways to sign in on Android. (iOS also has Apple.) */
+enum class SignInProvider { Google }
 
 data class SignInUiState(
     val busyProvider: SignInProvider? = null,
@@ -59,7 +60,6 @@ class SignInViewModel(
         current.update { it.copy(busyProvider = provider, failure = null) }
         try {
             when (provider) {
-                SignInProvider.Apple -> auth.signInWithApple()
                 SignInProvider.Google -> auth.signInWithGoogle()
             }
         } catch (failure: Failure) {

@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brixel.kameti.core.Failure
-import com.brixel.kameti.ui.KAppleLogo
 import com.brixel.kameti.ui.KButton
 import com.brixel.kameti.ui.KButtonStyle
 import com.brixel.kameti.ui.KColors
@@ -35,8 +34,9 @@ import com.brixel.kameti.ui.KTextToken
 import com.brixel.kameti.ui.userMessage
 
 /**
- * Sign-in screen (board AF-Sign-In): Continue with Apple and Google, plus two
- * dev buttons in a dev build.
+ * Sign-in screen (board AF-Sign-In): Continue with Google, plus two dev
+ * buttons in a dev build. Android has no Sign in with Apple (the owner's
+ * decision): an account made with Apple on iOS can't sign in here.
  */
 @Composable
 fun SignInScreen(model: SignInViewModel, modifier: Modifier = Modifier) {
@@ -66,13 +66,6 @@ fun SignInScreen(model: SignInViewModel, modifier: Modifier = Modifier) {
         Spacer(Modifier.weight(1f))
         state.failure?.let { FailureBanner(it) }
         Column(verticalArrangement = Arrangement.spacedBy(KSpace.sm)) {
-            KButton(
-                title = stringResource(R.string.auth_continue_with_apple),
-                onClick = { model.onSignIn(SignInProvider.Apple) },
-                leading = { KAppleLogo() },
-                enabled = !state.isBusy || state.busyProvider == SignInProvider.Apple,
-                isLoading = state.busyProvider == SignInProvider.Apple,
-            )
             KButton(
                 title = stringResource(R.string.auth_continue_with_google),
                 onClick = { model.onSignIn(SignInProvider.Google) },

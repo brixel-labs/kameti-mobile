@@ -7,7 +7,6 @@ import com.brixel.kameti.domain.AuthRepository
 import com.brixel.kameti.domain.SignInMethod
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.Apple
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.builtin.IDToken
@@ -35,10 +34,8 @@ fun interface ProviderCredentialSource {
 }
 
 /**
- * Sign-in on Supabase Auth. Google is native (an ID token from [google]);
- * Apple has no native sheet on Android, so it opens Supabase's web sign-in in
- * a browser tab and the session arrives through the app's redirect link
- * (`KametiBackend.handleRedirect`).
+ * Sign-in on Supabase Auth. Google is native (an ID token from [google]).
+ * Android has no Sign in with Apple.
  */
 internal class SupabaseAuthRepository(
     private val client: SupabaseClient,
@@ -76,12 +73,6 @@ internal class SupabaseAuthRepository(
                 nonce = credential.nonce
             }
         }
-        return true
-    }
-
-    /** `true` once the browser tab is open; the session follows when the user finishes there. */
-    override suspend fun signInWithApple(): Boolean {
-        signingIn { client.auth.signInWith(Apple) }
         return true
     }
 

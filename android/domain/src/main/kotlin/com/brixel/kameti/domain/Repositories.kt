@@ -151,8 +151,6 @@ interface AuthRepository {
     /** Native Google sign-in. `false` means the user closed the sheet. */
     suspend fun signInWithGoogle(): Boolean
 
-    /** Sign in with Apple. `false` means the user cancelled. */
-    suspend fun signInWithApple(): Boolean
 
     /** Local development only: email and password for seeded test users. */
     suspend fun signInWithPassword(email: String, password: String)

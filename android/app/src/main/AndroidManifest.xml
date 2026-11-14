@@ -17,15 +17,6 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
-            <!-- The end of a browser sign-in (Apple): KametiBackend.REDIRECT_SCHEME / REDIRECT_HOST. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:host="login-callback"
-                    android:scheme="com.brixel.kameti" />
-            </intent-filter>
             <!--
               Invite links (DeepLink.kt). Android opens them in the app without
               asking once the site's .well-known/assetlinks.json lists the

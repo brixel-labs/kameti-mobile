@@ -24,7 +24,6 @@ class AppContainer(config: AppConfig, context: Context, currentActivity: () -> A
     val router = AppRouter()
     val dependencies: KametiDependencies
     val session: SessionStore
-    private val backend: KametiBackend?
     private val showsDevSignIn = config.isDev()
 
     init {
@@ -32,17 +31,15 @@ class AppContainer(config: AppConfig, context: Context, currentActivity: () -> A
         // builds only: a release build doesn't even contain the sample data.
         val sample = if (config.isDemo()) demoDependencies() else null
         if (sample != null) {
-            backend = null
             dependencies = sample.copy(profileCache = ProfileCache(storage, sample.clock))
         } else {
             val google = config.googleWebClientId?.let { GoogleCredentialSource(serverClientId = it, currentActivity) }
-            backend = KametiBackend.create(
+            dependencies = KametiBackend.create(
                 url = config.backendUrl(),
                 publishableKey = config.supabasePublishableKey,
                 google = google,
                 profileStorage = storage,
-            )
-            dependencies = backend.dependencies
+            ).dependencies
         }
         session = SessionStore(dependencies.auth, MainScope()).also { it.start() }
         PushCenter.storage = storage
@@ -51,11 +48,10 @@ class AppContainer(config: AppConfig, context: Context, currentActivity: () -> A
     fun makeSignInViewModel() = SignInViewModel(dependencies.auth, showsDevSignIn)
 
     /**
-     * An intent the activity was opened with: the end of a browser sign-in
-     * (Apple), a tapped notification, or an invite link.
+     * An intent the activity was opened with: a tapped notification or an
+     * invite link.
      */
     fun handle(intent: Intent) {
-        backend?.handleRedirect(intent)
         if (Push.handleTap(intent)) return
         intent.dataString?.let(router::open)
     }
