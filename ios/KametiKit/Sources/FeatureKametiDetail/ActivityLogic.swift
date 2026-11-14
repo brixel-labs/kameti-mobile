@@ -113,6 +113,7 @@ enum ActivityLogic {
                 ("description", String(localized: "Description", bundle: .module), text),
                 ("due_day", String(localized: "Due day", bundle: .module), { $0?.intValue.map(EditKametiForm.ordinal) ?? "–" }),
                 ("reminder_days", String(localized: "Reminders", bundle: .module), days),
+                ("reminder_hour", String(localized: "Reminder time", bundle: .module), { $0?.intValue.map(ReminderTime.label) ?? "–" }),
             ])
             return item
         case "slot.set_shares":

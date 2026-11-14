@@ -35,6 +35,10 @@ public final class CreateWizardModel {
     public var startMonth: Date
     public var dueDay = 10
     public var reminderDays: [Int] = [1, 5, 8, 10]
+    /// The hour of the day, Pakistan time, reminders go out at.
+    public var reminderHour = ReminderTime.defaultHour
+    /// What the server has for the draft, so only a change is sent.
+    private var savedReminderHour = ReminderTime.defaultHour
     public var maxSlotsPerMember = 4
 
     public private(set) var kametiId: String?
@@ -169,6 +173,8 @@ public final class CreateWizardModel {
             startMonth = kameti.startMonth
             dueDay = kameti.dueDay
             reminderDays = kameti.reminderDays
+            reminderHour = kameti.reminderHour
+            savedReminderHour = kameti.reminderHour
             maxSlotsPerMember = kameti.maxSlotsPerMember
             try await reload()
             await loadContacts()
@@ -196,22 +202,28 @@ public final class CreateWizardModel {
             } else {
                 let created = try await self.dependencies.kametis.createKameti(NewKameti(
                     name: trimmed, startMonth: self.startMonth, months: self.months, slotAmount: amount,
-                    dueDay: self.dueDay, reminderDays: self.reminderDays, maxSlotsPerMember: self.maxSlotsPerMember
+                    dueDay: self.dueDay, reminderDays: self.reminderDays, maxSlotsPerMember: self.maxSlotsPerMember,
+                    reminderHour: self.reminderHour
                 ))
                 self.kametiId = created.id
+                self.savedReminderHour = self.reminderHour
             }
             try await self.reload()
             self.step = .dates
         }
     }
 
-    /// Step 2: due day, reminder days and the slot limit.
+    /// Step 2: due day, reminder days and time, and the slot limit.
     public func saveDates() async {
         guard let id = kametiId else { return }
         await write { () async throws(Failure) in
             _ = try await self.dependencies.kametis.updateKameti(
-                id: id, changes: KametiChanges(dueDay: self.dueDay, reminderDays: self.reminderDays, maxSlotsPerMember: self.maxSlotsPerMember)
+                id: id, changes: KametiChanges(
+                    dueDay: self.dueDay, reminderDays: self.reminderDays, maxSlotsPerMember: self.maxSlotsPerMember,
+                    reminderHour: self.reminderHour == self.savedReminderHour ? nil : self.reminderHour
+                )
             )
+            self.savedReminderHour = self.reminderHour
             self.step = .members
         }
     }

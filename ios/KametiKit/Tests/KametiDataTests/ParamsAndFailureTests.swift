@@ -21,6 +21,21 @@ struct ParamsTests {
         #expect(p["p_description"] == .null)
     }
 
+    @Test func theReminderHourIsLeftOutUntilItIsNotTheDefault() {
+        let start = DateOnly.make(year: 2026, month: 10)
+        // The default (10) is what the backend uses anyway, so a backend without the
+        // reminder-hour migration still takes the call.
+        let plain = Params.createKameti(NewKameti(name: "Office Kameti", startMonth: start, months: 20, slotAmount: Money(250_000)))
+        #expect(plain["p_reminder_hour"] == nil)
+        let evening = Params.createKameti(NewKameti(
+            name: "Office Kameti", startMonth: start, months: 20, slotAmount: Money(250_000), reminderHour: 18
+        ))
+        #expect(evening["p_reminder_hour"] == .int(18))
+
+        #expect(Params.updateKameti(id: "k1", KametiChanges(dueDay: 12))["p_reminder_hour"] == nil)
+        #expect(Params.updateKameti(id: "k1", KametiChanges(reminderHour: 9))["p_reminder_hour"] == .int(9))
+    }
+
     @Test func updateLeavesUnchangedFieldsNull() {
         let p = Params.updateKameti(id: "k1", KametiChanges(name: "New name", dueDay: 12))
         #expect(p["p_kameti_id"] == .string("k1"))

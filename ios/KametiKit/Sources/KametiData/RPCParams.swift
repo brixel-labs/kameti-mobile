@@ -28,7 +28,7 @@ enum Params {
     }
 
     static func createKameti(_ new: NewKameti) -> RPCParams {
-        [
+        var params: RPCParams = [
             "p_name": .string(new.name),
             "p_start_month": .day(new.startMonth),
             "p_months_n": .int(new.months),
@@ -38,11 +38,15 @@ enum Params {
             "p_max_slots_per_member": .int(new.maxSlotsPerMember),
             "p_description": .opt(new.description),
         ]
+        // Left out when it is the default (10), which the backend uses anyway, so a backend that
+        // hasn't got the reminder-hour migration yet still takes the call.
+        if new.reminderHour != ReminderTime.defaultHour { params["p_reminder_hour"] = .int(new.reminderHour) }
+        return params
     }
 
     /// `null` leaves a field unchanged on the backend.
     static func updateKameti(id: String, _ c: KametiChanges) -> RPCParams {
-        [
+        var params: RPCParams = [
             "p_kameti_id": .string(id),
             "p_name": .opt(c.name),
             "p_description": .opt(c.description),
@@ -53,6 +57,10 @@ enum Params {
             "p_reminder_days": c.reminderDays.map { .array($0.map { .int($0) }) } ?? .null,
             "p_max_slots_per_member": .opt(c.maxSlotsPerMember),
         ]
+        // Only sent when it changes, like the other fields' "null leaves it alone", but left out
+        // entirely so a backend without the reminder-hour migration still takes the call.
+        if let hour = c.reminderHour { params["p_reminder_hour"] = .int(hour) }
+        return params
     }
 
     static func addMember(kametiId: String, _ m: NewMember) -> RPCParams {

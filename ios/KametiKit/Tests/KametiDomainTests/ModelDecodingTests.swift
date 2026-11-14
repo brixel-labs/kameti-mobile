@@ -24,9 +24,20 @@ struct ModelDecodingTests {
         #expect(k.startMonth == DateOnly.make(year: 2026, month: 10))
         #expect(k.status == .active)
         #expect(k.startedAt != nil)
+        // This row came from a backend without the reminder-hour column: reminders stay at 10.
+        #expect(k.reminderHour == 10)
         #expect(k.isOwned(by: "u1"))
         #expect(!k.isOwned(by: "u2"))
         #expect(!k.isOwned(by: nil))
+    }
+
+    @Test func theReminderHourDecodes() throws {
+        let k = try decode(Kameti.self, """
+        {"id":"k1","owner_id":"u1","name":"Office Kameti 2026","description":null,
+         "start_month":"2026-10-01","months_n":20,"slot_amount_c":250000,"due_day":10,
+         "reminder_days":[1,5,8,10],"reminder_hour":18,"max_slots_per_member":6,"status":"active"}
+        """)
+        #expect(k.reminderHour == 18)
     }
 
     @Test func memberAndShare() throws {

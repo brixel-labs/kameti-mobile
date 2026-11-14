@@ -75,7 +75,7 @@ final class SampleAuditLog: Sendable {
     static func kameti(_ k: Kameti) -> JSONValue {
         .object([
             "name": .string(k.name), "description": k.description.map(JSONValue.string) ?? .null,
-            "due_day": .int(k.dueDay), "reminder_days": .array(k.reminderDays.map(JSONValue.int)),
+            "due_day": .int(k.dueDay), "reminder_days": .array(k.reminderDays.map(JSONValue.int)), "reminder_hour": .int(k.reminderHour),
         ])
     }
 

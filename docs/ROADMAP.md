@@ -34,7 +34,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Edit kameti, draft screen, Notes | Built: drafts reopen in the wizard; Notes tab (A2-Notes-Tab, swipe actions); edit a running kameti (AE-1, ••• menu) | Notes on payment and payout screens |
 | Offline and error states | Built (AF-States): offline banner, writes blocked offline, skeletons, error and invite cards | Saved copy for opening the app offline |
 | Dark mode | Checked: tokens match the dark artboards; two hard-coded colours fixed | — |
-| Android | Not started | Later |
+| Android | All 12 phases ported 2026-11-14; waiting on the owner's setup and testing. Started 2026-11-14: project, modules, tokens, strings, `:core`, `:domain`, sample data, design system, `:data`, sign-in, the tab shell, Home, the kameti detail and recording (payments, voids, payouts, reminders) | See "Android port" below |
 
 ## Order of work
 
@@ -56,3 +56,24 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 - Build screens to the canvas artboards; propose design options on the canvas first when a screen is unclear.
 - After a change: build and launch on the iPhone 18 Pro Max simulator; the owner tests the app. Run the package tests when logic changes.
 - One commit per finished feature; ask before pushing.
+
+## Android port
+
+`android/` is a module-for-module port of the iOS app (Kotlin, Jetpack Compose, supabase-kt). One `feature/android-*` branch per phase.
+
+| # | Phase | State |
+|---|---|---|
+| 1 | Scaffold: Gradle modules, convention plugins, token generator, strings importer, env script | Done |
+| 2 | `:core`, `:domain`, `:testsupport` with the ported tests | Done |
+| 3 | Design system: every `K*` component in Compose, `KIcons`, failure messages | Done |
+| 4 | Data layer (supabase-kt), sign-in, tabs and router, demo flavor. Inbox, Profile and the pushed screens are stand-ins (`feature/shell/ComingNext.kt`) | Done |
+| 5 | Home: owner, member and past cards, members sheet, invitations, join code, archived list, Record payment menu (as a sheet) | Done |
+| 6 | Kameti detail (read): Overview, Members, Schedule, Payments, member view. No write controls yet | Done |
+| 7 | Recording: record payment, void, tap-to-settle, payout with shortfall and dues taken from it, owner reminders (push and WhatsApp). The Record payment menu is a sheet | Done |
+| 8 | Create wizard: six steps, slot split sheet, payout order, reopening a draft. The tab bar hides while it is open | Done |
+| 9 | Members and invites, Inbox: edit member, app access, share transfer, Invite all, join screen, approve sheet | Done |
+| 10 | Notes tab and member notes, activity log, edit kameti, edit setup, archive, restore, duplicate | Done |
+| 11 | Profile: name, appearance, app icon (four launcher entries), notification settings, my people, sign-in methods, past kametis, delete account | Done |
+| 12 | Push (Firebase), live updates, invite links (App Links), adaptive launcher icons, shrunk release build without sample data, optional release signing, Android CI job | Done |
+
+Needs the owner: an Android OAuth client (Google Cloud, with the app's SHA-1), the Android app in Firebase (`google-services.json`), and the release signing fingerprint for `assetlinks.json` on the website.

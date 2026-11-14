@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wording only Android needs. Written by hand; import-strings.py leaves this file alone. -->
+<resources>
+    <string name="home_android_you">You</string>
+</resources>

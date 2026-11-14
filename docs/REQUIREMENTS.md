@@ -255,7 +255,7 @@ Let **N** = number of slots (= months) and **C** = slot amount per month.
 - FR-72: Notes are listed on their item and in a kameti-wide "Notes" feed, and can be searched.
 
 ### 6.9 Reminders and notifications
-- FR-80: **Automatic reminders.** During the reminder window (default days 1–10, in Asia/Karachi time), members with an outstanding balance for the current month get a push notification. The default schedule is the **1st, 5th, 8th and 10th at 10:00 AM**, and the owner can change it per kameti.
+- FR-80: **Automatic reminders.** During the reminder window (default days 1–10, in Asia/Karachi time), members with an outstanding balance for the current month get a push notification. The default schedule is the **1st, 5th, 8th and 10th at 10:00 AM**, and the owner can change the days and the time per kameti (a whole hour from 6:00 AM to 10:00 PM, Pakistan time) in the create wizard and in Edit kameti.
   - Members who are fully paid (including through credit) are **never** reminded.
 - FR-81: **Overdue.** After the due day, the member gets an "Overdue" reminder and the owner gets a digest (e.g. "3 members still owe Rs 4,50,000 for November").
 - FR-82: **Owner broadcast.** One tap sends a reminder to **all unpaid members** of a kameti. The owner can optionally edit the message and choose recipients (e.g. all members, unpaid only, or selected people).

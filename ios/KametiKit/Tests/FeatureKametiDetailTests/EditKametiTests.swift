@@ -34,6 +34,22 @@ struct EditKametiTests {
         #expect(changes.slotAmount == nil && changes.months == nil)
     }
 
+    @Test func theReminderTimeIsEditableAndSent() async throws {
+        let (model, data) = await loaded()
+        let kameti = try #require(data()).kameti
+        #expect(kameti.reminderHour == 10)
+        var form = EditKametiForm(kameti)
+        #expect(form.reminderHour == 10)
+        form.reminderHour = 18
+        let changes = try #require(form.changes(from: kameti))
+        #expect(changes.reminderHour == 18)
+        #expect(changes.name == nil && changes.dueDay == nil && changes.reminderDays == nil)
+        #expect(await model.updateKameti(changes) == nil)
+        #expect(try #require(data()).kameti.reminderHour == 18)
+        // The audit entry shows the change as "Reminder time: 10:00 AM → 6:00 PM" in Activity.
+        #expect(await model.updateKameti(KametiChanges(reminderHour: 3)) == .server(code: "invalid_reminder_hour", detail: nil))
+    }
+
     @Test func anEarlierDueDayDropsLaterReminders() async throws {
         let (_, data) = await loaded()
         var form = EditKametiForm(try #require(data()).kameti)

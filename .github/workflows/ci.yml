@@ -12,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  ios:
+    name: iOS tests
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -28,3 +29,28 @@ jobs:
           set -o pipefail
           SIM=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k in d for x in d[k] if 'iPhone' in x['name']))")
           xcodebuild test -scheme KametiKit-Package -destination "id=$SIM" | tail -40
+
+  # Linux minutes are cheap: unit tests, lint and a debug build of the Android app.
+  android:
+    name: Android tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # KametiConfig.json is git-ignored; the demo config needs no backend and no secrets.
+      - name: Use the demo config
+        run: scripts/use-env.sh demo
+
+      - name: Unit tests, lint and a debug build
+        run: ./gradlew test :app:lintDebug :app:assembleDebug --no-daemon

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wording only Android needs (iOS draws these with system controls). Written by hand; import-strings.py leaves this file alone. -->
+<resources>
+    <string name="ui_android_back">Back</string>
+    <string name="ui_android_n_new">%d new</string>
+</resources>

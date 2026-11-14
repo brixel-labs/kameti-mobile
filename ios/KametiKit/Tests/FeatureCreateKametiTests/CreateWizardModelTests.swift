@@ -58,6 +58,26 @@ struct CreateWizardModelTests {
         #expect(model.step == .members)
     }
 
+    @Test func theReminderTimeIsSavedWithTheDates() async throws {
+        let dependencies = SampleData.dependencies()
+        let model = CreateWizardModel(userId: SampleData.userId, dependencies: dependencies)
+        #expect(model.reminderHour == 10)
+        model.name = "Test kameti"
+        model.amountText = "100000"
+        model.setMonths(2)
+        await model.saveBasics()
+        model.reminderHour = 18
+        await model.saveDates()
+        #expect(model.failure == nil)
+        let id = try #require(model.kametiId)
+        #expect(try await dependencies.kametis.kameti(id: id).reminderHour == 18)
+
+        // Reopened later, the draft shows it again.
+        let reopened = CreateWizardModel(userId: SampleData.userId, dependencies: dependencies)
+        await reopened.resume(draftId: id)
+        #expect(reopened.reminderHour == 18)
+    }
+
     @Test func fullFlowCreatesFillsAndStarts() async throws {
         let model = makeModel()
         model.name = "Test kameti"

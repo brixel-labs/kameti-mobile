@@ -11,7 +11,7 @@ struct OwnerTabs: View {
 
     let data: KametiDetailData
     let model: KametiDetailViewModel
-    @State private var tab = Tab.overview
+    @State private var tab: Tab
     @State private var recording: RecordTarget?
     @State private var collecting = false
     @State private var voiding: VoidTarget?
@@ -31,6 +31,12 @@ struct OwnerTabs: View {
     @State private var invitesFinished = false
     @State private var restoreFailure: Failure?
     @State private var reminding = false
+
+    init(data: KametiDetailData, model: KametiDetailViewModel) {
+        self.data = data
+        self.model = model
+        _tab = State(initialValue: model.opensOnMembers ? .members : .overview)
+    }
 
     /// Archived (§6.11): read-only, so every write control is left out.
     private var isArchived: Bool { data.kameti.status == .archived }

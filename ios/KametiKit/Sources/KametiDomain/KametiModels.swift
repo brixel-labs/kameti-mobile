@@ -27,18 +27,30 @@ public struct Kameti: Codable, Hashable, Identifiable, Sendable {
     public let maxSlotsPerMember: Int
     public let status: KametiStatus
     public let startedAt: Date?
+    /// Stored as sent by the backend; a backend without the column (before its migration) sends none.
+    private let storedReminderHour: Int?
+
+    /// The hour of the day, Pakistan time, the kameti's reminders go out (06 to 22).
+    public var reminderHour: Int { storedReminderHour ?? ReminderTime.defaultHour }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, ownerId, name, description, startMonth, monthsN, slotAmountC, dueDay, reminderDays
+        case maxSlotsPerMember, status, startedAt
+        case storedReminderHour = "reminderHour"
+    }
 
     public init(
         id: String, ownerId: String, name: String, description: String? = nil,
         startMonth: Date, monthsN: Int, slotAmountC: Money, dueDay: Int,
         reminderDays: [Int], maxSlotsPerMember: Int, status: KametiStatus,
-        startedAt: Date? = nil
+        startedAt: Date? = nil, reminderHour: Int = ReminderTime.defaultHour
     ) {
         self.id = id; self.ownerId = ownerId; self.name = name
         self.description = description; self.startMonth = startMonth
         self.monthsN = monthsN; self.slotAmountC = slotAmountC; self.dueDay = dueDay
         self.reminderDays = reminderDays; self.maxSlotsPerMember = maxSlotsPerMember
         self.status = status; self.startedAt = startedAt
+        self.storedReminderHour = reminderHour
     }
 
     /// The monthly pot: N × C.
@@ -125,16 +137,17 @@ public struct NewKameti: Sendable {
     public var reminderDays: [Int]
     public var maxSlotsPerMember: Int
     public var description: String?
+    public var reminderHour: Int
 
     public init(
         name: String, startMonth: Date, months: Int, slotAmount: Money,
         dueDay: Int = 10, reminderDays: [Int] = [1, 5, 8, 10],
-        maxSlotsPerMember: Int = 4, description: String? = nil
+        maxSlotsPerMember: Int = 4, description: String? = nil, reminderHour: Int = ReminderTime.defaultHour
     ) {
         self.name = name; self.startMonth = startMonth; self.months = months
         self.slotAmount = slotAmount; self.dueDay = dueDay
         self.reminderDays = reminderDays; self.maxSlotsPerMember = maxSlotsPerMember
-        self.description = description
+        self.description = description; self.reminderHour = reminderHour
     }
 }
 
@@ -148,15 +161,17 @@ public struct KametiChanges: Sendable {
     public var dueDay: Int?
     public var reminderDays: [Int]?
     public var maxSlotsPerMember: Int?
+    public var reminderHour: Int?
 
     public init(
         name: String? = nil, description: String? = nil, startMonth: Date? = nil,
         months: Int? = nil, slotAmount: Money? = nil, dueDay: Int? = nil,
-        reminderDays: [Int]? = nil, maxSlotsPerMember: Int? = nil
+        reminderDays: [Int]? = nil, maxSlotsPerMember: Int? = nil, reminderHour: Int? = nil
     ) {
         self.name = name; self.description = description; self.startMonth = startMonth
         self.months = months; self.slotAmount = slotAmount; self.dueDay = dueDay
         self.reminderDays = reminderDays; self.maxSlotsPerMember = maxSlotsPerMember
+        self.reminderHour = reminderHour
     }
 }
 

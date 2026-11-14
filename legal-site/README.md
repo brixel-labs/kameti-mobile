@@ -21,6 +21,7 @@ Vercel project `kameti-site`: Root Directory `legal-site`, preset Other, product
   details, and is `noindex` with `no-referrer`
 - `/.well-known/apple-app-site-association` — opens `/join/*` links in the iOS app
   (`77XZANJHWG.com.brixel.kameti`), served as `application/json`
+- `/.well-known/assetlinks.json` — opens `/join/*` links in the Android app (lists the app's signing fingerprints; add the release one from Play Console before launch)
 - `/robots.txt` — keeps crawlers out of `/join/`
 
 ## Local preview

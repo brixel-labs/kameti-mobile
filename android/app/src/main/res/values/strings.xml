@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kameti</string>
+    <!-- The notification channel, as shown in the phone's settings. -->
+    <string name="notification_channel_name">Kameti updates</string>
+    <string name="notification_channel_description">Payments, reminders, invites and changes to your kametis.</string>
+</resources>

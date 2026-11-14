@@ -187,6 +187,8 @@ private struct RouteDestination: View {
         switch route {
         case .kametiDetail(let id):
             KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router)
+        case .kametiMembers(let id):
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, opensOnMembers: true)
         case .kametiAction(let id, let action):
             KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, action: action)
         case .createKameti:
@@ -253,9 +255,13 @@ private struct KametiDetailScreen: View {
     @State private var model: KametiDetailViewModel
     let router: AppRouter
 
-    init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?, router: AppRouter, action: RecordAction? = nil) {
+    init(
+        kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?, router: AppRouter,
+        action: RecordAction? = nil, opensOnMembers: Bool = false
+    ) {
         let model = KametiDetailViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies, preview: preview)
         model.pendingAction = action
+        model.opensOnMembers = opensOnMembers
         _model = State(initialValue: model)
         self.router = router
     }
@@ -289,7 +295,8 @@ private struct CreateKametiScreen: View {
             model: model,
             onStarted: { id in
                 onFinished()
-                router.homePath = [.kametiDetail(id: id)]
+                // Straight to Members, so the owner can invite people right away.
+                router.homePath = [.kametiMembers(id: id)]
             },
             onClose: {
                 onFinished()
