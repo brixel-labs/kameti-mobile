@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug builds only: the dev flavor talks to the local Supabase over plain http. -->
+    <application android:usesCleartextTraffic="true" />
+
+</manifest>

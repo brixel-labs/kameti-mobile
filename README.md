@@ -1,6 +1,6 @@
 # Kameti — Mobile
 
-Native iOS app for running a kameti (committee / ROSCA): the owner records contributions and payouts, and members see their dues, the payout schedule and each month's pot status (read-only). Android comes later.
+Native iOS app for running a kameti (committee / ROSCA): the owner records contributions and payouts, and members see their dues, the payout schedule and each month's pot status (read-only). The Android app (`android/`, Kotlin and Jetpack Compose) is being ported from the iOS app, module for module.
 
 - **Stack:** SwiftUI, Swift 6, iOS 26, supabase-swift; Xcode 27.2
 - **Bundle ID:** `com.brixel.kameti`
@@ -32,7 +32,12 @@ ios/
                      sign-in providers, push, wiring
   KametiKit/         Swift package with all app code (iOS 26, Swift 6)
   scripts/           use-env.sh
-design-tokens/       tokens.json is the single source of truth; generate.py writes Swift
+android/
+  app/               the thin Android app module
+  core/ domain/ ui/ data/ navigation/ testsupport/ feature/*   one Gradle module per KametiKit target
+  build-logic/       the kameti.* convention plugins
+  scripts/           use-env.sh, import-strings.py (iOS String Catalogs -> strings.xml)
+design-tokens/       tokens.json is the single source of truth; generate.py writes Swift and Kotlin
 docs/                requirements, design system, roadmap
 legal-site/          static website (Vercel)
 env/                 per-flavor backend settings (gitignored except example.json)
@@ -62,5 +67,15 @@ cd ios/KametiKit && xcodebuild test -scheme KametiKit-Package -destination 'id=<
 # Build the app
 xcodebuild -project ios/Kameti/Kameti.xcodeproj -scheme Kameti -destination 'platform=iOS Simulator,name=iPhone 18 Pro' build
 ```
+
+## Android
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+android/scripts/use-env.sh prod           # or dev or demo
+cd android && ./gradlew test :app:assembleDebug
+```
+
+Open `android/` in Android Studio to run it. The modules mirror the KametiKit table above (`:core`, `:domain`, `:ui`, `:data`, `:feature:*`), with the same rule: only `:app` depends on `:data`.
 
 CI (`.github/workflows/ci.yml`) runs the KametiKit tests on pushes to `develop` and `main` (after a PR merges), so run them locally before opening a PR. It can also be started by hand from the Actions tab.

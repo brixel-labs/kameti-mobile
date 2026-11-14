@@ -34,7 +34,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Edit kameti, draft screen, Notes | Built: drafts reopen in the wizard; Notes tab (A2-Notes-Tab, swipe actions); edit a running kameti (AE-1, ••• menu) | Notes on payment and payout screens |
 | Offline and error states | Built (AF-States): offline banner, writes blocked offline, skeletons, error and invite cards | Saved copy for opening the app offline |
 | Dark mode | Checked: tokens match the dark artboards; two hard-coded colours fixed | — |
-| Android | Not started | Later |
+| Android | Started 2026-11-14: project, modules, tokens, strings, `:core`, `:domain`, sample data, design system, `:data`, sign-in, the tab shell, Home, the kameti detail and recording (payments, voids, payouts, reminders) | See "Android port" below |
 
 ## Order of work
 
@@ -56,3 +56,24 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 - Build screens to the canvas artboards; propose design options on the canvas first when a screen is unclear.
 - After a change: build and launch on the iPhone 18 Pro Max simulator; the owner tests the app. Run the package tests when logic changes.
 - One commit per finished feature; ask before pushing.
+
+## Android port
+
+`android/` is a module-for-module port of the iOS app (Kotlin, Jetpack Compose, supabase-kt). One `feature/android-*` branch per phase.
+
+| # | Phase | State |
+|---|---|---|
+| 1 | Scaffold: Gradle modules, convention plugins, token generator, strings importer, env script | Done |
+| 2 | `:core`, `:domain`, `:testsupport` with the ported tests | Done |
+| 3 | Design system: every `K*` component in Compose, `KIcons`, failure messages | Done |
+| 4 | Data layer (supabase-kt), sign-in, tabs and router, demo flavor. Inbox, Profile and the pushed screens are stand-ins (`feature/shell/ComingNext.kt`) | Done |
+| 5 | Home: owner, member and past cards, members sheet, invitations, join code, archived list, Record payment menu (as a sheet) | Done |
+| 6 | Kameti detail (read): Overview, Members, Schedule, Payments, member view. No write controls yet | Done |
+| 7 | Recording: record payment, void, tap-to-settle, payout with shortfall and dues taken from it, owner reminders (push and WhatsApp). The Record payment menu is a sheet | Done |
+| 8 | Create wizard | — |
+| 9 | Members and invites, Inbox | — |
+| 10 | Notes, activity, edit, archive, restore, duplicate | — |
+| 11 | Profile | — |
+| 12 | Push, live updates, invite links, offline states, release preparation, CI | — |
+
+Needs the owner: an Android OAuth client (Google Cloud, with the app's SHA-1), `com.brixel.kameti://login-callback` in Supabase's redirect URLs and an Apple Services ID on the Apple provider (Sign in with Apple opens in a browser tab on Android), the Android app in Firebase (`google-services.json`), and the release signing fingerprint for `assetlinks.json` on the website.

@@ -1,0 +1,17 @@
+.gradle/
+.kotlin/
+build/
+local.properties
+*.iml
+.idea/
+captures/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# The app's backend settings (copied from env/*.json by android/scripts/use-env.sh)
+app/src/main/assets/KametiConfig.json
+
+# Firebase config for push (downloaded from the Firebase console; not committed)
+app/google-services.json

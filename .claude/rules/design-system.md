@@ -1,11 +1,12 @@
 ---
 paths:
   - "ios/**/*.swift"
+  - "android/**/*.kt"
 ---
 
 # Design system rules (UI code)
 
-The full catalogue is in `docs/DESIGN_SYSTEM.md`; the SwiftUI implementation is in `ios/KametiKit/Sources/KametiUI`. Read them before building or changing any screen.
+The full catalogue is in `docs/DESIGN_SYSTEM.md`; the SwiftUI implementation is in `ios/KametiKit/Sources/KametiUI`. The Compose implementation is in `android/ui` with the same component names. Read them before building or changing any screen.
 
 1. **Build screens from KDS components** (`KCard`, `KButton`, `KPill`, `KAvatar`, `kBottomSheet`, `kConfirmSheet`, …). Before writing UI, check `KametiUI/Components` for an existing one.
 2. **Never use raw styling in feature code:** no literal colours (`Color(red:…)`, `.blue`), font sizes or spacing numbers where a token exists. Use `KColors.*`, `KTextToken.*` with `.kText`, `KSpace.*` and `KRadius.*`.
@@ -16,4 +17,4 @@ The full catalogue is in `docs/DESIGN_SYSTEM.md`; the SwiftUI implementation is 
 7. **Whole cards are tappable** when they lead somewhere, not just a chevron or link.
 8. **Every screen handles** loading (skeletons), empty, error (with retry) and offline (banner).
 9. **Destructive or money-changing actions** (void, payout with shortfall, removing a member) go through `kConfirmSheet`. Buttons that write show a spinner and ignore repeat taps.
-10. Tokens come from `design-tokens/tokens.json`; regenerate with `python3 design-tokens/generate.py`, never edit `Tokens.generated.swift` by hand.
+10. Tokens come from `design-tokens/tokens.json`; regenerate with `python3 design-tokens/generate.py`, never edit `Tokens.generated.swift` or `Tokens.generated.kt` by hand.
