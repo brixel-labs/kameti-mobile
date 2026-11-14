@@ -176,3 +176,29 @@ object DetailLogic {
         )
     }
 }
+
+/**
+ * "Edit setup" (mirrors `reopen_kameti`): the owner can take a started kameti
+ * back to setup until its first month arrives, while nothing is recorded.
+ */
+object SetupLogic {
+    fun canEditSetup(data: KametiDetailData): Boolean =
+        data.isOwner && data.kameti.status == KametiStatus.Active &&
+            data.today.isBefore(data.kameti.startMonth) &&
+            data.payments.isEmpty() && data.payouts.isEmpty() &&
+            data.shares.none { it.effectiveFromMonth > 1 || it.effectiveToMonth != null }
+}
+
+/** Name and start month for a duplicated kameti (FR-13). */
+object DuplicateLogic {
+    /**
+     * "Office Kameti (copy)", then "(copy 2)", … kept within the 40-character
+     * limit. [suffix] is " (copy)" for the first attempt, " (copy 2)" after.
+     */
+    fun name(original: String, suffix: String): String =
+        original.trim().take(maxOf(40 - suffix.length, 3)).trim() + suffix
+
+    /** The month after the original's last month, or [currentMonth] if that is later. */
+    fun startMonth(kameti: Kameti, currentMonth: LocalDate): LocalDate =
+        maxOf(DetailLogic.monthStart(kameti, kameti.monthsN + 1), currentMonth)
+}

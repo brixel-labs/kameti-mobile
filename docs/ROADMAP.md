@@ -70,9 +70,9 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | 5 | Home: owner, member and past cards, members sheet, invitations, join code, archived list, Record payment menu (as a sheet) | Done |
 | 6 | Kameti detail (read): Overview, Members, Schedule, Payments, member view. No write controls yet | Done |
 | 7 | Recording: record payment, void, tap-to-settle, payout with shortfall and dues taken from it, owner reminders (push and WhatsApp). The Record payment menu is a sheet | Done |
-| 8 | Create wizard | — |
-| 9 | Members and invites, Inbox | — |
-| 10 | Notes, activity, edit, archive, restore, duplicate | — |
+| 8 | Create wizard: six steps, slot split sheet, payout order, reopening a draft. The tab bar hides while it is open | Done |
+| 9 | Members and invites, Inbox: edit member, app access, share transfer, Invite all, join screen, approve sheet | Done |
+| 10 | Notes tab and member notes, activity log, edit kameti, edit setup, archive, restore, duplicate | Done |
 | 11 | Profile | — |
 | 12 | Push, live updates, invite links, offline states, release preparation, CI | — |
 

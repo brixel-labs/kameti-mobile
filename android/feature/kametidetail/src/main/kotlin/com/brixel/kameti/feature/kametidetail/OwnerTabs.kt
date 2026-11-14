@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -38,18 +40,26 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brixel.kameti.core.Money
+import com.brixel.kameti.core.Failure
 import com.brixel.kameti.core.RecordAction
 import com.brixel.kameti.domain.JoinStatus
 import com.brixel.kameti.domain.KametiStatus
+import com.brixel.kameti.domain.Member
 import com.brixel.kameti.domain.MemberBalanceRow
 import com.brixel.kameti.domain.MonthCollectionRow
 import com.brixel.kameti.domain.MonthCollectionState
 import com.brixel.kameti.domain.MonthStatusCode
 import com.brixel.kameti.ui.KAvatarStack
+import com.brixel.kameti.ui.KAvatar
 import com.brixel.kameti.ui.KBottomSheet
 import com.brixel.kameti.ui.KCard
 import com.brixel.kameti.ui.KColors
+import com.brixel.kameti.ui.KConfirmOutcome
+import com.brixel.kameti.ui.KConfirmSheet
+import com.brixel.kameti.ui.KDivider
+import com.brixel.kameti.ui.KFailureSheet
 import com.brixel.kameti.ui.KFlowRow
 import com.brixel.kameti.ui.KIcon
 import com.brixel.kameti.ui.KIcons
@@ -68,25 +78,29 @@ import com.brixel.kameti.ui.KPotProgress
 import com.brixel.kameti.ui.KRadius
 import com.brixel.kameti.ui.KRefreshable
 import com.brixel.kameti.ui.KSectionHeader
+import com.brixel.kameti.ui.KSheetMessage
 import com.brixel.kameti.ui.KSpace
 import com.brixel.kameti.ui.KStatusChip
 import com.brixel.kameti.ui.KText
 import com.brixel.kameti.ui.KTextField
 import com.brixel.kameti.ui.KTextStyle
 import com.brixel.kameti.ui.KTextToken
+import com.brixel.kameti.ui.KTonalButton
+import com.brixel.kameti.ui.KTonalStyle
 import com.brixel.kameti.ui.KUnderlineTabs
 import com.brixel.kameti.ui.subtitle
 import com.brixel.kameti.ui.subtitleSmall
 import com.brixel.kameti.ui.textSubtitle
+import com.brixel.kameti.ui.userMessage
 import java.time.LocalDate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-internal enum class OwnerTab { Overview, Members, Schedule, Payments }
+internal enum class OwnerTab { Overview, Members, Schedule, Payments, Notes }
 
 /**
  * The owner's view of a running kameti (boards A-Overview, A2-*-Tab):
- * Overview, Members, Schedule and Payments. Swipe sideways or tap a tab.
+ * Overview, Members, Schedule, Payments and Notes. Swipe sideways or tap a tab.
  */
 @Composable
 internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, modifier: Modifier = Modifier) {
@@ -95,6 +109,7 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
         KOption(OwnerTab.Members, stringResource(R.string.detail_members)),
         KOption(OwnerTab.Schedule, stringResource(R.string.detail_schedule)),
         KOption(OwnerTab.Payments, stringResource(R.string.detail_payments)),
+        KOption(OwnerTab.Notes, stringResource(R.string.detail_notes)),
     )
     val pager = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
@@ -110,6 +125,14 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
     var voiding by remember { mutableStateOf<VoidTarget?>(null) }
     var payingOut by remember { mutableStateOf<Int?>(null) }
     var reminding by remember { mutableStateOf(false) }
+    var editingMember by remember { mutableStateOf<String?>(null) }
+    // Who Invite all goes to, fixed when its sheet opens, so the list and the count stay put while it sends.
+    var inviteBatch by remember { mutableStateOf<InviteBatch?>(null) }
+    // The one note whose swipe actions are showing; moving to another tab closes it.
+    var openNote by remember { mutableStateOf<String?>(null) }
+    var restoreFailure by remember { mutableStateOf<Failure?>(null) }
+    val onNotes = tabs[pager.currentPage].value == OwnerTab.Notes
+    LaunchedEffect(pager.currentPage) { openNote = null }
 
     // Home's Record payment opens the kameti and starts the chosen action.
     LaunchedEffect(Unit) {
@@ -127,7 +150,9 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
     Box(modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         if (isArchived) {
-            ArchivedBanner(Modifier.padding(horizontal = KSpace.xl, vertical = KSpace.sm))
+            ArchivedBanner(Modifier.padding(horizontal = KSpace.xl, vertical = KSpace.sm)) {
+                scope.launch { restoreFailure = model.restore() }
+            }
         }
         KUnderlineTabs(
             tabs = tabs,
@@ -136,7 +161,10 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
             inset = KSpace.xl,
         )
         HorizontalPager(state = pager, modifier = Modifier.weight(1f), beyondViewportPageCount = 1) { page ->
+            val isNotes = tabs[page].value == OwnerTab.Notes
+            Column {
             KRefreshable(
+                modifier = Modifier.weight(1f),
                 isRefreshing = refreshing,
                 onRefresh = {
                     scope.launch {
@@ -152,7 +180,7 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = KSpace.xl)
                         // Room for the floating action.
-                        .padding(top = KSpace.lg, bottom = if (current != null && !isArchived) 88.dp else KSpace.xl),
+                        .padding(top = KSpace.lg, bottom = if (current != null && !isArchived && !isNotes) 88.dp else KSpace.xl),
                     verticalArrangement = Arrangement.spacedBy(KSpace.lg),
                 ) {
                     when (tabs[page].value) {
@@ -162,15 +190,24 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
                             onPayOut = if (canPayOutNow) ({ payingOut = current?.monthIndex }) else null,
                             onRecord = { if (!isArchived) recording = RecordTarget(it) },
                         )
-                        OwnerTab.Members -> MembersTab(data)
+                        OwnerTab.Members -> MembersTab(
+                            data,
+                            onSelect = if (isArchived) null else ({ editingMember = it.id }),
+                            onInviteAll = if (isArchived) null else ({ inviteBatch = InviteBatch.of(data) }),
+                        )
                         OwnerTab.Schedule -> ScheduleSection(data, onPayOut = if (isArchived) null else ({ payingOut = it }))
                         OwnerTab.Payments -> PaymentsTab(data, onVoid = if (isArchived) null else ({ voiding = it }))
+                        OwnerTab.Notes -> NotesTab(data, model, openNote, { openNote = it }, isReadOnly = isArchived)
                     }
                 }
             }
+                // Notes keeps its composer pinned under the list.
+                if (isNotes && !isArchived) NoteComposer(data, model, Modifier.imePadding())
+            }
         }
     }
-        if (current != null && !isArchived) {
+        // On every tab but Notes, whose composer sits at the bottom.
+        if (current != null && !isArchived && !onNotes) {
             RecordButton(Modifier.align(Alignment.BottomEnd).padding(KSpace.xl)) { choosingAction = true }
         }
     }
@@ -200,6 +237,16 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
     voiding?.let { target -> VoidSheet(target, model) { voiding = null } }
     payingOut?.let { month -> PayoutSheet(data, model, month) { payingOut = null } }
     if (reminding) RemindSheet(data.kameti, model.dependencies, onDismiss = { reminding = false })
+    // The member as loaded now, so the sheet follows invite and name changes.
+    editingMember?.let { id ->
+        val member = data.members.firstOrNull { it.id == id }
+        if (member != null) EditMemberSheet(data, model, member) { editingMember = null }
+    }
+    inviteBatch?.let { batch -> InviteAllSheet(batch, model) { inviteBatch = null } }
+    KFailureSheet(
+        restoreFailure, stringResource(R.string.detail_couldnt_restore_this_kameti), onDismiss = { restoreFailure = null },
+        message = restoreFailure?.let { changeFailureMessage(it) },
+    )
 }
 
 /** Who a payment is being recorded for; `null` lets the owner choose. */
@@ -249,7 +296,7 @@ private fun ActionRow(icon: ImageVector, title: String, onClick: () -> Unit) {
 
 /** Shown above an archived kameti's tabs: what archived means. */
 @Composable
-private fun ArchivedBanner(modifier: Modifier = Modifier) {
+private fun ArchivedBanner(modifier: Modifier = Modifier, onRestore: () -> Unit) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -259,7 +306,7 @@ private fun ArchivedBanner(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         KIcon(KIcons.archiveFilled)
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             KText(stringResource(R.string.detail_archived), KTextToken.bodyStrong)
             KText(
                 stringResource(R.string.detail_read_only_for_you_and_every_member),
@@ -267,6 +314,7 @@ private fun ArchivedBanner(modifier: Modifier = Modifier) {
                 color = KColors.textSecondary,
             )
         }
+        KTonalButton(stringResource(R.string.detail_restore), onClick = onRestore, style = KTonalStyle.Neutral)
     }
 }
 
@@ -517,7 +565,12 @@ private fun FinishedOverview(data: KametiDetailData, summary: DetailLogic.FinalS
  * joined, and one row per member with slots, balance and join state.
  */
 @Composable
-private fun MembersTab(data: KametiDetailData) {
+private fun MembersTab(
+    data: KametiDetailData,
+    /** Opens the edit sheet for a member; `null` when the kameti is read-only. */
+    onSelect: ((Member) -> Unit)?,
+    onInviteAll: (() -> Unit)?,
+) {
     if (data.members.isEmpty()) {
         KMessageCard(
             title = stringResource(R.string.detail_no_members_yet),
@@ -539,7 +592,10 @@ private fun MembersTab(data: KametiDetailData) {
         leading = { KIcon(KIcons.search) },
     )
 
-    if (notJoined > 0 && data.kameti.status != KametiStatus.Archived) {
+    if (notJoined > 0 && onInviteAll != null) {
+        // Only offer "Invite" when someone can actually be invited (has an
+        // email and no live invite); otherwise say what's missing.
+        val invitable = AccessState.invitable(data).size
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -549,15 +605,40 @@ private fun MembersTab(data: KametiDetailData) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             KIcon(KIcons.envelope, tint = KColors.warning)
-            KText(
-                if (notJoined == 1) {
-                    stringResource(R.string.detail_1_person_hasnt_joined_the_app_yet)
-                } else {
-                    stringResource(R.string.detail_n_people_havent_joined_the_app_yet, notJoined)
-                },
-                KTextToken.bodySm,
-                color = KColors.warning,
-            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                KText(
+                    if (notJoined == 1) {
+                        stringResource(R.string.detail_1_person_hasnt_joined_the_app_yet)
+                    } else {
+                        stringResource(R.string.detail_n_people_havent_joined_the_app_yet, notJoined)
+                    },
+                    KTextToken.bodySm,
+                    color = KColors.warning,
+                )
+                if (invitable == 0) {
+                    KText(
+                        stringResource(R.string.detail_add_an_email_in_their_member_sheet_to),
+                        KTextToken.caption,
+                        color = KColors.warning,
+                    )
+                }
+            }
+            if (invitable > 0) {
+                KText(
+                    if (invitable == notJoined) {
+                        stringResource(R.string.detail_invite_all)
+                    } else {
+                        stringResource(R.string.detail_invite_n, invitable)
+                    },
+                    KTextStyle(size = 13f, weight = FontWeight.SemiBold),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(KColors.warning)
+                        .clickable(role = Role.Button, onClick = onInviteAll)
+                        .padding(horizontal = KSpace.md, vertical = 7.dp),
+                    color = KColors.textOnBrand,
+                )
+            }
         }
     }
 
@@ -575,6 +656,7 @@ private fun MembersTab(data: KametiDetailData) {
                     else -> stringResource(R.string.detail_n_slots_s_mo, slots, balance.monthlyDue.format())
                 },
                 showsDivider = index < list.size - 1,
+                onClick = onSelect?.let { { it(member) } },
             ) {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (balance != null) BalanceChip(balance)
@@ -595,6 +677,144 @@ private fun JoinCaption(status: JoinStatus) {
         JoinStatus.NotInvited ->
             KText(stringResource(R.string.detail_not_invited), KTextToken.subtitleSmall, color = KColors.textSubtitle)
         JoinStatus.Declined -> KText(stringResource(R.string.detail_declined), KTextToken.caption, color = KColors.negative)
+    }
+}
+
+// Invite all
+
+/** The people an Invite all will email, and how many others have no email yet. */
+private class InviteBatch(val people: List<Person>, val missingEmail: Int) {
+    class Person(val id: String, val name: String, val email: String?, val colorIndex: Int)
+
+    companion object {
+        fun of(data: KametiDetailData) = InviteBatch(
+            AccessState.invitable(data).map { member ->
+                Person(
+                    member.id, member.name, (AccessState.of(member, data) as? AccessState.NotInvited)?.email,
+                    DetailLogic.colorIndex(member, data.members),
+                )
+            },
+            AccessState.missingEmail(data),
+        )
+    }
+}
+
+/**
+ * "Send 3 invites?" (board AX-4): who gets one, then the invites go out one
+ * by one, each row turning green as its invite is sent, and the result
+ * shows in the same sheet.
+ */
+@Composable
+private fun InviteAllSheet(batch: InviteBatch, model: KametiDetailViewModel, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val sent by model.invitedThisRun.collectAsStateWithLifecycle()
+    var sending by remember { mutableStateOf(false) }
+    val count = batch.people.size
+    val base = stringResource(
+        if (count == 0) R.string.detail_everyone_with_an_email_already_has_an_invite else R.string.detail_each_person_gets_an_email_with_a_link,
+    )
+    val missing = when (batch.missingEmail) {
+        0 -> null
+        1 -> stringResource(R.string.detail_1_person_has_no_email_yet_add_one)
+        else -> stringResource(R.string.detail_n_people_have_no_email_yet_add_one, batch.missingEmail)
+    }
+
+    KConfirmSheet(
+        title = when (count) {
+            0 -> stringResource(R.string.detail_no_one_to_invite)
+            1 -> stringResource(R.string.detail_send_1_invite)
+            else -> stringResource(R.string.detail_send_n_invites, count)
+        },
+        confirmTitle = stringResource(R.string.detail_send),
+        onDismiss = onDismiss,
+        onConfirm = {
+            val ids = batch.people.map { it.id }
+            sending = true
+            val result = model.inviteAll(ids)
+            // The last row shows its tick before the result takes its place.
+            if (result.invited > 0) delay(450)
+            sending = false
+            val emailed = ids.any { model.sentInvites.value[it]?.emailed == true }
+            if (result.invited == 0) {
+                return@KConfirmSheet KConfirmOutcome.Result(
+                    KSheetMessage(
+                        context.getString(R.string.detail_invites_werent_sent),
+                        result.failure?.userMessage(context) ?: context.getString(R.string.detail_please_try_again),
+                        KSheetMessage.Tone.Error,
+                    ),
+                )
+            }
+            val who = if (result.invited == 1) {
+                context.getString(R.string.detail_1_member)
+            } else {
+                context.getString(R.string.detail_n_members, result.invited)
+            }
+            var message = context.getString(
+                if (emailed) R.string.detail_s_will_get_an_email_with_a_link else R.string.detail_invites_made_for_s_email_isnt_set_up,
+                who,
+            )
+            result.failure?.let {
+                message += "\n\n" + context.getString(R.string.detail_n_couldnt_be_sent_s, ids.size - result.invited, it.userMessage(context))
+            }
+            KConfirmOutcome.Result(
+                KSheetMessage(
+                    if (result.invited == 1) {
+                        context.getString(R.string.detail_1_invite_sent)
+                    } else {
+                        context.getString(R.string.detail_n_invites_sent, result.invited)
+                    },
+                    message,
+                    if (result.failure == null) KSheetMessage.Tone.Success else KSheetMessage.Tone.Warning,
+                ),
+            )
+        },
+        message = listOfNotNull(base, missing).joinToString(" "),
+        details = if (count == 0) null else ({ InviteList(batch.people, if (sending) sent else emptySet()) }),
+    )
+}
+
+/** The people an invite goes to: avatar, name and email, or "Invite sent" once theirs has gone out. */
+@Composable
+private fun InviteList(people: List<InviteBatch.Person>, sent: Set<String>) {
+    val shape = RoundedCornerShape(KRadius.card)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(max = 280.dp)
+            .clip(shape)
+            .background(KColors.surface)
+            .border(1.dp, KColors.border, shape)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        people.forEachIndexed { index, person ->
+            val isSent = person.id in sent
+            if (index > 0) KDivider()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(if (isSent) KColors.brandSubtle else KColors.surface)
+                    .padding(horizontal = KSpace.md, vertical = KSpace.sm),
+                horizontalArrangement = Arrangement.spacedBy(KSpace.md),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                KAvatar(person.name, person.colorIndex)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    KText(person.name, KTextToken.bodyStrong)
+                    if (isSent) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            KIcon(KIcons.check, tint = KColors.brand, size = 14.dp)
+                            KText(
+                                stringResource(R.string.detail_invite_sent),
+                                KTextStyle(size = 13f, weight = FontWeight.SemiBold),
+                                color = KColors.brand,
+                            )
+                        }
+                    } else if (person.email != null) {
+                        KText(person.email, KTextToken.subtitleSmall, color = KColors.textSubtitle)
+                    }
+                }
+            }
+        }
     }
 }
 

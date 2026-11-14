@@ -2,13 +2,13 @@
 
 Read this first when picking up the Android port in a new session. Update it at the end of every phase (and whenever the state below changes).
 
-**Last updated:** 2026-11-14, end of phase 7.
+**Last updated:** 2026-11-14, end of phase 10.
 
 ## Where things stand
 
-- **Phases 1–7 are done. Next: phase 8.** Start a phase only when the owner says "Continue phase N".
-- **Nothing is committed.** All Android work is uncommitted on branch `feature/android-scaffold` in `kameti-mobile` (the git repo is `kameti-mobile`, not the parent `kameti` folder). Changed tracked files: `CLAUDE.md`, `README.md`, `docs/ROADMAP.md`, `design-tokens/generate.py`, `.claude/rules/design-system.md`. New: `android/`, `.claude/rules/android-architecture.md`, this file.
-- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 136 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. The screens have not been checked visually by Claude; the owner tests them.
+- **Phases 1–10 are done. Next: phase 11.** Start a phase only when the owner says "Continue phase N".
+- **Phases 1–10 are committed** on branch `feature/android-scaffold` in `kameti-mobile` (the git repo is `kameti-mobile`, not the parent `kameti` folder): phases 1–7 in `f7c60a0`, phases 8–10 in the commit after it. Nothing is pushed and there is no pull request.
+- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 227 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. The screens have not been checked visually by Claude; the owner tests them.
 - **Android app config is `demo`** (`android/app/src/main/assets/KametiConfig.json`, gitignored). Switch with `android/scripts/use-env.sh prod|dev|demo` run from `kameti-mobile`, then rebuild. The iOS config is untouched.
 - **Sign-in on prod does not work on Android yet** (see "Waiting on the owner"). Until then the tabs are reachable only in demo, or dev against a local Supabase.
 
@@ -23,10 +23,10 @@ Read this first when picking up the Android port in a new session. Update it at 
 | 5 | Home: cards, members sheet, invitations, join code, archived list, Record payment sheet | Done |
 | 6 | Kameti detail (read): Overview, Members, Schedule, Payments, member view | Done |
 | 7 | Recording: payments, void, tap-to-settle, payouts with shortfall, reminders | Done |
-| 8 | Create wizard | Next |
-| 9 | Members and invites, Inbox | — |
-| 10 | Notes, activity, edit, archive, restore, duplicate | — |
-| 11 | Profile | — |
+| 8 | Create wizard: six steps, slot split sheet, reorder, reopening a draft | Done |
+| 9 | Members and invites, Inbox: edit member, app access, share transfer, Invite all, join screen, approve sheet | Done |
+| 10 | Notes, activity, edit, archive, restore, duplicate, edit setup | Done |
+| 11 | Profile | Next |
 | 12 | Push, live updates, invite links, offline states, release preparation, CI | — |
 
 The same table is in `docs/ROADMAP.md` ("Android port"); keep both in step.
@@ -36,12 +36,13 @@ The same table is in `docs/ROADMAP.md` ("Android port"); keep both in step.
 These are deliberate gaps, each owned by a later phase:
 
 - **Phase 7 (done), differences from iOS:** the floating Record payment button opens a short sheet of actions, not a menu; the method in the "Received … by …" bar opens a short sheet, not a menu; a WhatsApp reminder falls back to the system share sheet when WhatsApp can't open the link; names skipped by a reminder are joined with commas.
-- **Phase 9 also owns:** "Remind" for one person from a member's sheet (`RemindSheet(onlyMemberId = …)` is ready).
-- **Phase 9:** tap a member to edit, Invite all. Inbox tab is a stand-in (`feature/shell/ComingNext.kt`).
-- **Phase 10:** Notes tab, the member's "Notes from the owner", the ••• menu (Edit, Activity, Duplicate, Archive, Restore). The archived banner has no Restore button yet.
+- **Phase 9 (done), differences from iOS:** in Invite all, a row turns green and says "Invite sent" but stays in the list (iOS fades each row out); iOS's `AddMemberSheet` is not ported, because members are only added while a kameti is a draft and a draft opens the wizard, so the sheet can't be reached; the app-icon badge that follows the Inbox count belongs to phase 12 (push).
+- **Phase 10 (done), differences from iOS:** the ••• menu opens a short sheet of actions, not a menu; the note composer's "@ Kameti" chooser is a sheet; the Notes search button sits on the filter row inside the tab (iOS puts it in the navigation bar); note text can't be selected for copying; after archiving or restoring, Home shows the change on its next reload.
+- **Sentences built in logic** (activity rows, note labels, the duplicate name) take a `Strings` lookup (`kametidetail/Strings.kt`); tests pass `english`, which reads `strings.xml`, so they check whole sentences like the iOS tests.
 - **Phase 11:** Profile tab is a stand-in with a working Sign out (`ProfileComingNext`).
 - **Phase 12:** `data/SupabaseLiveUpdates.kt` is written but not wired into any screen.
-- **Create wizard (8)** and the other pushed routes show `ComingNext`.
+- **Phase 8 (done), differences from iOS:** the wizard's top bar and footer are its own (a close or back arrow, then Previous and the primary button); the tab bar is hidden while it is open, as on iOS; the system Back button steps back a step. The keyboard has no previous/next bar. As on iOS, the overdue-reminder and owner-summary switches and "Email invites now" are shown but not saved.
+- The past kametis route (from Profile) shows `ComingNext` until phase 11.
 - `ui/res/drawable/k_apple_logo.xml` was drawn by hand; the owner should check it looks right.
 - One difference from iOS: the member's schedule opens as a full-height sheet, not a pushed page.
 

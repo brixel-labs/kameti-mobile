@@ -99,6 +99,14 @@ private fun MemberContent(data: KametiDetailData, me: Member) {
     }
     data.current?.let { PotCard(data, it) }
     PaymentsCard(data, me)
+    // Shared notes from the owner that are about me or the whole kameti (FR-71).
+    if (data.notes.isNotEmpty()) {
+        TitledCard(stringResource(R.string.detail_notes_from_the_owner)) {
+            Column(verticalArrangement = Arrangement.spacedBy(KSpace.sm)) {
+                for (note in data.notes) NoteCard(note, data)
+            }
+        }
+    }
 }
 
 // Your due

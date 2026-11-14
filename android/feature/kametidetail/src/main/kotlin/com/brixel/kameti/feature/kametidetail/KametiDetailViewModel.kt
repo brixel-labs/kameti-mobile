@@ -5,19 +5,26 @@ import androidx.lifecycle.viewModelScope
 import com.brixel.kameti.core.Failure
 import com.brixel.kameti.core.Money
 import com.brixel.kameti.core.RecordAction
+import com.brixel.kameti.core.Attempt
 import com.brixel.kameti.core.attempt
 import com.brixel.kameti.domain.BatchPaymentItem
 import com.brixel.kameti.domain.Contact
 import com.brixel.kameti.domain.Invite
+import com.brixel.kameti.domain.InviteLink
 import com.brixel.kameti.domain.Kameti
+import com.brixel.kameti.domain.KametiChanges
 import com.brixel.kameti.domain.KametiDependencies
 import com.brixel.kameti.domain.Member
 import com.brixel.kameti.domain.MemberBalanceRow
+import com.brixel.kameti.domain.MemberChanges
 import com.brixel.kameti.domain.MemberMonthRow
 import com.brixel.kameti.domain.MonthCollectionRow
+import com.brixel.kameti.domain.NewMember
+import com.brixel.kameti.domain.NewNote
 import com.brixel.kameti.domain.NewPayment
 import com.brixel.kameti.domain.NewPayout
 import com.brixel.kameti.domain.Note
+import com.brixel.kameti.domain.NoteVisibility
 import com.brixel.kameti.domain.Payment
 import com.brixel.kameti.domain.PaymentMethod
 import com.brixel.kameti.domain.Payout
@@ -31,6 +38,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Everything the detail screens show, loaded together. */
@@ -250,6 +258,163 @@ class KametiDetailViewModel(
 
     /** Voids a payout with a reason. */
     suspend fun voidPayout(id: String, reason: String): Failure? = write { dependencies.payments.voidPayout(id, reason) }
+
+    // Members
+
+    /** The member the last [addMember] made. */
+    var lastAddedMemberId: String? = null
+        private set
+
+    /** Adds a member (a saved person, or a new one by name), then reloads. */
+    suspend fun addMember(new: NewMember): Failure? = write { lastAddedMemberId = dependencies.kametis.addMember(kametiId, new).id }
+
+    /** Saves a member's name, email or phone, then reloads. */
+    suspend fun updateMember(id: String, changes: MemberChanges): Failure? =
+        write { dependencies.kametis.updateMember(id, changes) }
+
+    /** Removes a member who holds no shares and has no payments, then reloads. */
+    suspend fun removeMember(id: String): Failure? = write { dependencies.kametis.removeMember(id) }
+
+    // Invites
+
+    /**
+     * A freshly made invite. The token and code can only be read when the
+     * invite is created or resent, so they're kept for this screen's life.
+     */
+    data class SentInvite(
+        val link: InviteLink,
+        /** `false` when email isn't set up: the owner shares the code or link. */
+        val emailed: Boolean,
+    )
+
+    private val sent = MutableStateFlow<Map<String, SentInvite>>(emptyMap())
+
+    /** Invites made on this screen, by member id. */
+    val sentInvites: StateFlow<Map<String, SentInvite>> = sent.asStateFlow()
+
+    private val invitedNow = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Members invited by the Invite all that is running now, so its sheet can tick each row. */
+    val invitedThisRun: StateFlow<Set<String>> = invitedNow.asStateFlow()
+
+    /** "Now" from the app clock, for "expires in" (fixed in the demo). */
+    val now: Instant get() = dependencies.clock.now()
+
+    /** Makes the invite and emails it. The invite exists either way; a failed email only means sharing by hand. */
+    private suspend fun send(memberId: String, resend: Boolean) {
+        val link = if (resend) dependencies.invites.resendInvite(memberId) else dependencies.invites.createInvite(memberId)
+        val emailed = attempt { dependencies.invites.sendInviteEmail(link) }.getOrNull() ?: false
+        sent.update { it + (memberId to SentInvite(link, emailed)) }
+    }
+
+    /** Creates (or with [resend], replaces) a member's invite and emails it when email is set up. */
+    suspend fun invite(memberId: String, resend: Boolean = false): Failure? = write { send(memberId, resend) }
+
+    /** What an Invite all did: how many went out, and the first failure, if any. */
+    data class InviteAllResult(val invited: Int, val failure: Failure?)
+
+    /** Invites everyone given, one by one. */
+    suspend fun inviteAll(memberIds: List<String>): InviteAllResult {
+        var invited = 0
+        var failure: Failure? = null
+        invitedNow.value = emptySet()
+        for (id in memberIds) {
+            try {
+                send(id, resend = false)
+                invitedNow.update { it + id }
+                invited += 1
+            } catch (caught: Failure) {
+                failure = failure ?: caught
+            }
+        }
+        load()
+        return InviteAllResult(invited, failure)
+    }
+
+    suspend fun revokeInvite(memberId: String): Failure? = write {
+        dependencies.invites.revokeInvite(memberId)
+        sent.update { it - memberId }
+    }
+
+    suspend fun approveJoin(memberId: String): Failure? = write { dependencies.invites.approveJoin(memberId) }
+
+    suspend fun declineJoin(memberId: String): Failure? = write { dependencies.invites.declineJoin(memberId) }
+
+    /** Takes a joined member's app access away; their record and payments stay. */
+    suspend fun unlinkMember(memberId: String): Failure? = write {
+        dependencies.invites.unlinkMember(memberId)
+        sent.update { it - memberId }
+    }
+
+    /** Who takes over a share: someone in the kameti, or a new person added first. */
+    sealed interface TransferTarget {
+        data class Existing(val memberId: String) : TransferTarget
+        data class NewPerson(val name: String) : TransferTarget
+    }
+
+    /** FR-33: moves a share to [target] from [fromMonth], adding the new person first if needed. */
+    suspend fun transferShare(shareId: String, target: TransferTarget, fromMonth: Int, note: String?): Failure? {
+        var failure: Failure? = null
+        try {
+            val memberId = when (target) {
+                is TransferTarget.Existing -> target.memberId
+                is TransferTarget.NewPerson -> dependencies.kametis.addMember(kametiId, NewMember(name = target.name)).id
+            }
+            dependencies.kametis.transferShare(shareId, memberId, fromMonth, note?.trim()?.ifEmpty { null })
+        } catch (caught: Failure) {
+            failure = caught
+        }
+        // Reload either way: a new person may have been added before it failed.
+        load()
+        return failure
+    }
+
+    // Kameti
+
+    /** Saves the owner's edits to a running kameti (name, description, due day, reminders), then reloads. */
+    suspend fun updateKameti(changes: KametiChanges): Failure? = write { dependencies.kametis.updateKameti(kametiId, changes) }
+
+    // Archive (§6.11)
+
+    suspend fun archive(): Failure? = write { dependencies.kametis.archiveKameti(kametiId) }
+
+    /** "Edit setup": back to a draft (the backend re-checks every condition). */
+    suspend fun reopen(): Failure? = write { dependencies.kametis.reopenKameti(kametiId) }
+
+    suspend fun restore(): Failure? = write { dependencies.kametis.restoreKameti(kametiId) }
+
+    // Duplicate (FR-13)
+
+    /**
+     * Copies this kameti as a new draft named "<name> (copy)", starting the
+     * month after it ends (or this month, if that's later). The owner can
+     * change both in the setup steps. Returns the new draft's id.
+     * [suffix] gives " (copy)" for attempt 1 and " (copy 2)" and so on after.
+     */
+    suspend fun duplicate(suffix: (attempt: Int) -> String): Attempt<String> {
+        val data = (current.value as? State.Loaded)?.data ?: return Attempt.Failed(Failure.Server("not_found"))
+        val start = DuplicateLogic.startMonth(data.kameti, dependencies.clock.currentMonth())
+        var last: Failure = Failure.Server("kameti_name_taken")
+        for (attempt in 1..5) {
+            val name = DuplicateLogic.name(data.kameti.name, suffix(attempt))
+            try {
+                return Attempt.Success(dependencies.kametis.duplicateKameti(kametiId, name, start).id)
+            } catch (failure: Failure) {
+                last = failure
+                if ((failure as? Failure.Server)?.code != "kameti_name_taken") return Attempt.Failed(failure)
+            }
+        }
+        return Attempt.Failed(last)
+    }
+
+    // Notes
+
+    suspend fun addNote(new: NewNote): Failure? = write { dependencies.notes.addNote(kametiId, new) }
+
+    suspend fun updateNote(id: String, body: String?, visibility: NoteVisibility?): Failure? =
+        write { dependencies.notes.updateNote(id, body, visibility) }
+
+    suspend fun deleteNote(id: String): Failure? = write { dependencies.notes.deleteNote(id) }
 
     /** A fresh key for one user action (a sheet makes its keys once, when it opens). */
     fun idempotencyKey(): String = dependencies.makeIdempotencyKey()
