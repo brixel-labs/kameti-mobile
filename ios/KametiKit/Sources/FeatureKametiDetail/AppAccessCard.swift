@@ -15,6 +15,8 @@ enum AccessState: Equatable {
     case invited(Invite)
     /// Not invited, declined or revoked. `email` is where an invite would go.
     case notInvited(email: String?, declined: Bool)
+    /// The owner marked them as not using the app: updates reach them by WhatsApp. `phone` is where.
+    case guest(phone: String?)
 
     static func of(_ member: Member, in data: KametiDetailData) -> AccessState {
         if member.profileId == data.userId { return .owner }
@@ -29,6 +31,7 @@ enum AccessState: Equatable {
             if let live = mine.first(where: { $0.status == .pending }) { return .invited(live) }
             return .notInvited(email: MemberLogic.contact(of: member, in: data)?.email, declined: false)
         case .notInvited, .declined:
+            if member.noApp { return .guest(phone: MemberLogic.contact(of: member, in: data)?.phone) }
             return .notInvited(email: MemberLogic.contact(of: member, in: data)?.email, declined: member.joinStatus == .declined)
         }
     }
@@ -125,6 +128,8 @@ struct AppAccessCard: View {
             declined
                 ? KPill(String(localized: "Declined", bundle: .module), foreground: KColors.negative, background: KColors.negativeSubtle)
                 : KPill(String(localized: "Not invited", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)
+        case .guest:
+            KPill(String(localized: "Without the app", bundle: .module), symbol: "message.fill", foreground: KColors.info, background: KColors.infoSubtle)
         }
     }
 
@@ -179,6 +184,32 @@ struct AppAccessCard: View {
                 }
             } else {
                 note(String(localized: "Add an email above and save, then you can invite \(firstName).", bundle: .module))
+            }
+            // Someone who won't use the app: stop waiting for them and send updates by WhatsApp instead.
+            if data.kameti.status != .archived {
+                Button { run { await model.setNoApp(memberId: member.id, true) } } label: {
+                    Text("Doesn't use the app", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
+                        .frame(maxWidth: .infinity, minHeight: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(busy)
+            }
+        case .guest(let phone):
+            note(phone == nil
+                 ? String(localized: "\(firstName) gets updates by WhatsApp. Add a phone number below and save to open the chat directly.", bundle: .module)
+                 : String(localized: "\(firstName) gets updates by WhatsApp.", bundle: .module))
+            GuestMessageButton(
+                title: String(localized: "Send update", bundle: .module), text: GuestUpdate.text(for: member, in: data), phone: phone, prominent: true
+            )
+            if data.kameti.status != .archived {
+                Button { run { await model.setNoApp(memberId: member.id, false) } } label: {
+                    Text("Invite to the app instead", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
+                        .frame(maxWidth: .infinity, minHeight: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(busy)
             }
         }
     }

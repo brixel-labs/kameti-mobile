@@ -216,7 +216,12 @@ internal fun CollectMonthSheet(data: KametiDetailData, model: KametiDetailViewMo
                     scope.launch {
                         val result = model.recordPayments(items, receivedOn, method)
                         isBusy = false
-                        if (result != null) failure = result else close()
+                        if (result != null) {
+                            failure = result
+                        } else {
+                            close()
+                            model.offerReceipts(items.map { PendingReceipt(it.memberId, it.amount, receivedOn) })
+                        }
                     }
                 },
                 enabled = session.count > 0 && online,

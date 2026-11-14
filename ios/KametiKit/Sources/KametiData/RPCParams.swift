@@ -76,13 +76,16 @@ enum Params {
     }
 
     static func updateMember(id: String, _ c: MemberChanges) -> RPCParams {
-        [
+        var params: RPCParams = [
             "p_member_id": .string(id),
             "p_name": .opt(c.name),
             "p_nickname": .opt(c.nickname),
             "p_email": .opt(c.email),
             "p_phone": .opt(c.phone),
         ]
+        // Only sent when it changes, so a backend without the guest-member migration still takes the call.
+        if let noApp = c.noApp { params["p_no_app"] = .bool(noApp) }
+        return params
     }
 
     static func setSlotShares(slotId: String, _ shares: [ShareInput]) -> RPCParams {

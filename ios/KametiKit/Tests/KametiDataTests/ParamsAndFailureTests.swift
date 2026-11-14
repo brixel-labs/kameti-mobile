@@ -36,6 +36,12 @@ struct ParamsTests {
         #expect(Params.updateKameti(id: "k1", KametiChanges(reminderHour: 9))["p_reminder_hour"] == .int(9))
     }
 
+    @Test func theNoAppFlagIsOnlySentWhenItChanges() {
+        #expect(Params.updateMember(id: "m1", MemberChanges(name: "Ali"))["p_no_app"] == nil)
+        #expect(Params.updateMember(id: "m1", MemberChanges(noApp: true))["p_no_app"] == .bool(true))
+        #expect(Params.updateMember(id: "m1", MemberChanges(noApp: false))["p_no_app"] == .bool(false))
+    }
+
     @Test func updateLeavesUnchangedFieldsNull() {
         let p = Params.updateKameti(id: "k1", KametiChanges(name: "New name", dueDay: 12))
         #expect(p["p_kameti_id"] == .string("k1"))

@@ -66,6 +66,15 @@ class ModelDecodingTest {
             """
         )
         assertEquals(JoinStatus.PendingApproval, m.joinStatus)
+        // This row came from a backend without the no_app column: the member uses the app.
+        assertEquals(false, m.noApp)
+        val guest = decode<Member>(
+            """
+            {"id":"m2","kameti_id":"k1","name":"Hira Malik","join_status":"not_invited",
+             "contact_id":null,"profile_id":null,"no_app":true}
+            """
+        )
+        assertEquals(true, guest.noApp)
 
         val s = decode<Share>(
             """

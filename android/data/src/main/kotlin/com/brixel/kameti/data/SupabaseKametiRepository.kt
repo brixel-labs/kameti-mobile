@@ -67,6 +67,10 @@ internal class SupabaseKametiRepository(private val client: SupabaseClient) : Ka
         client.postgrest.rpc("start_kameti", kametiParam(id)).decodeAs()
     }
 
+    override suspend fun deleteKametiDraft(id: String) {
+        call { client.postgrest.rpc("delete_kameti_draft", kametiParam(id)) }
+    }
+
     override suspend fun archiveKameti(id: String): Kameti = call {
         client.postgrest.rpc("archive_kameti", kametiParam(id)).decodeAs()
     }

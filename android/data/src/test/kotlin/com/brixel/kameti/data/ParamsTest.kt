@@ -51,6 +51,13 @@ class ParamsTest {
     }
 
     @Test
+    fun theNoAppFlagIsOnlySentWhenItChanges() {
+        assertTrue("p_no_app" !in Params.updateMember("m1", MemberChanges(name = "Ali")))
+        assertEquals(flag(true), Params.updateMember("m1", MemberChanges(noApp = true))["p_no_app"])
+        assertEquals(flag(false), Params.updateMember("m1", MemberChanges(noApp = false))["p_no_app"])
+    }
+
+    @Test
     fun updateLeavesUnchangedFieldsNull() {
         val p = Params.updateKameti("k1", KametiChanges(name = "New name", dueDay = 12))
         assertEquals(text("k1"), p["p_kameti_id"])

@@ -2584,6 +2584,237 @@
           }
         }
       }
+    },
+    "Waiting for %@ to join" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for %@ to join"
+          }
+        }
+      }
+    },
+    "%lld of %lld haven't joined yet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld haven't joined yet"
+          }
+        }
+      }
+    },
+    "Someone is waiting for your approval." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Someone is waiting for your approval."
+          }
+        }
+      }
+    },
+    "Invite them so they can see their payments." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite them so they can see their payments."
+          }
+        }
+      }
+    },
+    "Without the app" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Without the app"
+          }
+        }
+      }
+    },
+    "%@ gets updates by WhatsApp. Add a phone number below and save to open the chat directly." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gets updates by WhatsApp. Add a phone number below and save to open the chat directly."
+          }
+        }
+      }
+    },
+    "%@ gets updates by WhatsApp." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gets updates by WhatsApp."
+          }
+        }
+      }
+    },
+    "Send update" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send update"
+          }
+        }
+      }
+    },
+    "Doesn't use the app" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doesn't use the app"
+          }
+        }
+      }
+    },
+    "Invite to the app instead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite to the app instead"
+          }
+        }
+      }
+    },
+    "They don't use the app, so send them a receipt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They don't use the app, so send them a receipt."
+          }
+        }
+      }
+    },
+    "Send a receipt?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send a receipt?"
+          }
+        }
+      }
+    },
+    "Send receipts?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send receipts?"
+          }
+        }
+      }
+    },
+    "Not now" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        }
+      }
+    },
+    "Hi %@, we received %@ from you on %@ for %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi %1$@, we received %2$@ from you on %3$@ for %4$@."
+          }
+        }
+      }
+    },
+    "Hi %@, here's your %@ update for %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi %1$@, here's your %2$@ update for %3$@."
+          }
+        }
+      }
+    },
+    "This month: paid %@ of %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This month: paid %1$@ of %2$@."
+          }
+        }
+      }
+    },
+    "You owe %@ so far, due by the %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You owe %1$@ so far, due by the %2$@."
+          }
+        }
+      }
+    },
+    "You're ahead by %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're ahead by %@."
+          }
+        }
+      }
+    },
+    "You're all paid up." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're all paid up."
+          }
+        }
+      }
+    },
+    "Your payout is in %@: %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your payout is in %1$@: %2$@."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

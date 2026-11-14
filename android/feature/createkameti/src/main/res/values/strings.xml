@@ -20,7 +20,10 @@
     <string name="create_cancel">Cancel</string>
     <string name="create_checks">Checks</string>
     <string name="create_close">Close</string>
+    <string name="create_couldnt_delete_this_draft">Couldn\'t delete this draft</string>
     <string name="create_day_after_the_due_date">Day after the due date</string>
+    <string name="create_delete_draft">Delete draft</string>
+    <string name="create_delete_this_draft">Delete this draft?</string>
     <string name="create_drag_to_move_s">Drag to move %s</string>
     <string name="create_due_by">Due by</string>
     <string name="create_due_date_and_reminders">Due date and reminders</string>
@@ -142,6 +145,7 @@
     <string name="create_tap_to_add_people">Tap to add people</string>
     <string name="create_tell_me_who_hasnt_paid">Tell me who hasn\'t paid</string>
     <string name="create_the_basics">The basics</string>
+    <string name="create_the_setup_the_people_you_added_and_any">The setup, the people you added and any invites are removed for good. This can\'t be undone.</string>
     <string name="create_this_slot_needs_s_a_month_up_to">This slot needs %s a month. Up to 3 people.</string>
     <string name="create_up_to_n">Up to %d</string>
     <string name="create_use_3_to_40_characters">Use 3 to 40 characters.</string>

@@ -8,7 +8,7 @@ Read this first when picking up the Android port in a new session. Update it at 
 
 - **All 12 phases are done.** What is left is the owner's setup (see "Waiting on the owner") and the owner's testing; after that, a pull request into `develop`.
 - **All 12 phases are committed and pushed** on branch `feature/android-scaffold` in `kameti-mobile` (the git repo is `kameti-mobile`, not the parent `kameti` folder): one commit for phases 1–7, one for 8–10, one for 11 and one for 12. There is no pull request yet, and nothing is merged into `develop`.
-- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 247 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. `./gradlew :app:assembleRelease` (shrunk with R8) also builds, and that build, signed with the debug key, starts on the emulator without crashing; nothing beyond its first screen was exercised. The screens have not been checked visually by Claude; the owner tests them.
+- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 258 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. `./gradlew :app:assembleRelease` (shrunk with R8) also builds, and that build, signed with the debug key, starts on the emulator without crashing; nothing beyond its first screen was exercised. The screens have not been checked visually by Claude; the owner tests them.
 - **Android app config is `demo`** (`android/app/src/main/assets/KametiConfig.json`, gitignored). Switch with `android/scripts/use-env.sh prod|dev|demo` run from `kameti-mobile`, then rebuild. The iOS config is untouched.
 - **Sign-in on prod does not work on Android yet** (see "Waiting on the owner"). Until then the tabs are reachable only in demo, or dev against a local Supabase.
 
@@ -116,3 +116,17 @@ adb -s emulator-5554 logcat -d -s AndroidRuntime:E   # check only that it did no
 - **Needs a backend migration:** `kameti-backend/supabase/migrations/20261114120000_reminder_hour.sql` (branch `feature/reminder-time`, tests in `supabase/tests/140_reminder_hour.test.sql`). It was applied to **kameti-prod on 2026-11-14** with `supabase db push` (the owner approved it); the 3 kametis there keep 10:00. The apps leave `p_reminder_hour` out of a call when it is 10 or unchanged, so they also work against a backend that hasn't got it. The branch is not committed or merged.
 - **After Start, the kameti opens on its Members tab** (new `Route.KametiMembers`), so the owner can send invites at once; both platforms.
 - **Sign in with Apple removed from Android** (see Decisions above).
+
+## Guest members and the setup card (2026-11-14), on both platforms
+
+- **Setup card:** while anyone hasn't joined, the owner's Overview shows a warning card at the top ("Waiting for Ali to join" / "3 of 9 haven't joined yet"); tapping it opens the Members tab. Recording is never hidden or blocked: payments don't depend on anyone having the app (decision with the owner).
+- **"Doesn't use the app":** a stored per-member setting (`members.no_app`) on the member sheet, only for a member who isn't invited or has declined. Such a member isn't counted as waiting, is left out of Invite all, and shows "Without the app". Turning it off (or inviting them) puts them back.
+- **Updates by WhatsApp:** the member sheet's "Send update" opens WhatsApp (or the share sheet without a usable phone number) with a short text of only that member's own figures: this month, what they owe or are ahead, and their payout turn (`GuestUpdate`).
+- **Receipts:** after each payment recorded for such a member (one at a time, or several with tap-to-settle) a "Send a receipt?" sheet offers the WhatsApp message, with "Not now" to dismiss.
+- **Not built:** counting pending invites on Home's kameti cards, a dot on the Members tab, and the private view-only link for guests (a later version, needs backend work).
+- **Needs a backend migration:** `kameti-backend` `20261114180000_member_no_app.sql` (branch `feature/guest-members`, tests `150_member_no_app.test.sql`), applied to the **local** database only. Until it is applied to prod, the apps work as before, but "Doesn't use the app" fails with a server error (the call leaves `p_no_app` out otherwise).
+
+## Delete a draft (2026-11-14), on both platforms
+
+- A draft kameti (not through the create wizard yet, or reopened with Edit setup) can be **deleted for good**: from the wizard's ••• menu once the draft exists, and by pressing and holding the draft's card on Home. A confirm sheet says it can't be undone. Nothing is recorded in a draft, so only the setup, the people added and any invites go. Anything running or finished is still archived, not deleted.
+- **Needs a backend migration:** `kameti-backend` `20261114200000_delete_kameti_draft.sql` (`delete_kameti_draft`, owner only, drafts only; branch `feature/guest-members`, tests `160_delete_kameti_draft.test.sql`), applied to the **local** database only. Until it is applied to prod, deleting a draft fails with a server error; everything else is unaffected.

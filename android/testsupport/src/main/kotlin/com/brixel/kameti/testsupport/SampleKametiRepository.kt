@@ -173,6 +173,17 @@ class SampleKametiRepository(
         return old
     }
 
+    /** Mirrors `delete_kameti_draft`: owner only, drafts only; the draft's members, slots and shares go too. */
+    override suspend fun deleteKametiDraft(id: String): Unit = synchronized(lock) {
+        // Like the backend, a kameti that doesn't exist reads as "not yours".
+        val old = kametis.firstOrNull { it.id == id && it.ownerId == SampleData.USER_ID } ?: fail("not_kameti_owner")
+        if (old.status != KametiStatus.Draft) fail("kameti_not_draft")
+        kametis = kametis.filterNot { it.id == id }
+        members.remove(id)
+        slots.remove(id)
+        shares.remove(id)
+    }
+
     /** Mirrors `archive_kameti`: owner only, anything but an archived kameti. */
     override suspend fun archiveKameti(id: String): Kameti = synchronized(lock) {
         val old = owned(id)
@@ -285,7 +296,11 @@ class SampleKametiRepository(
             contactId = contacts.update(old.contactId, name, changes.email?.trim()?.lowercase(), changes.phone?.trim()).id
         }
         val nickname = if (changes.nickname != null) trimmed(changes.nickname) else old.nickname
-        val updated = old.copy(name = name, contactId = contactId, nickname = nickname)
+        // Like update_member: someone with an invite, or who joined, can't be marked as not using the app.
+        if (changes.noApp == true && old.joinStatus != JoinStatus.NotInvited && old.joinStatus != JoinStatus.Declined) {
+            fail("member_already_invited")
+        }
+        val updated = old.copy(name = name, contactId = contactId, nickname = nickname, noApp = changes.noApp ?: old.noApp)
         members[old.kametiId] = members[old.kametiId].orEmpty().map { if (it.id == id) updated else it }
         log.record(
             old.kametiId, "member.update", entity = "member", entityId = id, member = id,

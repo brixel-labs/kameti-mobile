@@ -46,6 +46,13 @@ struct ModelDecodingTests {
          "contact_id":null,"profile_id":null}
         """)
         #expect(m.joinStatus == .pendingApproval)
+        // This row came from a backend without the no_app column: the member uses the app.
+        #expect(!m.noApp)
+        let guest = try decode(Member.self, """
+        {"id":"m2","kameti_id":"k1","name":"Hira Malik","join_status":"not_invited",
+         "contact_id":null,"profile_id":null,"no_app":true}
+        """)
+        #expect(guest.noApp)
 
         let s = try decode(Share.self, """
         {"id":"s1","kameti_id":"k1","slot_id":"sl1","member_id":"m1",

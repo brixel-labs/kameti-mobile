@@ -24,6 +24,10 @@ public protocol KametiRepository: Sendable {
     /// Owner only (§6.11): hides it from the running lists and makes it
     /// read-only for everyone. Fails with `kameti_already_archived`.
     func archiveKameti(id: String) async throws(Failure) -> Kameti
+    /// Owner only: deletes a draft for good (`delete_kameti_draft`), with its members, slots, shares and
+    /// invites. Nothing is recorded in a draft, so nothing else is lost. Anything running or finished is
+    /// archived instead; this fails with `kameti_not_draft`.
+    func deleteKametiDraft(id: String) async throws(Failure)
     /// "Edit setup": a started kameti back to a draft, before its first month
     /// and with nothing recorded (`reopen_kameti`).
     func reopenKameti(id: String) async throws(Failure) -> Kameti

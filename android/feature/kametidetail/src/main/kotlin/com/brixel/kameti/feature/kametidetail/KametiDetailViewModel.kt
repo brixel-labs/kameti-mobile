@@ -35,6 +35,7 @@ import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -273,6 +274,39 @@ class KametiDetailViewModel(
     /** Saves a member's name, email or phone, then reloads. */
     suspend fun updateMember(id: String, changes: MemberChanges): Failure? =
         write { dependencies.kametis.updateMember(id, changes) }
+
+    /**
+     * Marks a member as not using the app (updates reach them by WhatsApp and nobody waits for them to
+     * join), or back again, then reloads.
+     */
+    suspend fun setNoApp(memberId: String, value: Boolean): Failure? = updateMember(memberId, MemberChanges(noApp = value))
+
+    private val receipts = MutableStateFlow<List<PendingReceipt>>(emptyList())
+
+    /** Payments just recorded for members who aren't on the app, to offer receipts for. */
+    internal val pendingReceipts: StateFlow<List<PendingReceipt>> = receipts.asStateFlow()
+
+    internal fun clearReceipts() {
+        receipts.value = emptyList()
+    }
+
+    /**
+     * After a recording sheet closes: offers a receipt for each payment made for a member who isn't on
+     * the app. Runs in the view model's scope, because the sheet that called it is already gone, and
+     * waits a moment so that sheet has finished closing before this one opens.
+     */
+    internal fun offerReceipts(list: List<PendingReceipt>) {
+        viewModelScope.launch { offerReceiptsNow(list) }
+    }
+
+    internal suspend fun offerReceiptsNow(list: List<PendingReceipt>) {
+        val data = (current.value as? State.Loaded)?.data ?: return
+        val guests = data.members.filter { it.noApp }.map { it.id }.toSet()
+        val wanted = list.filter { it.memberId in guests }
+        if (wanted.isEmpty()) return
+        delay(500)
+        receipts.value = wanted
+    }
 
     /** Removes a member who holds no shares and has no payments, then reloads. */
     suspend fun removeMember(id: String): Failure? = write { dependencies.kametis.removeMember(id) }

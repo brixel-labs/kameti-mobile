@@ -60,6 +60,12 @@ data class Member(
     val profileId: String? = null,
     val nickname: String? = null,
     val color: String? = null,
+    /**
+     * The owner marked this member as not using the app: they get their updates by WhatsApp, and nobody
+     * waits for them to join. Never true for a member who has an invite or has joined. A backend
+     * without the column sends none.
+     */
+    val noApp: Boolean = false,
 )
 
 /** Row of `public.slots`. Created automatically, one per month. */
@@ -131,4 +137,5 @@ data class MemberChanges(
     val nickname: String? = null,
     val email: String? = null,
     val phone: String? = null,
+    val noApp: Boolean? = null,
 )

@@ -216,6 +216,17 @@ public final class HomeViewModel {
         return result
     }
 
+    /// Deletes one of my drafts for good, then reloads.
+    public func deleteDraft(id: String) async -> Failure? {
+        do throws(Failure) {
+            try await dependencies.kametis.deleteKametiDraft(id: id)
+        } catch {
+            return error
+        }
+        await load()
+        return nil
+    }
+
     /// Declines an invitation from Home, then reloads.
     public func decline(_ invitation: MyInvitation) async -> Failure? {
         do throws(Failure) {

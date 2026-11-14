@@ -11,9 +11,12 @@
     <string name="home_collect_s_tap_to_settle">Collect %s (tap to settle)</string>
     <string name="home_completed">Completed</string>
     <string name="home_couldnt_decline">Couldn\'t decline</string>
+    <string name="home_couldnt_delete_this_draft">Couldn\'t delete this draft</string>
     <string name="home_couldnt_load_your_kametis">Couldn\'t load your kametis</string>
     <string name="home_decline">Decline</string>
     <string name="home_decline_this_invite">Decline this invite?</string>
+    <string name="home_delete_draft">Delete draft</string>
+    <string name="home_delete_this_draft">Delete this draft?</string>
     <string name="home_due_by_s">Due by %s</string>
     <string name="home_due_s">Due %s</string>
     <string name="home_e_g_k7q2mx">e.g. K7Q2MX</string>
@@ -49,6 +52,7 @@
     <string name="home_record_payment">Record payment</string>
     <string name="home_running_by_me">Running by me</string>
     <string name="home_s">" · %s"</string>
+    <string name="home_s_and_the_people_you_added_are_removed">%s and the people you added are removed for good. This can\'t be undone.</string>
     <string name="home_s_s">%1$s · %2$s</string>
     <string name="home_s_will_see_that_you_declined_s">%1$s will see that you declined %2$s.</string>
     <string name="home_settled">Settled</string>

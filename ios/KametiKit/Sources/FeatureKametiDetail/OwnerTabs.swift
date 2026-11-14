@@ -173,6 +173,13 @@ struct OwnerTabs: View {
         ) {
             await inviteAll()
         }
+        .kBottomSheet(
+            isPresented: Binding(get: { !model.pendingReceipts.isEmpty }, set: { if !$0 { model.pendingReceipts = [] } }),
+            title: model.pendingReceipts.count == 1 ? String(localized: "Send a receipt?", bundle: .module) : String(localized: "Send receipts?", bundle: .module),
+            detents: [.medium, .large]
+        ) {
+            ReceiptSheet(data: data, receipts: model.pendingReceipts) { model.pendingReceipts = [] }
+        }
         .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind members", bundle: .module), detents: [.large]) {
             RemindSheet(kameti: data.kameti, dependencies: model.dependencies) { reminding = false }
         }
@@ -318,7 +325,9 @@ struct OwnerTabs: View {
         case .overview:
             OverviewTab(
                 data: data, onRemind: isArchived || data.kameti.status != .active ? nil : { reminding = true },
-                onPayOut: isArchived ? nil : data.current.flatMap { current in canPayOut(current) ? { payingOut = current.monthIndex } : nil }
+                onPayOut: isArchived ? nil : data.current.flatMap { current in canPayOut(current) ? { payingOut = current.monthIndex } : nil },
+                // The setup card opens Members, where the invites go out.
+                onOpenMembers: isArchived || data.kameti.status != .active ? nil : { withAnimation(.smooth(duration: 0.28)) { self.tab = .members } }
             ) {
                 if !isArchived { recording = RecordTarget(memberId: $0) }
             }
@@ -347,9 +356,15 @@ struct OverviewTab: View {
     var onRemind: (() -> Void)?
     /// Set once everyone has paid: "Pay out <month>" on the This month row.
     var onPayOut: (() -> Void)?
+    /// Set for a running kameti: opens the Members tab from the setup card.
+    var onOpenMembers: (() -> Void)?
     let onRecord: (String) -> Void
 
     var body: some View {
+        // Prominent while anyone hasn't joined (members who don't use the app don't count). Recording stays
+        // available either way: payments don't depend on anyone having the app.
+        let progress = SetupProgress.of(data)
+        if let onOpenMembers, !progress.isComplete { SetupCard(progress: progress, action: onOpenMembers) }
         if let current = data.current {
             let recipients = DetailLogic.recipients(
                 kameti: data.kameti, monthIndex: current.monthIndex, slots: data.slots, shares: data.shares, members: data.members
@@ -516,7 +531,7 @@ struct MembersTab: View {
 
     var body: some View {
         let balances = Dictionary(data.balances.map { ($0.memberId, $0) }, uniquingKeysWith: { first, _ in first })
-        let notJoined = data.members.filter { $0.joinStatus != .joined && $0.profileId == nil }.count
+        let notJoined = data.members.filter { $0.joinStatus != .joined && $0.profileId == nil && !$0.noApp }.count
         let list = data.members.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) }
         if data.members.isEmpty {
             ContentUnavailableView(
@@ -582,7 +597,7 @@ struct MembersTab: View {
                     ) {
                         VStack(alignment: .trailing, spacing: 4) {
                             if let balance { BalanceChip(balance: balance) }
-                            joinCaption(member.joinStatus)
+                            joinCaption(member)
                         }
                     } }
                     .buttonStyle(.plain)
@@ -594,8 +609,10 @@ struct MembersTab: View {
     }
 
     @ViewBuilder
-    private func joinCaption(_ status: JoinStatus) -> some View {
-        switch status {
+    private func joinCaption(_ member: Member) -> some View {
+        switch member.joinStatus {
+        case .notInvited where member.noApp, .declined where member.noApp:
+            Text("Without the app", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.info)
         case .joined: Text("Joined", bundle: .module).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
         case .invited: Text("Invited", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.warning)
         case .pendingApproval: Text("Needs approval", bundle: .module).kText(KTextStyle(size: 12, weight: .semibold), color: KColors.info)

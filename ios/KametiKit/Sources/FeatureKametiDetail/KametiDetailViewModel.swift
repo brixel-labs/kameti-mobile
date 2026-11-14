@@ -242,6 +242,26 @@ public final class KametiDetailViewModel {
         return nil
     }
 
+    /// Marks a member as not using the app (updates reach them by WhatsApp and nobody waits for them to
+    /// join), or back again, then reloads.
+    public func setNoApp(memberId: String, _ value: Bool) async -> Failure? {
+        await updateMember(id: memberId, changes: MemberChanges(noApp: value))
+    }
+
+    /// Payments just recorded for members who aren't on the app, to offer receipts for.
+    var pendingReceipts: [PendingReceipt] = []
+
+    /// After a recording sheet closes: offers a receipt for each payment made for a member who isn't on
+    /// the app. Waits a moment so the sheet that just closed is gone before this one opens.
+    func offerReceipts(_ receipts: [PendingReceipt]) async {
+        guard case .loaded(let data) = state else { return }
+        let guests = Set(data.members.filter(\.noApp).map(\.id))
+        let wanted = receipts.filter { guests.contains($0.memberId) }
+        guard !wanted.isEmpty else { return }
+        try? await Task.sleep(for: .milliseconds(500))
+        pendingReceipts = wanted
+    }
+
     /// Removes a member who holds no shares and has no payments, then reloads.
     public func removeMember(id: String) async -> Failure? {
         do throws(Failure) {
