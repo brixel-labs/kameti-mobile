@@ -137,6 +137,20 @@ class CreateWizardViewModel(
         viewModelScope.launch { work() }
     }
 
+    /**
+     * Deletes this draft for good (nothing has been recorded in a draft). Returns the failure to show,
+     * or `null`; the caller then closes the wizard.
+     */
+    suspend fun deleteDraft(): Failure? {
+        val id = current.value.kametiId ?: return null
+        return try {
+            dependencies.kametis.deleteKametiDraft(id)
+            null
+        } catch (failure: Failure) {
+            failure
+        }
+    }
+
     suspend fun loadOwner() {
         if (current.value.ownerName != null) return
         val profile = attempt { dependencies.profiles.myProfile(userId) }.getOrNull() ?: return

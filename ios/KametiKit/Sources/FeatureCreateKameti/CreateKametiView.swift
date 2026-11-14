@@ -15,6 +15,7 @@ public struct CreateKametiView: View {
     /// direction is set first and the step follows on the next turn.
     @State private var shownStep = WizardStep.basics
     @State private var forward = true
+    @State private var confirmingDelete = false
 
     public init(model: CreateWizardModel, onStarted: @escaping (String) -> Void, onClose: @escaping () -> Void) {
         self.model = model
@@ -69,6 +70,19 @@ public struct CreateKametiView: View {
                     Button(String(localized: "Back", bundle: .module), systemImage: "chevron.left") { model.back() }
                 }
             }
+            // Once the draft exists on the server it can be deleted from the wizard (nothing is recorded in one).
+            if model.kametiId != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(role: .destructive) { confirmingDelete = true } label: {
+                            Label(String(localized: "Delete draft", bundle: .module), systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                    }
+                    .accessibilityLabel(Text("More", bundle: .module))
+                }
+            }
             // A reopened draft starts mid-way, so it can be closed from any
             // step; everything is already saved on the server.
             if model.isResumed, !model.isAtStart {
@@ -78,6 +92,18 @@ public struct CreateKametiView: View {
             }
         }
         .task { await model.loadOwner() }
+        .kConfirmSheet(
+            isPresented: $confirmingDelete, title: String(localized: "Delete this draft?", bundle: .module),
+            message: String(localized: "The setup, the people you added and any invites are removed for good. This can't be undone.", bundle: .module),
+            confirmTitle: String(localized: "Delete draft", bundle: .module), isDestructive: true
+        ) {
+            if let failure = await model.deleteDraft() {
+                return .result(KSheetMessage(String(localized: "Couldn't delete this draft", bundle: .module), message: failure.userMessage, tone: .error))
+            }
+            // Let the sheet close, then leave the wizard (Home reloads and the draft is gone).
+            Task { try? await Task.sleep(for: .milliseconds(450)); onClose() }
+            return .dismiss
+        }
         // A reopened draft jumps straight to its step, without sliding through the rest.
         .onChange(of: model.isResumed) { _, resumed in
             if resumed { shownStep = model.step }

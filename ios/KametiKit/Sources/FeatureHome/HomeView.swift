@@ -19,6 +19,7 @@ public struct HomeView: View {
     /// The code card's measured height, so its sheet is only as tall as needed.
     @State private var codeCardHeight: CGFloat = 170
     @State private var declining: MyInvitation?
+    @State private var deletingDraft: HomeKametiSummary?
     @State private var declineFailure: Failure?
 
     public init(
@@ -79,6 +80,14 @@ public struct HomeView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .kDismissesKeyboard()
+        }
+        .kConfirmSheet(
+            item: $deletingDraft, title: { _ in String(localized: "Delete this draft?", bundle: .module) },
+            message: { String(localized: "\($0.kameti.name) and the people you added are removed for good. This can't be undone.", bundle: .module) },
+            confirmTitle: String(localized: "Delete draft", bundle: .module), isDestructive: true
+        ) { draft in
+            guard let failure = await model.deleteDraft(id: draft.id) else { return .dismiss }
+            return .result(KSheetMessage(String(localized: "Couldn't delete this draft", bundle: .module), message: failure.userMessage, tone: .error))
         }
         .kConfirmSheet(
             item: $declining, title: { _ in String(localized: "Decline this invite?", bundle: .module) },
@@ -214,6 +223,14 @@ public struct HomeView: View {
             ForEach(items) { item in
                 Button { onOpen(item.id) } label: { HomeKametiCard(item: item) }
                     .buttonStyle(.plain)
+                    // A draft of mine that isn't going ahead: press and hold to delete it.
+                    .contextMenu {
+                        if item.kameti.status == .draft, item.isOwner {
+                            Button(role: .destructive) { deletingDraft = item } label: {
+                                Label(String(localized: "Delete draft", bundle: .module), systemImage: "trash")
+                            }
+                        }
+                    }
             }
             if archivedCount > 0 {
                 Button(action: onOpenArchived) { ArchivedRow(count: archivedCount) }

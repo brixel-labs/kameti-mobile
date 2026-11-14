@@ -181,6 +181,14 @@ class HomeViewModel(
     }
 
     /** Declines an invitation from Home, then reloads. */
+    /** Deletes one of my drafts for good, then reloads. */
+    suspend fun deleteDraft(id: String): Failure? {
+        val result = attempt { dependencies.kametis.deleteKametiDraft(id) }
+        if (result is Attempt.Failed) return result.failure
+        load()
+        return null
+    }
+
     suspend fun decline(invitation: MyInvitation): Failure? {
         val result = attempt { dependencies.invites.declineInvite(token = null, inviteId = invitation.inviteId) }
         if (result is Attempt.Failed) return result.failure

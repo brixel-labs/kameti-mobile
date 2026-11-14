@@ -207,7 +207,10 @@ if !KConnectivity.shared.isOnline {
         Task {
             let result = await model.recordPayments(items: items, receivedOn: receivedOn, method: method)
             isBusy = false
-            if let result { failure = result } else { onDone() }
+            if let result { failure = result } else {
+                onDone()
+                await model.offerReceipts(items.map { PendingReceipt(memberId: $0.memberId, amount: $0.amount, on: receivedOn) })
+            }
         }
     }
 }

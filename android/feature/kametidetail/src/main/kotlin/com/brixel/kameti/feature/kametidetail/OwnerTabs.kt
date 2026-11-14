@@ -189,6 +189,12 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
                             onRemind = if (isArchived || data.kameti.status != KametiStatus.Active) null else ({ reminding = true }),
                             onPayOut = if (canPayOutNow) ({ payingOut = current?.monthIndex }) else null,
                             onRecord = { if (!isArchived) recording = RecordTarget(it) },
+                            // The setup card opens Members, where the invites go out.
+                            onOpenMembers = if (isArchived || data.kameti.status != KametiStatus.Active) {
+                                null
+                            } else {
+                                { scope.launch { pager.animateScrollToPage(tabs.indexOfFirst { it.value == OwnerTab.Members }) } }
+                            },
                         )
                         OwnerTab.Members -> MembersTab(
                             data,
@@ -243,6 +249,8 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
         if (member != null) EditMemberSheet(data, model, member) { editingMember = null }
     }
     inviteBatch?.let { batch -> InviteAllSheet(batch, model) { inviteBatch = null } }
+    val receipts by model.pendingReceipts.collectAsStateWithLifecycle()
+    if (receipts.isNotEmpty()) ReceiptSheet(data, receipts, onDismiss = { model.clearReceipts() })
     KFailureSheet(
         restoreFailure, stringResource(R.string.detail_couldnt_restore_this_kameti), onDismiss = { restoreFailure = null },
         message = restoreFailure?.let { changeFailureMessage(it) },
@@ -331,7 +339,13 @@ private fun OverviewTab(
     /** Set while this month can be paid out. */
     onPayOut: (() -> Unit)?,
     onRecord: (String) -> Unit,
+    /** Set for a running kameti: opens the Members tab from the setup card. */
+    onOpenMembers: (() -> Unit)?,
 ) {
+    // Prominent while anyone hasn't joined (members who don't use the app don't count). Recording stays
+    // available either way: payments don't depend on anyone having the app.
+    val progress = SetupProgress.of(data)
+    if (onOpenMembers != null && !progress.isComplete) SetupCard(progress, onOpenMembers)
     val current = data.current
     val summary = if (current == null) DetailLogic.finalSummary(data) else null
     when {
@@ -581,7 +595,7 @@ private fun MembersTab(
     }
     var search by rememberSaveable { mutableStateOf("") }
     val balances = data.balances.associateBy { it.memberId }
-    val notJoined = data.members.count { it.joinStatus != JoinStatus.Joined && it.profileId == null }
+    val notJoined = data.members.count { it.joinStatus != JoinStatus.Joined && it.profileId == null && !it.noApp }
     val list = data.members.filter { search.isBlank() || it.name.contains(search.trim(), ignoreCase = true) }
 
     KTextField(
@@ -660,7 +674,7 @@ private fun MembersTab(
             ) {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (balance != null) BalanceChip(balance)
-                    JoinCaption(member.joinStatus)
+                    JoinCaption(member)
                 }
             }
         }
@@ -668,9 +682,13 @@ private fun MembersTab(
 }
 
 @Composable
-private fun JoinCaption(status: JoinStatus) {
+private fun JoinCaption(member: Member) {
     val strong = KTextStyle(size = 12f, weight = FontWeight.SemiBold)
-    when (status) {
+    if (member.noApp && (member.joinStatus == JoinStatus.NotInvited || member.joinStatus == JoinStatus.Declined)) {
+        KText(stringResource(R.string.detail_without_the_app), strong, color = KColors.info)
+        return
+    }
+    when (member.joinStatus) {
         JoinStatus.Joined -> KText(stringResource(R.string.detail_joined), KTextToken.subtitleSmall, color = KColors.textSubtitle)
         JoinStatus.Invited -> KText(stringResource(R.string.detail_invited), strong, color = KColors.warning)
         JoinStatus.PendingApproval -> KText(stringResource(R.string.detail_needs_approval), strong, color = KColors.info)

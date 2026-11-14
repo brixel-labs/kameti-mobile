@@ -33,6 +33,13 @@ interface KametiRepository {
     suspend fun archiveKameti(id: String): Kameti
 
     /**
+     * Owner only: deletes a draft for good (`delete_kameti_draft`), with its members, slots, shares and
+     * invites. Nothing is recorded in a draft, so nothing else is lost. Anything running or finished is
+     * archived instead; this fails with `kameti_not_draft`.
+     */
+    suspend fun deleteKametiDraft(id: String)
+
+    /**
      * "Edit setup": a started kameti back to a draft, before its first month
      * and with nothing recorded (`reopen_kameti`).
      */

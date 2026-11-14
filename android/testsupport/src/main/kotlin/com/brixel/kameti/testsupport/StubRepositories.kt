@@ -97,6 +97,7 @@ class StubKametiRepository(
     override suspend fun updateKameti(id: String, changes: KametiChanges): Kameti = notStubbed()
     override suspend fun startKameti(id: String): Kameti = notStubbed()
     override suspend fun archiveKameti(id: String): Kameti = notStubbed()
+    override suspend fun deleteKametiDraft(id: String): Unit = notStubbed()
     override suspend fun reopenKameti(id: String): Kameti = notStubbed()
     override suspend fun restoreKameti(id: String): Kameti = notStubbed()
     override suspend fun duplicateKameti(id: String, name: String, startMonth: Day): Kameti = notStubbed()

@@ -193,7 +193,10 @@ struct RecordPaymentSheet: View {
                 note: trimmed.isEmpty ? nil : trimmed, idempotencyKey: key
             )
             isBusy = false
-            if let result { failure = result } else { onDone() }
+            if let result { failure = result } else {
+                onDone()
+                await model.offerReceipts([PendingReceipt(memberId: memberId, amount: amount, on: received)])
+            }
         }
     }
 

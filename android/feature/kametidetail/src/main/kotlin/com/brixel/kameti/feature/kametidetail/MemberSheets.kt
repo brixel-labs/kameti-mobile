@@ -279,6 +279,17 @@ private fun blockMessage(block: MemberLogic.RemovalBlock, first: String): String
     }
 }
 
+/** A plain brand-coloured text button under a card's content. */
+@Composable
+private fun TextAction(title: String, enabled: Boolean = true, onClick: () -> Unit) {
+    KText(
+        title, KTextToken.bodyStrong,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 36.dp).alpha(if (enabled) 1f else 0.5f)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick).padding(vertical = KSpace.sm),
+        color = KColors.brand, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+    )
+}
+
 /** A compact button inside a card: an optional icon and a short label. */
 @Composable
 private fun SmallButton(
@@ -319,6 +330,7 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
     val sentInvites by model.sentInvites.collectAsStateWithLifecycle()
     val sent = sentInvites[member.id]
     val first = firstName(member.name)
+    val strings = rememberStrings()
     val wentWrong = stringResource(R.string.detail_something_went_wrong)
     var busy by remember { mutableStateOf(false) }
     var failure by remember { mutableStateOf<Failure?>(null) }
@@ -396,6 +408,8 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
                     } else {
                         KPill(stringResource(R.string.detail_not_invited), KColors.textSecondary, KColors.surfaceSunken)
                     }
+                is AccessState.Guest ->
+                    KPill(stringResource(R.string.detail_without_the_app), KColors.info, KColors.infoSubtle, icon = KIcons.message)
             }
         }
         when (state) {
@@ -480,6 +494,26 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
                 } else {
                     note(stringResource(R.string.detail_add_an_email_above_and_save_then_you, first))
                 }
+            is AccessState.Guest -> {
+                note(
+                    stringResource(
+                        if (state.phone == null) R.string.detail_s_gets_updates_by_whatsapp_add_a_phone else R.string.detail_s_gets_updates_by_whatsapp,
+                        first,
+                    ),
+                )
+                GuestMessageButton(
+                    stringResource(R.string.detail_send_update), GuestUpdate.text(strings, member, data), state.phone, prominent = true,
+                )
+                if (data.kameti.status != KametiStatus.Archived) {
+                    TextAction(stringResource(R.string.detail_invite_to_the_app_instead), enabled = !busy) {
+                        run { model.setNoApp(member.id, false) }
+                    }
+                }
+            }
+        }
+        // Someone who won't use the app: stop waiting for them and send updates by WhatsApp instead.
+        if (state is AccessState.NotInvited && data.kameti.status != KametiStatus.Archived) {
+            TextAction(stringResource(R.string.detail_doesnt_use_the_app), enabled = !busy) { run { model.setNoApp(member.id, true) } }
         }
         FailureLine(failure)
     }

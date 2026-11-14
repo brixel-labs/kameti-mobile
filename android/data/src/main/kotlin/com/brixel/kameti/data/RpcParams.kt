@@ -110,12 +110,16 @@ internal object Params {
         "p_is_self" to flag(m.isSelf),
     )
 
-    fun updateMember(id: String, c: MemberChanges): RpcParams = params(
-        "p_member_id" to text(id),
-        "p_name" to opt(c.name),
-        "p_nickname" to opt(c.nickname),
-        "p_email" to opt(c.email),
-        "p_phone" to opt(c.phone),
+    fun updateMember(id: String, c: MemberChanges): RpcParams = JsonObject(
+        mapOf(
+            "p_member_id" to text(id),
+            "p_name" to opt(c.name),
+            "p_nickname" to opt(c.nickname),
+            "p_email" to opt(c.email),
+            "p_phone" to opt(c.phone),
+        ) +
+            // Only sent when it changes, so a backend without the guest-member migration still takes the call.
+            (c.noApp?.let { mapOf("p_no_app" to flag(it)) } ?: emptyMap()),
     )
 
     fun setSlotShares(slotId: String, shares: List<ShareInput>): RpcParams = params(

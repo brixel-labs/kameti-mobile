@@ -71,15 +71,27 @@ public struct Member: Codable, Hashable, Identifiable, Sendable {
     public let profileId: String?
     public let nickname: String?
     public let color: String?
+    /// Stored as sent by the backend; a backend without the column (before its migration) sends none.
+    private let storedNoApp: Bool?
+
+    /// The owner marked this member as not using the app: they get their updates by WhatsApp, and
+    /// nobody waits for them to join. Never true for a member who has an invite or has joined.
+    public var noApp: Bool { storedNoApp ?? false }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kametiId, name, joinStatus, contactId, profileId, nickname, color
+        case storedNoApp = "noApp"
+    }
 
     public init(
         id: String, kametiId: String, name: String, joinStatus: JoinStatus,
         contactId: String? = nil, profileId: String? = nil,
-        nickname: String? = nil, color: String? = nil
+        nickname: String? = nil, color: String? = nil, noApp: Bool = false
     ) {
         self.id = id; self.kametiId = kametiId; self.name = name
         self.joinStatus = joinStatus; self.contactId = contactId
         self.profileId = profileId; self.nickname = nickname; self.color = color
+        self.storedNoApp = noApp
     }
 }
 
@@ -200,8 +212,9 @@ public struct MemberChanges: Sendable {
     public var nickname: String?
     public var email: String?
     public var phone: String?
+    public var noApp: Bool?
 
-    public init(name: String? = nil, nickname: String? = nil, email: String? = nil, phone: String? = nil) {
-        self.name = name; self.nickname = nickname; self.email = email; self.phone = phone
+    public init(name: String? = nil, nickname: String? = nil, email: String? = nil, phone: String? = nil, noApp: Bool? = nil) {
+        self.name = name; self.nickname = nickname; self.email = email; self.phone = phone; self.noApp = noApp
     }
 }

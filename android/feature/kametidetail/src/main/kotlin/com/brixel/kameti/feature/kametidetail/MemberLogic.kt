@@ -91,6 +91,9 @@ internal sealed interface AccessState {
     /** Not invited, declined or revoked. [email] is where an invite would go. */
     data class NotInvited(val email: String?, val declined: Boolean) : AccessState
 
+    /** The owner marked them as not using the app: updates reach them by WhatsApp. [phone] is where. */
+    data class Guest(val phone: String?) : AccessState
+
     companion object {
         fun of(member: Member, data: KametiDetailData): AccessState {
             if (member.profileId == data.userId) return Owner
@@ -105,7 +108,11 @@ internal sealed interface AccessState {
                 JoinStatus.Invited ->
                     mine.firstOrNull { it.status == InviteStatus.Pending }?.let(::Invited) ?: NotInvited(email, declined = false)
                 JoinStatus.NotInvited, JoinStatus.Declined ->
-                    NotInvited(email, declined = member.joinStatus == JoinStatus.Declined)
+                    if (member.noApp) {
+                        Guest(MemberLogic.contact(member, data)?.phone)
+                    } else {
+                        NotInvited(email, declined = member.joinStatus == JoinStatus.Declined)
+                    }
             }
         }
 

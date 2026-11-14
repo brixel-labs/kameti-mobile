@@ -76,8 +76,8 @@ private fun memberCountText(count: Int): String =
  * sheet.
  */
 @Composable
-internal fun HomeKametiCard(item: HomeKametiSummary, currentMonth: LocalDate, onClick: () -> Unit) {
-    KCard(onClick = onClick) {
+internal fun HomeKametiCard(item: HomeKametiSummary, currentMonth: LocalDate, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
+    KCard(onClick = onClick, onLongClick = onLongClick) {
         if (HomeViewModel.isPast(item.kameti.status)) {
             PastBody(item)
         } else {

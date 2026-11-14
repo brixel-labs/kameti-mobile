@@ -483,6 +483,20 @@ final class SampleKametiRepository: KametiRepository {
     }
 
     /// Mirrors `archive_kameti`: owner only, anything but an archived kameti.
+    /// Mirrors `delete_kameti_draft`: owner only, drafts only; the draft's members, slots and shares go too.
+    func deleteKametiDraft(id: String) async throws(Failure) {
+        try state.withLock { s throws(Failure) in
+            guard let index = s.kametis.firstIndex(where: { $0.id == id }), s.kametis[index].ownerId == SampleData.userId else {
+                throw Failure.server(code: "not_kameti_owner", detail: nil)
+            }
+            guard s.kametis[index].status == .draft else { throw Failure.server(code: "kameti_not_draft", detail: nil) }
+            s.kametis.remove(at: index)
+            s.members[id] = nil
+            s.slots[id] = nil
+            s.shares[id] = nil
+        }
+    }
+
     func archiveKameti(id: String) async throws(Failure) -> Kameti {
         try state.withLock { s throws(Failure) in
             guard let index = s.kametis.firstIndex(where: { $0.id == id }) else { throw notFound }
@@ -631,9 +645,13 @@ final class SampleKametiRepository: KametiRepository {
             contactId = contacts.update(id: old.contactId, name: name, email: email, phone: phone).id
         }
         let nickname = changes.nickname.map { trimmed($0) } ?? old.nickname
+        // Like update_member: someone with an invite, or who joined, can't be marked as not using the app.
+        if changes.noApp == true, ![.notInvited, .declined].contains(old.joinStatus) {
+            throw Failure.server(code: "member_already_invited", detail: nil)
+        }
         let updated = Member(
             id: old.id, kametiId: old.kametiId, name: name, joinStatus: old.joinStatus, contactId: contactId,
-            profileId: old.profileId, nickname: nickname, color: old.color
+            profileId: old.profileId, nickname: nickname, color: old.color, noApp: changes.noApp ?? old.noApp
         )
         state.withLock { s in
             if let index = s.members[old.kametiId]?.firstIndex(where: { $0.id == id }) { s.members[old.kametiId]?[index] = updated }

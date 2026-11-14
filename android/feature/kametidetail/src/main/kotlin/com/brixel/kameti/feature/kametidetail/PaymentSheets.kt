@@ -216,7 +216,12 @@ internal fun RecordPaymentSheet(
                             note = note.trim().ifEmpty { null }, idempotencyKey = key,
                         )
                         isBusy = false
-                        if (result != null) failure = result else close()
+                        if (result != null) {
+                            failure = result
+                        } else {
+                            close()
+                            model.offerReceipts(listOf(PendingReceipt(id, amount, dateChoice.date(opened.today, customDate))))
+                        }
                     }
                 },
                 enabled = amount.isPositive && memberId != null && online,

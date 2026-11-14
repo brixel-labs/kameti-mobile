@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brixel.kameti.core.RecordAction
+import com.brixel.kameti.domain.KametiStatus
 import com.brixel.kameti.domain.MyInvitation
 import com.brixel.kameti.feature.invites.InvitationCard
 import com.brixel.kameti.feature.kametidetail.DetailLogic
@@ -95,6 +96,8 @@ fun HomeScreen(
     var enteringCode by rememberSaveable { mutableStateOf(false) }
     var recording by rememberSaveable { mutableStateOf(false) }
     var declining by remember { mutableStateOf<MyInvitation?>(null) }
+    // A draft of mine that isn't going ahead: press and hold its card to delete it.
+    var deletingDraft by remember { mutableStateOf<HomeKametiSummary?>(null) }
     // Owner kametis that are collecting this month.
     val recordable = state.sections.mine.filter { it.currentMonth != null }
 
@@ -175,7 +178,7 @@ fun HomeScreen(
                         }
                         // "New kameti" sits on the first group's header.
                         val hasMine = state.sections.mine.isNotEmpty()
-                        group(R.string.home_running_by_me, state.sections.mine, model, onOpen, onNew = onCreate)
+                        group(R.string.home_running_by_me, state.sections.mine, model, onOpen, onNew = onCreate, onDeleteDraft = { deletingDraft = it })
                         group(
                             R.string.home_im_a_member, state.sections.joined, model, onOpen,
                             onNew = if (hasMine) null else onCreate,
@@ -234,6 +237,29 @@ fun HomeScreen(
         }
     }
 
+    deletingDraft?.let { draft ->
+        KConfirmSheet(
+            title = stringResource(R.string.home_delete_this_draft),
+            confirmTitle = stringResource(R.string.home_delete_draft),
+            onDismiss = { deletingDraft = null },
+            onConfirm = {
+                val failure = model.deleteDraft(draft.id)
+                if (failure == null) {
+                    KConfirmOutcome.Dismiss
+                } else {
+                    KConfirmOutcome.Result(
+                        KSheetMessage(
+                            context.getString(R.string.home_couldnt_delete_this_draft),
+                            failure.userMessage(context),
+                            KSheetMessage.Tone.Error,
+                        ),
+                    )
+                }
+            },
+            message = stringResource(R.string.home_s_and_the_people_you_added_are_removed, draft.kameti.name),
+            isDestructive = true,
+        )
+    }
     declining?.let { invitation ->
         KConfirmSheet(
             title = stringResource(R.string.home_decline_this_invite),
@@ -272,6 +298,7 @@ private fun LazyListScope.group(
     onNew: (() -> Unit)? = null,
     archivedCount: Int = 0,
     onOpenArchived: () -> Unit = {},
+    onDeleteDraft: ((HomeKametiSummary) -> Unit)? = null,
 ) {
     if (items.isEmpty() && archivedCount == 0) return
     item(key = "header-$titleRes") {
@@ -282,7 +309,12 @@ private fun LazyListScope.group(
         )
     }
     items(items, key = { it.id }) { item ->
-        HomeKametiCard(item, model.currentMonth) { onOpen(item.id) }
+        val deletes = if (onDeleteDraft != null && item.kameti.status == KametiStatus.Draft && item.isOwner) {
+            { onDeleteDraft(item) }
+        } else {
+            null
+        }
+        HomeKametiCard(item, model.currentMonth, onLongClick = deletes) { onOpen(item.id) }
     }
     if (archivedCount > 0) {
         item(key = "archived") { ArchivedRow(archivedCount, onOpenArchived) }

@@ -134,6 +134,18 @@ public final class CreateWizardModel {
 
     public func clearFailure() { failure = nil }
 
+    /// Deletes this draft for good (nothing has been recorded in a draft). Returns the failure to show, or
+    /// `nil`; the caller then closes the wizard.
+    public func deleteDraft() async -> Failure? {
+        guard let id = kametiId else { return nil }
+        do throws(Failure) {
+            try await dependencies.kametis.deleteKametiDraft(id: id)
+        } catch {
+            return error
+        }
+        return nil
+    }
+
     public func goTo(_ target: WizardStep) {
         step = target
         editingSlotId = nil
