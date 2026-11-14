@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The flat colour behind each launcher icon: the edge colour of its art (iOS AppIcon sets). -->
+<resources>
+    <color name="ic_launcher_background">#0E6B52</color>
+    <color name="ic_launcher_midnight_background">#06231A</color>
+    <color name="ic_launcher_monogram_background">#0E6B52</color>
+    <color name="ic_launcher_turns_background">#0E6B52</color>
+</resources>

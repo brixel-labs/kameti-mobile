@@ -10,8 +10,8 @@ import com.brixel.kameti.domain.KeyValueStorage
 import com.brixel.kameti.domain.ProfileCache
 import com.brixel.kameti.feature.auth.SessionStore
 import com.brixel.kameti.feature.auth.SignInViewModel
+import com.brixel.kameti.feature.shell.PushCenter
 import com.brixel.kameti.navigation.AppRouter
-import com.brixel.kameti.testsupport.SampleData
 import kotlinx.coroutines.MainScope
 
 /**
@@ -28,10 +28,11 @@ class AppContainer(config: AppConfig, context: Context, currentActivity: () -> A
     private val showsDevSignIn = config.isDev()
 
     init {
-        if (config.isDemo()) {
-            // Sample kametis, no backend: see every screen without data.
+        // Sample kametis, no backend: see every screen without data. Debug
+        // builds only: a release build doesn't even contain the sample data.
+        val sample = if (config.isDemo()) demoDependencies() else null
+        if (sample != null) {
             backend = null
-            val sample = SampleData.dependencies()
             dependencies = sample.copy(profileCache = ProfileCache(storage, sample.clock))
         } else {
             val google = config.googleWebClientId?.let { GoogleCredentialSource(serverClientId = it, currentActivity) }
@@ -44,16 +45,18 @@ class AppContainer(config: AppConfig, context: Context, currentActivity: () -> A
             dependencies = backend.dependencies
         }
         session = SessionStore(dependencies.auth, MainScope()).also { it.start() }
+        PushCenter.storage = storage
     }
 
     fun makeSignInViewModel() = SignInViewModel(dependencies.auth, showsDevSignIn)
 
     /**
      * An intent the activity was opened with: the end of a browser sign-in
-     * (Apple), or an invite link.
+     * (Apple), a tapped notification, or an invite link.
      */
     fun handle(intent: Intent) {
         backend?.handleRedirect(intent)
+        if (Push.handleTap(intent)) return
         intent.dataString?.let(router::open)
     }
 }

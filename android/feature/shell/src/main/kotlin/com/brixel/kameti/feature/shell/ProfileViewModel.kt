@@ -47,7 +47,12 @@ data class ProfileUiState(
  * The signed-in user's profile (name and how many kametis they run or are
  * in) and sign-out.
  */
-class ProfileViewModel(val userId: String, val dependencies: KametiDependencies) : ViewModel() {
+class ProfileViewModel(
+    val userId: String,
+    val dependencies: KametiDependencies,
+    /** This phone's push token, if it has one. */
+    private val pushToken: () -> String? = { PushCenter.token.value },
+) : ViewModel() {
     private val cache = dependencies.profileCache
     private val current = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = current.asStateFlow()
@@ -158,6 +163,8 @@ class ProfileViewModel(val userId: String, val dependencies: KametiDependencies)
 
     /** The session store notices the signed-out state and the root screen moves on. */
     suspend fun signOut() {
+        // This phone stops getting this account's pushes.
+        pushToken()?.let { token -> attempt { dependencies.notifications.unregisterDevice(token) } }
         try {
             dependencies.auth.signOut()
             cache.clear(userId)

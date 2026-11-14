@@ -12,6 +12,8 @@ supabase = "3.9.0"
 ktor = "3.6.0"
 credentials = "1.6.0"
 googleid = "1.2.1"
+firebaseBom = "35.2.0"
+googleServices = "4.6.0"
 
 [libraries]
 # Build plugins, used by build-logic.
@@ -52,5 +54,12 @@ androidx-credentials = { module = "androidx.credentials:credentials", version.re
 androidx-credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 
+# Push (:app only). Works without google-services.json: the app then runs without push.
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+
+[plugins]
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

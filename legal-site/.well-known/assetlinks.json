@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.brixel.kameti",
+      "sha256_cert_fingerprints": [
+        "9E:1A:EB:61:05:BF:60:6E:03:52:43:6C:59:FC:B5:B9:74:39:B6:68:E4:FE:AE:E5:C1:62:38:34:6A:26:4C:C1"
+      ]
+    }
+  }
+]

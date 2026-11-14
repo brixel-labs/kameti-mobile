@@ -26,7 +26,45 @@
                     android:host="login-callback"
                     android:scheme="com.brixel.kameti" />
             </intent-filter>
+            <!--
+              Invite links (DeepLink.kt). Android opens them in the app without
+              asking once the site's .well-known/assetlinks.json lists the
+              app's signing fingerprint.
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="kameti.fhbtechservices.com" />
+                <data android:pathPrefix="/join/" />
+            </intent-filter>
+            <!-- The first links sent, on the company site. Not verified: Android may ask which app opens them. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="www.fhbtechservices.com" />
+                <data android:host="fhbtechservices.com" />
+                <data android:pathPrefix="/kameti/join/" />
+            </intent-filter>
         </activity>
+
+        <!-- Push: the phone's token and notifications that arrive while the app is open. -->
+        <service
+            android:name=".KametiMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="kameti" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
 
         <!--
           The home-screen icons (Profile → App icon). Each is a launcher entry

@@ -34,7 +34,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Edit kameti, draft screen, Notes | Built: drafts reopen in the wizard; Notes tab (A2-Notes-Tab, swipe actions); edit a running kameti (AE-1, ••• menu) | Notes on payment and payout screens |
 | Offline and error states | Built (AF-States): offline banner, writes blocked offline, skeletons, error and invite cards | Saved copy for opening the app offline |
 | Dark mode | Checked: tokens match the dark artboards; two hard-coded colours fixed | — |
-| Android | Started 2026-11-14: project, modules, tokens, strings, `:core`, `:domain`, sample data, design system, `:data`, sign-in, the tab shell, Home, the kameti detail and recording (payments, voids, payouts, reminders) | See "Android port" below |
+| Android | All 12 phases ported 2026-11-14; waiting on the owner's setup and testing. Started 2026-11-14: project, modules, tokens, strings, `:core`, `:domain`, sample data, design system, `:data`, sign-in, the tab shell, Home, the kameti detail and recording (payments, voids, payouts, reminders) | See "Android port" below |
 
 ## Order of work
 
@@ -74,6 +74,6 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | 9 | Members and invites, Inbox: edit member, app access, share transfer, Invite all, join screen, approve sheet | Done |
 | 10 | Notes tab and member notes, activity log, edit kameti, edit setup, archive, restore, duplicate | Done |
 | 11 | Profile: name, appearance, app icon (four launcher entries), notification settings, my people, sign-in methods, past kametis, delete account | Done |
-| 12 | Push, live updates, invite links, offline states, release preparation, CI | — |
+| 12 | Push (Firebase), live updates, invite links (App Links), adaptive launcher icons, shrunk release build without sample data, optional release signing, Android CI job | Done |
 
 Needs the owner: an Android OAuth client (Google Cloud, with the app's SHA-1), `com.brixel.kameti://login-callback` in Supabase's redirect URLs and an Apple Services ID on the Apple provider (Sign in with Apple opens in a browser tab on Android), the Android app in Firebase (`google-services.json`), and the release signing fingerprint for `assetlinks.json` on the website.

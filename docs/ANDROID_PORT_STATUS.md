@@ -2,13 +2,13 @@
 
 Read this first when picking up the Android port in a new session. Update it at the end of every phase (and whenever the state below changes).
 
-**Last updated:** 2026-11-14, end of phase 11.
+**Last updated:** 2026-11-14, end of phase 12.
 
 ## Where things stand
 
-- **Phases 1–11 are done. Next: phase 12.** Start a phase only when the owner says "Continue phase N".
-- **Phases 1–11 are committed** on branch `feature/android-scaffold` in `kameti-mobile` (the git repo is `kameti-mobile`, not the parent `kameti` folder), one commit for phases 1–7, one for 8–10 and one for 11. Nothing is pushed and there is no pull request.
-- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 240 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. The screens have not been checked visually by Claude; the owner tests them.
+- **All 12 phases are done.** What is left is the owner's setup (see "Waiting on the owner") and the owner's testing; after that, a pull request into `develop`.
+- **Phases 1–11 are committed** on branch `feature/android-scaffold` in `kameti-mobile` (the git repo is `kameti-mobile`, not the parent `kameti` folder), one commit for phases 1–7, one for 8–10 and one for 11. **Phase 12 is uncommitted** on the same branch (`android/app`, `android/feature/shell`, `.github/workflows/ci.yml`, `legal-site/`, the docs). Nothing is pushed and there is no pull request.
+- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 240 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. `./gradlew :app:assembleRelease` (shrunk with R8) also builds, and that build, signed with the debug key, starts on the emulator without crashing; nothing beyond its first screen was exercised. The screens have not been checked visually by Claude; the owner tests them.
 - **Android app config is `demo`** (`android/app/src/main/assets/KametiConfig.json`, gitignored). Switch with `android/scripts/use-env.sh prod|dev|demo` run from `kameti-mobile`, then rebuild. The iOS config is untouched.
 - **Sign-in on prod does not work on Android yet** (see "Waiting on the owner"). Until then the tabs are reachable only in demo, or dev against a local Supabase.
 
@@ -27,7 +27,7 @@ Read this first when picking up the Android port in a new session. Update it at 
 | 9 | Members and invites, Inbox: edit member, app access, share transfer, Invite all, join screen, approve sheet | Done |
 | 10 | Notes, activity, edit, archive, restore, duplicate, edit setup | Done |
 | 11 | Profile: name, appearance, app icon, notification settings, my people, sign-in methods, past kametis, delete account | Done |
-| 12 | Push, live updates, invite links, offline states, release preparation, CI | Next |
+| 12 | Push, live updates, invite links, offline states, release preparation, CI | Done |
 
 The same table is in `docs/ROADMAP.md` ("Android port"); keep both in step.
 
@@ -40,10 +40,15 @@ These are deliberate gaps, each owned by a later phase:
 - **Phase 10 (done), differences from iOS:** the ••• menu opens a short sheet of actions, not a menu; the note composer's "@ Kameti" chooser is a sheet; the Notes search button sits on the filter row inside the tab (iOS puts it in the navigation bar); note text can't be selected for copying; after archiving or restoring, Home shows the change on its next reload.
 - **Sentences built in logic** (activity rows, note labels, the duplicate name) take a `Strings` lookup (`kametidetail/Strings.kt`); tests pass `english`, which reads `strings.xml`, so they check whole sentences like the iOS tests.
 - **Phase 11 (done), differences from iOS:** My people and Notifications are routes (`Route.MyPeople`, `Route.NotificationSettings`, Android only); the app icon changes by enabling one of four launcher entries (`activity-alias` in the manifest, `app/LauncherIcons.kt`), which the launcher shows after a moment and with no system alert; wording that says "iPhone" on iOS has Android versions in `shell/res/values/strings_android.xml`.
-- **Phase 12 owns, from Profile:** the "Know when it matters" push permission sheet and asking after the name prompt; removing this phone's push token on sign-out; the app-icon badge. Profile → Notifications already asks for the notification permission (`POST_NOTIFICATIONS` is in the manifest) and saves the four preferences.
-- **Launcher icons are plain PNGs** made from the iOS 1024-pt art (`sips`), so Android shrinks them into its own shape (lint: `IconLauncherShape`). Proper adaptive icons (foreground and background layers) are release preparation in phase 12.
+- **Phase 12 (done):**
+  - *Live updates:* the shell starts `dependencies.live` after sign-in and stops it on sign-out; changes go through `KLiveUpdates`, which reloads Home, the Inbox and an open kameti. Coming back to the app after it was in the background reloads everything.
+  - *Invite links:* `https://kameti.fhbtechservices.com/join/<token>` (verified App Link) and the old `fhbtechservices.com/kameti/join/<token>` links (not verified: Android may ask which app opens them) open the join screen. `legal-site/.well-known/assetlinks.json` lists the **debug** signing fingerprint only; the website has to be deployed for it to count.
+  - *Push:* Firebase Messaging in `:app` (`Push.kt`, `KametiMessagingService`), `PushCenter` in `:feature:shell`. The phone's token is saved for the signed-in account and removed on sign-out; a tapped notification opens its kameti or the Inbox; the "Know when it matters" sheet asks once after sign-in, after the name prompt. Without `app/google-services.json` the app builds and runs, with no push. Android has no app-icon count like iOS; the launcher shows its own dot when a notification is waiting.
+  - *Offline:* `KConnectivity` and the offline banners were already in each screen from earlier phases; nothing new was needed.
+  - *Launcher icons:* adaptive (a flat colour behind the iOS art, `res/mipmap-anydpi-v26`, `res/values/launcher_colors.xml`), one per icon choice. No themed (monochrome) layer yet.
+  - *Release build:* R8 shrinking is on; sample data is a debug-only dependency (`app/src/debug/DemoBackend.kt` has it, `app/src/release/DemoBackend.kt` returns nothing), so a release build cannot run the demo; signing reads `android/keystore.properties` (git-ignored: `storeFile`, `storePassword`, `keyAlias`, `keyPassword`) and without it the release APK is unsigned.
+  - *CI:* `.github/workflows/ci.yml` has an `android` job on Linux (unit tests, lint, debug build with the demo config) beside the iOS job. It runs on pushes to `develop` and `main`, so it has not run yet.
 - **Launching from adb still uses** `am start -n com.brixel.kameti/.MainActivity`: the launcher entries are aliases, but the activity is exported.
-- **Phase 12:** `data/SupabaseLiveUpdates.kt` is written but not wired into any screen.
 - **Phase 8 (done), differences from iOS:** the wizard's top bar and footer are its own (a close or back arrow, then Previous and the primary button); the tab bar is hidden while it is open, as on iOS; the system Back button steps back a step. The keyboard has no previous/next bar. As on iOS, the overdue-reminder and owner-summary switches and "Email invites now" are shown but not saved.
 - `ui/res/drawable/k_apple_logo.xml` was drawn by hand; the owner should check it looks right.
 - One difference from iOS: the member's schedule opens as a full-height sheet, not a pushed page.
@@ -92,8 +97,9 @@ adb -s emulator-5554 logcat -d -s AndroidRuntime:E   # check only that it did no
 
 - **Google Cloud:** an Android OAuth client for package `com.brixel.kameti` with the debug SHA-1 `46:AE:62:40:60:E6:68:3F:60:FB:3A:BA:CD:69:4D:D3:96:3C:7B:11` (and later the release one).
 - **Supabase:** add `com.brixel.kameti://login-callback` to the redirect URLs, and an Apple Services ID on the Apple provider.
-- **Firebase:** add the Android app and supply `google-services.json` (phase 12, push).
-- **Website:** the release signing fingerprint for `assetlinks.json` (phase 12, invite links).
+- **Firebase:** add the Android app (package `com.brixel.kameti`) to the Firebase project and put its `google-services.json` in `android/app/` (git-ignored). Until then there is no push on Android. The backend's push sender must also accept the `android` platform tokens it now receives; that has not been checked.
+- **Release key:** create the upload keystore and `android/keystore.properties`; add the release SHA-1 to the Google OAuth client.
+- **Website:** add the release SHA-256 fingerprint (from Play Console → App signing) to `legal-site/.well-known/assetlinks.json` and deploy the site, so invite links open the store build without asking.
 
 ## Technical notes worth keeping
 

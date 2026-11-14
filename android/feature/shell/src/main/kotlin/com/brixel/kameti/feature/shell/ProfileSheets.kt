@@ -314,3 +314,52 @@ private fun Point(icon: ImageVector, text: String) {
         KText(text, KTextToken.body, modifier = Modifier.weight(1f))
     }
 }
+
+/** "Know when it matters" (board AN-4): asked once, soon after signing in. */
+@Composable
+internal fun PushPermissionSheet(onAllow: () -> Unit, onDismiss: () -> Unit) {
+    KBottomSheet(title = "", onDismiss = onDismiss, expanded = true) { close ->
+        Column(
+            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = KSpace.xl).padding(bottom = KSpace.lg),
+            verticalArrangement = Arrangement.spacedBy(KSpace.lg),
+        ) {
+            Box(Modifier.size(56.dp).background(KColors.brandSubtle, RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+                KIcon(KIcons.bell, tint = KColors.brand, size = 28.dp)
+            }
+            KText(stringResource(R.string.shell_know_when_it_matters), KTextToken.titleLg)
+            KText(stringResource(R.string.shell_kameti_tells_you_when_a_payment_is_due), KTextToken.body, color = KColors.textSecondary)
+            Column(verticalArrangement = Arrangement.spacedBy(KSpace.sm)) {
+                Example(KIcons.check, stringResource(R.string.shell_office_kameti), stringResource(R.string.shell_hira_paid_rs_50_000_for_november))
+                Example(
+                    KIcons.personFilled, stringResource(R.string.shell_office_kameti),
+                    stringResource(R.string.shell_muhammad_hassan_wants_to_join_tap_to_review),
+                )
+                Example(KIcons.clock, stringResource(R.string.shell_family_kameti), stringResource(R.string.shell_rs_25_000_is_due_by_the_10th))
+            }
+            KButton(
+                stringResource(R.string.shell_turn_on_notifications),
+                onClick = {
+                    onAllow()
+                    close()
+                },
+            )
+            KButton(stringResource(R.string.shell_not_now), onClick = close, style = KButtonStyle.Secondary)
+        }
+    }
+}
+
+@Composable
+private fun Example(icon: ImageVector, title: String, body: String) {
+    Row(
+        Modifier.fillMaxWidth().background(KColors.surface, RoundedCornerShape(14.dp)).padding(KSpace.md),
+        horizontalArrangement = Arrangement.spacedBy(KSpace.md),
+    ) {
+        Box(Modifier.size(30.dp).background(KColors.brand, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+            KIcon(icon, tint = KColors.textOnBrand, size = 16.dp)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            KText(title, KTextToken.bodyStrong)
+            KText(body, KTextToken.bodySm)
+        }
+    }
+}

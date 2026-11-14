@@ -44,6 +44,7 @@ import com.brixel.kameti.ui.KFailureSheet
 import com.brixel.kameti.ui.KIcon
 import com.brixel.kameti.ui.KIconButton
 import com.brixel.kameti.ui.KIcons
+import com.brixel.kameti.ui.KLiveUpdates
 import com.brixel.kameti.ui.KMessageCard
 import com.brixel.kameti.ui.KOfflineBanner
 import com.brixel.kameti.ui.KRadius
@@ -81,6 +82,11 @@ fun KametiDetailScreen(
     val known = (state as? KametiDetailViewModel.State.Loaded)?.data?.kameti ?: model.preview
 
     LaunchedEffect(Unit) { model.load() }
+    // Live: reload quietly when this kameti changes on the server.
+    val live = KLiveUpdates.shared
+    LaunchedEffect(live.revision) {
+        if (live.revision > 0 && live.affects(model.kametiId)) model.load()
+    }
 
     Column(modifier.fillMaxSize().background(KColors.background)) {
         KTopBar(

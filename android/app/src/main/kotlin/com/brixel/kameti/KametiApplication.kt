@@ -19,6 +19,7 @@ class KametiApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         KConnectivity.start(this)
+        Push.start(this)
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) {
                 resumedActivity = WeakReference(activity)
