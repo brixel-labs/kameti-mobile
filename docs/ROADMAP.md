@@ -34,7 +34,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | Edit kameti, draft screen, Notes | Built: drafts reopen in the wizard; Notes tab (A2-Notes-Tab, swipe actions); edit a running kameti (AE-1, ••• menu) | Notes on payment and payout screens |
 | Offline and error states | Built (AF-States): offline banner, writes blocked offline, skeletons, error and invite cards | Saved copy for opening the app offline |
 | Dark mode | Checked: tokens match the dark artboards; two hard-coded colours fixed | — |
-| Android | All 12 phases ported 2026-11-14; waiting on the owner's setup and testing. Started 2026-11-14: project, modules, tokens, strings, `:core`, `:domain`, sample data, design system, `:data`, sign-in, the tab shell, Home, the kameti detail and recording (payments, voids, payouts, reminders) | See "Android port" below |
+| Android | Ported and merged into `develop` 2026-11-14 (kameti-mobile#39, #40); waiting on the owner's release setup and testing | See "Android port" below |
 
 ## Order of work
 
@@ -76,4 +76,4 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | 11 | Profile: name, appearance, app icon (four launcher entries), notification settings, my people, sign-in methods, past kametis, delete account | Done |
 | 12 | Push (Firebase), live updates, invite links (App Links), adaptive launcher icons, shrunk release build without sample data, optional release signing, Android CI job | Done |
 
-Needs the owner: an Android OAuth client (Google Cloud, with the app's SHA-1), the Android app in Firebase (`google-services.json`), and the release signing fingerprint for `assetlinks.json` on the website.
+Needs the owner for the store release: the upload keystore and its fingerprint (Google Cloud, Firebase) and the release SHA-256 in `assetlinks.json` on the website. The debug-key Google and Firebase setup is done.
