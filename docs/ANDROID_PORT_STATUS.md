@@ -2,15 +2,14 @@
 
 Read this first when picking up the Android port in a new session. Update it at the end of every phase (and whenever the state below changes).
 
-**Last updated:** 2026-11-14, end of phase 12.
+**Last updated:** 2026-11-14, after the guest-members and delete-draft work (kameti-mobile#40).
 
 ## Where things stand
 
-- **All 12 phases are done.** What is left is the owner's setup (see "Waiting on the owner") and the owner's testing; after that, a pull request into `develop`.
-- **All 12 phases are committed and pushed** on branch `feature/android-scaffold` in `kameti-mobile` (the git repo is `kameti-mobile`, not the parent `kameti` folder): one commit for phases 1–7, one for 8–10, one for 11 and one for 12. There is no pull request yet, and nothing is merged into `develop`.
+- **All 12 phases are done and merged into `develop`** (kameti-mobile#39 with the whole Android app and the reminder time; #40 with guest members, the setup card and delete a draft). The git repo is `kameti-mobile`, not the parent `kameti` folder. What is left is the owner's release setup (see "Waiting on the owner") and the owner's testing.
 - **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 258 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. `./gradlew :app:assembleRelease` (shrunk with R8) also builds, and that build, signed with the debug key, starts on the emulator without crashing; nothing beyond its first screen was exercised. The screens have not been checked visually by Claude; the owner tests them.
-- **Android app config is `demo`** (`android/app/src/main/assets/KametiConfig.json`, gitignored). Switch with `android/scripts/use-env.sh prod|dev|demo` run from `kameti-mobile`, then rebuild. The iOS config is untouched.
-- **Sign-in on prod does not work on Android yet** (see "Waiting on the owner"). Until then the tabs are reachable only in demo, or dev against a local Supabase.
+- **Android app config:** the owner's local copy points at **prod** (`android/app/src/main/assets/KametiConfig.json`, gitignored) with `android/app/google-services.json` in place. Switch with `android/scripts/use-env.sh prod|dev|demo` run from `kameti-mobile`, then rebuild. Google sign-in on Android is set up (the Android OAuth client and the Firebase app exist for the debug key); Apple sign-in was removed from Android on purpose.
+- **Backend:** the migrations for the reminder time (#22), guest members and delete a draft (#23) are applied to kameti-prod.
 
 ## Phases
 
@@ -95,10 +94,11 @@ adb -s emulator-5554 logcat -d -s AndroidRuntime:E   # check only that it did no
 
 ## Waiting on the owner
 
-- **Google Cloud:** an Android OAuth client for package `com.brixel.kameti` with the debug SHA-1 `46:AE:62:40:60:E6:68:3F:60:FB:3A:BA:CD:69:4D:D3:96:3C:7B:11` (and later the release one).
-- **Firebase:** add the Android app (package `com.brixel.kameti`) to the Firebase project and put its `google-services.json` in `android/app/` (git-ignored). Until then there is no push on Android. The backend already accepts `android` tokens (`register_device` allows `ios` and `android`, and `send-push` sends to every token through FCM); a real push to an Android phone has not been tried.
-- **Release key:** create the upload keystore and `android/keystore.properties`; add the release SHA-1 to the Google OAuth client.
+- **Done:** the Android OAuth client in Google Cloud and the Firebase Android app (both for the debug SHA-1 `46:AE:62:40:60:E6:68:3F:60:FB:3A:BA:CD:69:4D:D3:96:3C:7B:11`).
+- **Push test:** a real push to an Android phone has not been tried. The backend already accepts `android` tokens (`register_device`, `send-push` through FCM).
+- **Release key:** create the upload keystore and `android/keystore.properties`; add the release SHA-1 to the Google OAuth client and to the Firebase app.
 - **Website:** add the release SHA-256 fingerprint (from Play Console → App signing) to `legal-site/.well-known/assetlinks.json` and deploy the site, so invite links open the store build without asking.
+- **Not tried:** the iOS build on the physical iPhone 17 Pro Max (it was locked), and the first run of the Android CI job (it runs on the next push to `develop`).
 
 ## Technical notes worth keeping
 
