@@ -8,11 +8,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.brixel.kameti.feature.auth.ConfigurationMissingScreen
 import com.brixel.kameti.feature.shell.RootScreen
+import com.brixel.kameti.feature.shell.ShellSettings
 import com.brixel.kameti.ui.KAppearance
 import com.brixel.kameti.ui.KTheme
 
@@ -39,6 +41,14 @@ class MainActivity : ComponentActivity() {
                         router = container.router,
                         signIn = viewModel { container.makeSignInViewModel() },
                         dependencies = container.dependencies,
+                        settings = ShellSettings(
+                            appearance = appearance,
+                            onAppearance = {
+                                appearance = it
+                                container.storage.write(KAppearance.STORAGE_KEY, it.rawValue)
+                            },
+                            appIcons = remember { LauncherIcons(applicationContext) },
+                        ),
                     )
                 }
             }

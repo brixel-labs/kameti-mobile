@@ -28,6 +28,12 @@ sealed interface Route {
     /** Profile's completed and cancelled kametis. */
     data object PastKametis : Route
 
+    /** Profile's saved people. */
+    data object MyPeople : Route
+
+    /** Profile's notification settings. */
+    data object NotificationSettings : Route
+
     /** An invite link token or the 6-character code. */
     data class Join(val token: String) : Route
 

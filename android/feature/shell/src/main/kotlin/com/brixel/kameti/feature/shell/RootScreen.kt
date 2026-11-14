@@ -21,6 +21,7 @@ fun RootScreen(
     signIn: SignInViewModel,
     dependencies: KametiDependencies,
     modifier: Modifier = Modifier,
+    settings: ShellSettings = ShellSettings(),
 ) {
     val state by session.state.collectAsStateWithLifecycle()
     Crossfade(targetState = state, modifier = modifier, label = "session") { current ->
@@ -29,7 +30,7 @@ fun RootScreen(
             SessionStore.State.SignedOut -> SignInScreen(signIn)
             // A new user gets fresh screens and a clean tab state.
             is SessionStore.State.SignedIn -> key(current.userId) {
-                MainTabs(router = router, userId = current.userId, dependencies = dependencies)
+                MainTabs(router = router, userId = current.userId, dependencies = dependencies, settings = settings)
             }
         }
     }

@@ -73,7 +73,7 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | 8 | Create wizard: six steps, slot split sheet, payout order, reopening a draft. The tab bar hides while it is open | Done |
 | 9 | Members and invites, Inbox: edit member, app access, share transfer, Invite all, join screen, approve sheet | Done |
 | 10 | Notes tab and member notes, activity log, edit kameti, edit setup, archive, restore, duplicate | Done |
-| 11 | Profile | — |
+| 11 | Profile: name, appearance, app icon (four launcher entries), notification settings, my people, sign-in methods, past kametis, delete account | Done |
 | 12 | Push, live updates, invite links, offline states, release preparation, CI | — |
 
 Needs the owner: an Android OAuth client (Google Cloud, with the app's SHA-1), `com.brixel.kameti://login-callback` in Supabase's redirect URLs and an Apple Services ID on the Apple provider (Sign in with Apple opens in a browser tab on Android), the Android app in Firebase (`google-services.json`), and the release signing fingerprint for `assetlinks.json` on the website.

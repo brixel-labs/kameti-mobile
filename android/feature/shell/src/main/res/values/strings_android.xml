@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wording only Android needs: the iOS catalog says "iPhone" in these. Written by hand. -->
+<resources>
+    <string name="shell_android_notifications_are_on_for_this_phone">Notifications are on for this phone</string>
+    <string name="shell_android_notifications_are_off_for_this_phone">Notifications are off for this phone</string>
+    <string name="shell_android_open_settings">Open settings</string>
+    <string name="shell_android_system_follows_your_phone">System follows your phone\'s setting and switches with it.</string>
+    <string name="shell_android_turn_notifications_on_to_choose">Turn notifications on for this phone to choose what you get. Everything still shows in your Inbox.</string>
+    <string name="shell_android_everything_also_shows_in_your_inbox">Everything also shows in your Inbox, even when it\'s off here. The owner\'s \"remind everyone\" message always comes through unless you turn notifications off for Kameti in your phone\'s settings.</string>
+    <string name="shell_android_send_me">Send me</string>
+    <string name="shell_android_delete_word">DELETE</string>
+    <string name="shell_android_the_icon_changes_in_a_moment">Changes the icon on your home screen, in a moment. Only on this phone.</string>
+</resources>
