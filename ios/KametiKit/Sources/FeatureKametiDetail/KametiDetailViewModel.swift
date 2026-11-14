@@ -55,6 +55,8 @@ public final class KametiDetailViewModel {
     public let preview: Kameti?
     /// An action to start once the owner's tabs are on screen (from Home).
     public var pendingAction: RecordAction?
+    /// Open the owner's tabs on Members instead of Overview (right after a kameti starts).
+    public var opensOnMembers = false
 
     public init(kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti? = nil) {
         self.preview = preview

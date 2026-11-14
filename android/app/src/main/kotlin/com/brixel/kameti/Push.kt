@@ -27,12 +27,10 @@ object Push {
 
     /** Call once at app start. Without `google-services.json` the app runs, just without push. */
     fun start(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID, context.getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply { description = context.getString(R.string.notification_channel_description) }
-            context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-        }
+        val channel = NotificationChannel(
+            CHANNEL_ID, context.getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply { description = context.getString(R.string.notification_channel_description) }
+        context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         if (FirebaseApp.getApps(context).isEmpty()) return
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token -> PushCenter.token.value = token }
     }

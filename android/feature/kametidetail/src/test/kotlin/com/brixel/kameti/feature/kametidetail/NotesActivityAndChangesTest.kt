@@ -128,6 +128,15 @@ class ActivityTest {
     }
 
     @Test
+    fun aChangedReminderTimeReadsAsATime() {
+        val edit = ActivityLogic.item(
+            entry("kameti.update", member = null, before = obj("reminder_hour" to int(10)), after = obj("reminder_hour" to int(18))),
+            context,
+        )
+        assertEquals(listOf(ActivityItem.Change("Reminder time", "10:00 AM", "6:00 PM")), edit.changes)
+    }
+
+    @Test
     fun aRemovedMemberIsNamedFromTheEntry() {
         val removed = ActivityLogic.item(entry("member.remove", member = "gone", before = obj("name" to str("Old Friend"))), context)
         assertEquals("Old Friend removed", removed.title)
@@ -201,6 +210,20 @@ class EditKametiTest {
         assertNull(changes.dueDay)
         assertNull(changes.description)
         assertTrue(changes.slotAmount == null && changes.months == null)
+    }
+
+    @Test
+    fun theReminderTimeIsEditableAndSent() = runTest {
+        val model = loaded()
+        val kameti = model.data.kameti
+        assertEquals(10, kameti.reminderHour)
+        val form = EditKametiForm(kameti).copy(reminderHour = 18)
+        val changes = assertNotNull(form.changes(kameti))
+        assertEquals(18, changes.reminderHour)
+        assertTrue(changes.name == null && changes.dueDay == null && changes.reminderDays == null)
+        assertNull(model.updateKameti(changes))
+        assertEquals(18, model.data.kameti.reminderHour)
+        assertEquals(Failure.Server("invalid_reminder_hour"), model.updateKameti(KametiChanges(reminderHour = 3)))
     }
 
     @Test

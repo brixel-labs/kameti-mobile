@@ -2,6 +2,7 @@ package com.brixel.kameti.feature.kametidetail
 
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.brixel.kameti.core.Money
+import com.brixel.kameti.core.ReminderTime
 import com.brixel.kameti.domain.AuditEntry
 import com.brixel.kameti.domain.Kameti
 import com.brixel.kameti.domain.Member
@@ -142,6 +143,7 @@ internal object ActivityLogic {
                         Field("description", s.get(R.string.detail_description)) { text(it, s) },
                         Field("due_day", s.get(R.string.detail_due_day)) { it.number?.let { day -> ReminderLogic.ordinal(day.toInt()) } ?: "–" },
                         Field("reminder_days", s.get(R.string.detail_reminders)) { days(it, s) },
+                        Field("reminder_hour", s.get(R.string.detail_reminder_time)) { it.number?.let { hour -> ReminderTime.label(hour.toInt()) } ?: "–" },
                     ),
                 ),
             )

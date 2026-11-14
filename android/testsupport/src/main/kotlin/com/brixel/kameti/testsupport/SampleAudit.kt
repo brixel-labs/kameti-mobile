@@ -110,6 +110,7 @@ class SampleAuditLog {
         fun kameti(k: Kameti): JsonElement = buildJsonObject {
             put("name", k.name); put("description", k.description); put("due_day", k.dueDay)
             put("reminder_days", buildJsonArray { k.reminderDays.forEach { add(JsonPrimitive(it)) } })
+            put("reminder_hour", k.reminderHour)
         }
 
         fun member(m: Member): JsonElement = buildJsonObject {

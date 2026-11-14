@@ -284,8 +284,9 @@
     <string name="detail_reminded_today">Reminded today</string>
     <string name="detail_reminder_sent_to_1_member">Reminder sent to 1 member.</string>
     <string name="detail_reminder_sent_to_n_members">Reminder sent to %d members.</string>
+    <string name="detail_reminder_time">Reminder time</string>
     <string name="detail_reminders">Reminders</string>
-    <string name="detail_reminders_go_at_10_00_am_pakistan_time">Reminders go at 10:00 AM, Pakistan time. Paid members are never reminded.</string>
+    <string name="detail_reminders_go_at_s_pakistan_time_paid_members">Reminders go at %s, Pakistan time. Paid members are never reminded.</string>
     <string name="detail_remove">Remove</string>
     <string name="detail_remove_access">Remove access</string>
     <string name="detail_remove_from_kameti">Remove from kameti</string>
@@ -324,6 +325,7 @@
     <string name="detail_s_owes_s_take_it_from_the_payout">%1$s owes %2$s. Take it from the payout?</string>
     <string name="detail_s_paid_out">%s paid out</string>
     <string name="detail_s_paid_so_far">%s paid so far</string>
+    <string name="detail_s_pakistan_time">%s, Pakistan time</string>
     <string name="detail_s_pay_the_owner_by_cash_or_bank">%s · pay the owner by cash or bank</string>
     <string name="detail_s_payout">%s payout</string>
     <string name="detail_s_removed">%s removed</string>

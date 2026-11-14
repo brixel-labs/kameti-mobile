@@ -3,6 +3,7 @@ package com.brixel.kameti.data
 import com.brixel.kameti.core.DateOnly
 import com.brixel.kameti.core.KametiJson
 import com.brixel.kameti.core.Money
+import com.brixel.kameti.core.ReminderTime
 import com.brixel.kameti.domain.BatchPaymentItem
 import com.brixel.kameti.domain.KametiChanges
 import com.brixel.kameti.domain.MemberChanges
@@ -65,28 +66,38 @@ internal object Params {
         "p_visibility" to (visibility?.let(::raw) ?: JsonNull),
     )
 
-    fun createKameti(new: NewKameti): RpcParams = params(
-        "p_name" to text(new.name),
-        "p_start_month" to day(new.startMonth),
-        "p_months_n" to number(new.months),
-        "p_slot_amount_c" to rupees(new.slotAmount),
-        "p_due_day" to number(new.dueDay),
-        "p_reminder_days" to numbers(new.reminderDays),
-        "p_max_slots_per_member" to number(new.maxSlotsPerMember),
-        "p_description" to opt(new.description),
+    fun createKameti(new: NewKameti): RpcParams = JsonObject(
+        mapOf(
+            "p_name" to text(new.name),
+            "p_start_month" to day(new.startMonth),
+            "p_months_n" to number(new.months),
+            "p_slot_amount_c" to rupees(new.slotAmount),
+            "p_due_day" to number(new.dueDay),
+            "p_reminder_days" to numbers(new.reminderDays),
+            "p_max_slots_per_member" to number(new.maxSlotsPerMember),
+            "p_description" to opt(new.description),
+        ) +
+            // Left out when it is the default (10), which the backend uses anyway, so a backend
+            // that hasn't got the reminder-hour migration yet still takes the call.
+            (if (new.reminderHour != ReminderTime.DEFAULT_HOUR) mapOf("p_reminder_hour" to number(new.reminderHour)) else emptyMap()),
     )
 
     /** `null` leaves a field unchanged on the backend. */
-    fun updateKameti(id: String, c: KametiChanges): RpcParams = params(
-        "p_kameti_id" to text(id),
-        "p_name" to opt(c.name),
-        "p_description" to opt(c.description),
-        "p_start_month" to opt(c.startMonth),
-        "p_months_n" to opt(c.months),
-        "p_slot_amount_c" to opt(c.slotAmount),
-        "p_due_day" to opt(c.dueDay),
-        "p_reminder_days" to (c.reminderDays?.let(::numbers) ?: JsonNull),
-        "p_max_slots_per_member" to opt(c.maxSlotsPerMember),
+    fun updateKameti(id: String, c: KametiChanges): RpcParams = JsonObject(
+        mapOf(
+            "p_kameti_id" to text(id),
+            "p_name" to opt(c.name),
+            "p_description" to opt(c.description),
+            "p_start_month" to opt(c.startMonth),
+            "p_months_n" to opt(c.months),
+            "p_slot_amount_c" to opt(c.slotAmount),
+            "p_due_day" to opt(c.dueDay),
+            "p_reminder_days" to (c.reminderDays?.let(::numbers) ?: JsonNull),
+            "p_max_slots_per_member" to opt(c.maxSlotsPerMember),
+        ) +
+            // Only sent when it changes, and left out entirely otherwise, so a backend without the
+            // reminder-hour migration still takes the call.
+            (c.reminderHour?.let { mapOf("p_reminder_hour" to number(it)) } ?: emptyMap()),
     )
 
     fun addMember(kametiId: String, m: NewMember): RpcParams = params(

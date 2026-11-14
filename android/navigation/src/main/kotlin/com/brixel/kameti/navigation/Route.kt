@@ -12,6 +12,9 @@ enum class AppTab { Home, Inbox, Profile }
 sealed interface Route {
     data class KametiDetail(val id: String) : Route
 
+    /** A kameti opened on its Members tab: right after it starts, so the owner can send invites at once. */
+    data class KametiMembers(val id: String) : Route
+
     /** A kameti opened straight into a recording action (Home's Record payment). */
     data class KametiAction(val id: String, val action: RecordAction) : Route
 

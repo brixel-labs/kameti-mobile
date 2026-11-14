@@ -23,6 +23,18 @@ class ModelDecodingTest {
     private inline fun <reified T> decode(json: String): T = KametiJson.json.decodeFromString<T>(json)
 
     @Test
+    fun theReminderHourDecodes() {
+        val k = decode<Kameti>(
+            """
+            {"id":"k1","owner_id":"u1","name":"Office Kameti 2026","description":null,
+             "start_month":"2026-10-01","months_n":20,"slot_amount_c":250000,"due_day":10,
+             "reminder_days":[1,5,8,10],"reminder_hour":18,"max_slots_per_member":6,"status":"active"}
+            """
+        )
+        assertEquals(18, k.reminderHour)
+    }
+
+    @Test
     fun kameti() {
         val k = decode<Kameti>(
             """
@@ -38,6 +50,8 @@ class ModelDecodingTest {
         assertEquals(DateOnly.make(2026, 10), k.startMonth)
         assertEquals(KametiStatus.Active, k.status)
         assertNotNull(k.startedAt)
+        // This row came from a backend without the reminder-hour column: reminders stay at 10.
+        assertEquals(10, k.reminderHour)
         assertTrue(k.isOwnedBy("u1"))
         assertFalse(k.isOwnedBy("u2"))
         assertFalse(k.isOwnedBy(null))

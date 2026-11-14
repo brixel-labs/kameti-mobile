@@ -2,6 +2,7 @@ package com.brixel.kameti.domain
 
 import com.brixel.kameti.core.Day
 import com.brixel.kameti.core.Money
+import com.brixel.kameti.core.ReminderTime
 import com.brixel.kameti.core.Timestamp
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -39,6 +40,8 @@ data class Kameti(
     val maxSlotsPerMember: Int,
     val status: KametiStatus,
     val startedAt: Timestamp? = null,
+    /** The hour of the day, Pakistan time, its reminders go out (06 to 22). A backend without the column sends none. */
+    val reminderHour: Int = ReminderTime.DEFAULT_HOUR,
 ) {
     /** The monthly pot: N × C. */
     val pot: Money get() = slotAmountC * monthsN
@@ -93,6 +96,7 @@ data class NewKameti(
     val reminderDays: List<Int> = listOf(1, 5, 8, 10),
     val maxSlotsPerMember: Int = 4,
     val description: String? = null,
+    val reminderHour: Int = ReminderTime.DEFAULT_HOUR,
 )
 
 /** Input for `update_kameti_draft`. `null` leaves a field unchanged. */
@@ -105,6 +109,7 @@ data class KametiChanges(
     val dueDay: Int? = null,
     val reminderDays: List<Int>? = null,
     val maxSlotsPerMember: Int? = null,
+    val reminderHour: Int? = null,
 )
 
 /** Input for `add_member`. */

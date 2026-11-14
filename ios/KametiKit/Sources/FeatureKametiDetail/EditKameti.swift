@@ -14,12 +14,14 @@ struct EditKametiForm: Equatable {
     var description: String
     var dueDay: Int
     var reminderDays: [Int]
+    var reminderHour: Int
 
     init(_ kameti: Kameti) {
         name = kameti.name
         description = kameti.description ?? ""
         dueDay = kameti.dueDay
         reminderDays = kameti.reminderDays.sorted()
+        reminderHour = kameti.reminderHour
     }
 
     private func trimmed(_ text: String) -> String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -53,7 +55,9 @@ struct EditKametiForm: Equatable {
         if trimmed(description) != (kameti.description ?? "") { changes.description = trimmed(description) }
         if dueDay != kameti.dueDay { changes.dueDay = dueDay }
         if reminderDays != kameti.reminderDays.sorted() { changes.reminderDays = reminderDays }
+        if reminderHour != kameti.reminderHour { changes.reminderHour = reminderHour }
         let none = changes.name == nil && changes.description == nil && changes.dueDay == nil && changes.reminderDays == nil
+            && changes.reminderHour == nil
         return none ? nil : changes
     }
 
@@ -82,6 +86,7 @@ struct EditKametiView: View {
     @State private var isBusy = false
     @State private var failure: Failure?
     @State private var pickingDay = false
+    @State private var pickingTime = false
 
     init(data: KametiDetailData, model: KametiDetailViewModel, onDone: @escaping () -> Void) {
         self.data = data
@@ -209,10 +214,32 @@ struct EditKametiView: View {
             }
             .animation(.smooth(duration: 0.3), value: form.dueDay)
             .animation(.smooth(duration: 0.2), value: form.reminderDays)
+            // The whole row opens the time list, not just the arrow.
+            Button { kDismissKeyboard(); pickingTime = true } label: {
+                HStack {
+                    Text("Reminder time", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
+                    Spacer()
+                    Text(String(localized: "\(ReminderTime.label(form.reminderHour)), Pakistan time", bundle: .module))
+                        .kText(KTextToken.bodyStrong)
+                    Image(systemName: "chevron.down").font(.system(size: 13, weight: .semibold)).foregroundStyle(KColors.textSecondary)
+                }
+                .padding(.horizontal, KSpace.md)
+                .frame(minHeight: 48)
+                .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(KColors.border))
+                .contentShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
             Text(form.reminderDays.isEmpty
                  ? String(localized: "No reminders: members won't be nudged before the due day.", bundle: .module)
-                 : String(localized: "Reminders go at 10:00 AM, Pakistan time. Paid members are never reminded.", bundle: .module))
+                 : String(localized: "Reminders go at \(ReminderTime.label(form.reminderHour)), Pakistan time. Paid members are never reminded.", bundle: .module))
                 .kText(KTextToken.caption, color: KColors.textSecondary)
+        }
+        .kBottomSheet(isPresented: $pickingTime, title: String(localized: "Reminder time", bundle: .module), detents: [.medium, .large]) {
+            KReminderTimeList(selection: form.reminderHour) { hour in
+                form.reminderHour = hour
+                pickingTime = false
+            }
         }
     }
 

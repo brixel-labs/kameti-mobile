@@ -25,6 +25,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import com.brixel.kameti.ui.KReminderTimeList
+import com.brixel.kameti.core.ReminderTime
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -257,14 +261,27 @@ private fun Reminders(state: WizardState, model: CreateWizardViewModel) {
             }
         }
         val shape = RoundedCornerShape(KRadius.input)
+        var pickingTime by remember { mutableStateOf(false) }
+        // The whole row opens the time list, not just the arrow.
         Row(
             Modifier.fillMaxWidth().heightIn(min = KSize.fieldHeight)
-                .background(KColors.surface, shape).border(1.dp, KColors.border, shape)
+                .clip(shape).background(KColors.surface).border(1.dp, KColors.border, shape)
+                .clickable(role = Role.Button) { pickingTime = true }
                 .padding(horizontal = KSpace.md),
+            horizontalArrangement = Arrangement.spacedBy(KSpace.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             KText(stringResource(R.string.create_at), KTextToken.body, modifier = Modifier.weight(1f), color = KColors.textSecondary)
-            KText(stringResource(R.string.create_10_00_am_pakistan_time), KTextToken.bodyStrong)
+            KText(stringResource(R.string.create_s_pakistan_time, ReminderTime.label(state.reminderHour)), KTextToken.bodyStrong)
+            KIcon(KIcons.chevronDown, size = 18.dp)
+        }
+        if (pickingTime) {
+            KBottomSheet(stringResource(R.string.create_reminder_time), onDismiss = { pickingTime = false }) { close ->
+                KReminderTimeList(state.reminderHour, onPick = { hour ->
+                    model.setReminderHour(hour)
+                    close()
+                }, modifier = Modifier.weight(1f, fill = false))
+            }
         }
     }
 }

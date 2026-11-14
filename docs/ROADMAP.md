@@ -76,4 +76,4 @@ Each step is done on its own branch cut from `feature/native-ios`, with one comm
 | 11 | Profile: name, appearance, app icon (four launcher entries), notification settings, my people, sign-in methods, past kametis, delete account | Done |
 | 12 | Push (Firebase), live updates, invite links (App Links), adaptive launcher icons, shrunk release build without sample data, optional release signing, Android CI job | Done |
 
-Needs the owner: an Android OAuth client (Google Cloud, with the app's SHA-1), `com.brixel.kameti://login-callback` in Supabase's redirect URLs and an Apple Services ID on the Apple provider (Sign in with Apple opens in a browser tab on Android), the Android app in Firebase (`google-services.json`), and the release signing fingerprint for `assetlinks.json` on the website.
+Needs the owner: an Android OAuth client (Google Cloud, with the app's SHA-1), the Android app in Firebase (`google-services.json`), and the release signing fingerprint for `assetlinks.json` on the website.

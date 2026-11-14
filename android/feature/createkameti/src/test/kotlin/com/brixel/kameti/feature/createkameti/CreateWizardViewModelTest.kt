@@ -78,6 +78,28 @@ class CreateWizardViewModelTest {
     }
 
     @Test
+    fun theReminderTimeIsSavedWithTheDates() = runTest {
+        val dependencies = SampleData.dependencies()
+        val model = CreateWizardViewModel(SampleData.USER_ID, dependencies).apply {
+            setName("Test kameti")
+            setAmountText("100000")
+            setMonths(2)
+            saveBasics()
+        }
+        assertEquals(10, model.now.reminderHour)
+        model.setReminderHour(18)
+        model.saveDates()
+        assertNull(model.now.failure)
+        val id = assertNotNull(model.now.kametiId)
+        assertEquals(18, dependencies.kametis.kameti(id).reminderHour)
+
+        // Reopened later, the draft shows it again.
+        val reopened = CreateWizardViewModel(SampleData.USER_ID, dependencies)
+        reopened.resume(id)
+        assertEquals(18, reopened.now.reminderHour)
+    }
+
+    @Test
     fun fullFlowCreatesFillsAndStarts() = runTest {
         val model = draft()
         assertNull(model.now.failure)

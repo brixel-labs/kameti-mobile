@@ -85,6 +85,8 @@ class KametiDetailViewModel(
     val preview: Kameti? = null,
     /** An action to start once the owner's tabs are on screen (from Home). */
     var pendingAction: RecordAction? = null,
+    /** Open the owner's tabs on Members instead of Overview (right after a kameti starts). */
+    val opensOnMembers: Boolean = false,
 ) : ViewModel() {
     sealed interface State {
         data object Loading : State

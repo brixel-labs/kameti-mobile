@@ -413,7 +413,7 @@ final class SampleKametiRepository: KametiRepository {
             let created = Kameti(
                 id: id, ownerId: SampleData.userId, name: new.name, description: new.description, startMonth: new.startMonth,
                 monthsN: new.months, slotAmountC: new.slotAmount, dueDay: new.dueDay, reminderDays: new.reminderDays,
-                maxSlotsPerMember: new.maxSlotsPerMember, status: .draft
+                maxSlotsPerMember: new.maxSlotsPerMember, status: .draft, reminderHour: new.reminderHour
             )
             s.kametis.insert(created, at: 0)
             s.members[id] = []
@@ -442,12 +442,16 @@ final class SampleKametiRepository: KametiRepository {
                     throw Failure.server(code: "kameti_name_taken", detail: nil)
                 }
             }
+            if let hour = changes.reminderHour, !ReminderTime.hours.contains(hour) {
+                throw Failure.server(code: "invalid_reminder_hour", detail: nil)
+            }
             let months = changes.months ?? old.monthsN
             let updated = Kameti(
                 id: id, ownerId: old.ownerId, name: changes.name ?? old.name, description: changes.description ?? old.description,
                 startMonth: changes.startMonth ?? old.startMonth, monthsN: months, slotAmountC: changes.slotAmount ?? old.slotAmountC,
                 dueDay: changes.dueDay ?? old.dueDay, reminderDays: changes.reminderDays ?? old.reminderDays,
-                maxSlotsPerMember: changes.maxSlotsPerMember ?? old.maxSlotsPerMember, status: old.status, startedAt: old.startedAt
+                maxSlotsPerMember: changes.maxSlotsPerMember ?? old.maxSlotsPerMember, status: old.status, startedAt: old.startedAt,
+                reminderHour: changes.reminderHour ?? old.reminderHour
             )
             s.kametis[index] = updated
             log.record(id, "kameti.update", entity: "kameti", entityId: id, member: nil,
@@ -471,7 +475,7 @@ final class SampleKametiRepository: KametiRepository {
             let started = Kameti(
                 id: id, ownerId: old.ownerId, name: old.name, description: old.description, startMonth: old.startMonth,
                 monthsN: old.monthsN, slotAmountC: old.slotAmountC, dueDay: old.dueDay, reminderDays: old.reminderDays,
-                maxSlotsPerMember: old.maxSlotsPerMember, status: .active, startedAt: Date()
+                maxSlotsPerMember: old.maxSlotsPerMember, status: .active, startedAt: Date(), reminderHour: old.reminderHour
             )
             s.kametis[index] = started
             return started
@@ -539,7 +543,7 @@ final class SampleKametiRepository: KametiRepository {
             let copy = Kameti(
                 id: newId, ownerId: old.ownerId, name: trimmed, description: old.description, startMonth: startMonth,
                 monthsN: old.monthsN, slotAmountC: old.slotAmountC, dueDay: old.dueDay, reminderDays: old.reminderDays,
-                maxSlotsPerMember: old.maxSlotsPerMember, status: .draft
+                maxSlotsPerMember: old.maxSlotsPerMember, status: .draft, reminderHour: old.reminderHour
             )
             var memberIds: [String: String] = [:]
             s.members[newId] = (s.members[id] ?? []).enumerated().map { index, m in
@@ -568,7 +572,7 @@ final class SampleKametiRepository: KametiRepository {
         Kameti(
             id: k.id, ownerId: k.ownerId, name: k.name, description: k.description, startMonth: k.startMonth,
             monthsN: k.monthsN, slotAmountC: k.slotAmountC, dueDay: k.dueDay, reminderDays: k.reminderDays,
-            maxSlotsPerMember: k.maxSlotsPerMember, status: status, startedAt: k.startedAt
+            maxSlotsPerMember: k.maxSlotsPerMember, status: status, startedAt: k.startedAt, reminderHour: k.reminderHour
         )
     }
 

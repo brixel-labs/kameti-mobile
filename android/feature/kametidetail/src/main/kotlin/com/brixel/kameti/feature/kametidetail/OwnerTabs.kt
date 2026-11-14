@@ -111,7 +111,7 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
         KOption(OwnerTab.Payments, stringResource(R.string.detail_payments)),
         KOption(OwnerTab.Notes, stringResource(R.string.detail_notes)),
     )
-    val pager = rememberPagerState { tabs.size }
+    val pager = rememberPagerState(initialPage = if (model.opensOnMembers) tabs.indexOfFirst { it.value == OwnerTab.Members } else 0) { tabs.size }
     val scope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
     val isArchived = data.kameti.status == KametiStatus.Archived

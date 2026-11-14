@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.brixel.kameti.core.Failure
 import com.brixel.kameti.core.Money
+import com.brixel.kameti.core.ReminderTime
 import com.brixel.kameti.core.attempt
 import com.brixel.kameti.domain.Contact
 import com.brixel.kameti.domain.JoinStatus
@@ -49,6 +50,10 @@ data class WizardState(
     val startMonth: LocalDate,
     val dueDay: Int = 10,
     val reminderDays: List<Int> = listOf(1, 5, 8, 10),
+    /** The hour of the day, Pakistan time, reminders go out at. */
+    val reminderHour: Int = ReminderTime.DEFAULT_HOUR,
+    /** What the server has for the draft, so only a change is sent. */
+    val savedReminderHour: Int = ReminderTime.DEFAULT_HOUR,
     val maxSlotsPerMember: Int = 4,
 
     val kametiId: String? = null,
@@ -195,6 +200,7 @@ class CreateWizardViewModel(
                     kametiId = kameti.id, name = kameti.name, amountText = kameti.slotAmountC.rupees.toString(),
                     months = kameti.monthsN, startMonth = kameti.startMonth, dueDay = kameti.dueDay,
                     reminderDays = kameti.reminderDays, maxSlotsPerMember = kameti.maxSlotsPerMember,
+                    reminderHour = kameti.reminderHour, savedReminderHour = kameti.reminderHour,
                 )
             }
             reload()
@@ -235,24 +241,31 @@ class CreateWizardViewModel(
                     NewKameti(
                         name = trimmed, startMonth = state.startMonth, months = state.months, slotAmount = amount,
                         dueDay = state.dueDay, reminderDays = state.reminderDays, maxSlotsPerMember = state.maxSlotsPerMember,
+                        reminderHour = state.reminderHour,
                     ),
                 )
-                current.update { it.copy(kametiId = created.id) }
+                current.update { it.copy(kametiId = created.id, savedReminderHour = state.reminderHour) }
             }
             reload()
             current.update { it.copy(step = WizardStep.Dates) }
         }
     }
 
-    /** Step 2: due day, reminder days and the slot limit. */
+    fun setReminderHour(hour: Int) = current.update { it.copy(reminderHour = hour.coerceIn(ReminderTime.HOURS)) }
+
+    /** Step 2: due day, reminder days and time, and the slot limit. */
     suspend fun saveDates() {
         val state = current.value
         val id = state.kametiId ?: return
         write {
             dependencies.kametis.updateKameti(
-                id, KametiChanges(dueDay = state.dueDay, reminderDays = state.reminderDays, maxSlotsPerMember = state.maxSlotsPerMember),
+                id,
+                KametiChanges(
+                    dueDay = state.dueDay, reminderDays = state.reminderDays, maxSlotsPerMember = state.maxSlotsPerMember,
+                    reminderHour = state.reminderHour.takeIf { it != state.savedReminderHour },
+                ),
             )
-            current.update { it.copy(step = WizardStep.Members) }
+            current.update { it.copy(step = WizardStep.Members, savedReminderHour = state.reminderHour) }
         }
     }
 

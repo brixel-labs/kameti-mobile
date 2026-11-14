@@ -48,6 +48,11 @@ struct ActivityTests {
         ])
     }
 
+    @Test func aChangedReminderTimeReadsAsATime() {
+        let edit = ActivityLogic.item(entry("kameti.update", member: nil, before: .object(["reminder_hour": .int(10)]), after: .object(["reminder_hour": .int(18)])), context)
+        #expect(edit.changes == [.init(label: "Reminder time", before: "10:00 AM", after: "6:00 PM")])
+    }
+
     @Test func aRemovedMemberIsNamedFromTheEntry() {
         let removed = ActivityLogic.item(entry("member.remove", member: "gone", before: .object(["name": .string("Old Friend")])), context)
         #expect(removed.title == "Old Friend removed")

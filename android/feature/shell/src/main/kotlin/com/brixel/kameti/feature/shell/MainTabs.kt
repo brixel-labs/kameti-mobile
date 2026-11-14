@@ -288,6 +288,14 @@ private fun RouteDestination(
             onResumeDraft = { router.push(Route.ResumeDraft(it)) },
             onOpenActivity = { router.push(Route.Activity(it)) },
         )
+        is Route.KametiMembers -> KametiDetailScreen(
+            model = viewModel {
+                KametiDetailViewModel(route.id, userId, dependencies, preview = homeModel.kameti(route.id), opensOnMembers = true)
+            },
+            onBack = { router.pop() },
+            onResumeDraft = { router.push(Route.ResumeDraft(it)) },
+            onOpenActivity = { router.push(Route.Activity(it)) },
+        )
         // Opened straight into a recording action (Home's Record payment).
         is Route.KametiAction -> KametiDetailScreen(
             model = viewModel {
@@ -340,7 +348,8 @@ private fun CreateWizard(
         model = viewModel { CreateWizardViewModel(userId, dependencies) },
         onStarted = { id ->
             homeModel.refresh()
-            router.homePath = listOf(Route.KametiDetail(id))
+            // Straight to Members, so the owner can invite people right away.
+            router.homePath = listOf(Route.KametiMembers(id))
         },
         onClose = {
             homeModel.refresh()

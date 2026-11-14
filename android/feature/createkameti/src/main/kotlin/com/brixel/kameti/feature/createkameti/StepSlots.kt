@@ -156,8 +156,9 @@ internal fun SlotsStep(state: WizardState, model: CreateWizardViewModel) {
             expanded = true,
             dismissDisabled = state.isBusy,
         ) { close ->
-            // Saved (or emptied): the model closed the editor, so slide the sheet away.
-            LaunchedEffect(state.editingSlotId) { if (state.editingSlotId == null) close() }
+            // Saved (or emptied): the model closed the editor, so slide the sheet away. Not while
+            // the save is still reloading: the sheet refuses to close until the write is done.
+            LaunchedEffect(state.editingSlotId, state.isBusy) { if (state.editingSlotId == null && !state.isBusy) close() }
             SlotSplitEditor(state, model, slot, month)
         }
     }

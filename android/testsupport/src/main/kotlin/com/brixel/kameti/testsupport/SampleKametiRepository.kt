@@ -1,6 +1,7 @@
 package com.brixel.kameti.testsupport
 
 import com.brixel.kameti.core.Day
+import com.brixel.kameti.core.ReminderTime
 import com.brixel.kameti.core.Failure
 import com.brixel.kameti.core.Money
 import com.brixel.kameti.domain.Contact
@@ -102,6 +103,7 @@ class SampleKametiRepository(
             id = id, ownerId = SampleData.USER_ID, name = new.name, description = new.description,
             startMonth = new.startMonth, monthsN = new.months, slotAmountC = new.slotAmount, dueDay = new.dueDay,
             reminderDays = new.reminderDays, maxSlotsPerMember = new.maxSlotsPerMember, status = KametiStatus.Draft,
+            reminderHour = new.reminderHour,
         )
         kametis = listOf(created) + kametis
         members[id] = emptyList()
@@ -129,6 +131,7 @@ class SampleKametiRepository(
             if (trimmed.length !in 3..40) fail("invalid_name")
             if (nameTaken(trimmed, old.ownerId, id)) fail("kameti_name_taken")
         }
+        changes.reminderHour?.let { if (it !in ReminderTime.HOURS) fail("invalid_reminder_hour") }
         val months = changes.months ?: old.monthsN
         val updated = old.copy(
             name = changes.name ?: old.name, description = changes.description ?: old.description,
@@ -136,6 +139,7 @@ class SampleKametiRepository(
             slotAmountC = changes.slotAmount ?: old.slotAmountC, dueDay = changes.dueDay ?: old.dueDay,
             reminderDays = changes.reminderDays ?: old.reminderDays,
             maxSlotsPerMember = changes.maxSlotsPerMember ?: old.maxSlotsPerMember,
+            reminderHour = changes.reminderHour ?: old.reminderHour,
         )
         replace(updated)
         log.record(

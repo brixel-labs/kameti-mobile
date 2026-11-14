@@ -1,5 +1,6 @@
 package com.brixel.kameti.feature.kametidetail
 
+import com.brixel.kameti.core.ReminderTime
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -42,6 +45,7 @@ import com.brixel.kameti.ui.KDivider
 import com.brixel.kameti.ui.KFlowRow
 import com.brixel.kameti.ui.KIcon
 import com.brixel.kameti.ui.KIcons
+import com.brixel.kameti.ui.KReminderTimeList
 import com.brixel.kameti.ui.KSpace
 import com.brixel.kameti.ui.KText
 import com.brixel.kameti.ui.KTextField
@@ -58,8 +62,16 @@ import kotlinx.coroutines.launch
  * amount, months, start month and slot limit are fixed once it starts.
  * Each change returns a new form.
  */
-internal data class EditKametiForm(val name: String, val description: String, val dueDay: Int, val reminderDays: List<Int>) {
-    constructor(kameti: Kameti) : this(kameti.name, kameti.description.orEmpty(), kameti.dueDay, kameti.reminderDays.sorted())
+internal data class EditKametiForm(
+    val name: String,
+    val description: String,
+    val dueDay: Int,
+    val reminderDays: List<Int>,
+    val reminderHour: Int,
+) {
+    constructor(kameti: Kameti) : this(
+        kameti.name, kameti.description.orEmpty(), kameti.dueDay, kameti.reminderDays.sorted(), kameti.reminderHour,
+    )
 
     val isNameValid: Boolean get() = name.trim().length in 3..40
     val isDescriptionValid: Boolean get() = description.trim().length <= 500
@@ -81,6 +93,7 @@ internal data class EditKametiForm(val name: String, val description: String, va
             description = description.trim().takeIf { it != kameti.description.orEmpty() },
             dueDay = dueDay.takeIf { it != kameti.dueDay },
             reminderDays = reminderDays.takeIf { it != kameti.reminderDays.sorted() },
+            reminderHour = reminderHour.takeIf { it != kameti.reminderHour },
         )
         return changes.takeIf { it != KametiChanges() }
     }
@@ -104,6 +117,7 @@ internal fun EditKametiSheet(data: KametiDetailData, model: KametiDetailViewMode
     var isBusy by remember { mutableStateOf(false) }
     var failure by remember { mutableStateOf<Failure?>(null) }
     var pickingDay by remember { mutableStateOf(false) }
+    var pickingTime by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val focus = LocalFocusManager.current
     val changes = form.changes(kameti)
@@ -164,14 +178,29 @@ internal fun EditKametiSheet(data: KametiDetailData, model: KametiDetailViewMode
                         repeat(5 - week.size) { Row(Modifier.weight(1f)) {} }
                     }
                 }
+                // The whole row opens the time list, not just the arrow.
+                val rowShape = RoundedCornerShape(12.dp)
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(rowShape).background(KColors.surface)
+                        .border(1.dp, KColors.border, rowShape)
+                        .clickable(role = Role.Button) {
+                            focus.clearFocus()
+                            pickingTime = true
+                        }
+                        .padding(horizontal = KSpace.md),
+                    horizontalArrangement = Arrangement.spacedBy(KSpace.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    KText(stringResource(R.string.detail_reminder_time), KTextToken.body, modifier = Modifier.weight(1f), color = KColors.textSecondary)
+                    KText(stringResource(R.string.detail_s_pakistan_time, ReminderTime.label(form.reminderHour)), KTextToken.bodyStrong)
+                    KIcon(KIcons.chevronDown, size = 18.dp)
+                }
                 KText(
-                    stringResource(
-                        if (form.reminderDays.isEmpty()) {
-                            R.string.detail_no_reminders_members_wont_be_nudged_before_the
-                        } else {
-                            R.string.detail_reminders_go_at_10_00_am_pakistan_time
-                        },
-                    ),
+                    if (form.reminderDays.isEmpty()) {
+                        stringResource(R.string.detail_no_reminders_members_wont_be_nudged_before_the)
+                    } else {
+                        stringResource(R.string.detail_reminders_go_at_s_pakistan_time_paid_members, ReminderTime.label(form.reminderHour))
+                    },
                     KTextToken.caption, color = KColors.textSecondary,
                 )
             }
@@ -200,6 +229,14 @@ internal fun EditKametiSheet(data: KametiDetailData, model: KametiDetailViewMode
         )
     }
 
+    if (pickingTime) {
+        KBottomSheet(stringResource(R.string.detail_reminder_time), onDismiss = { pickingTime = false }) { close ->
+            KReminderTimeList(form.reminderHour, onPick = { hour ->
+                form = form.copy(reminderHour = hour)
+                close()
+            }, modifier = Modifier.weight(1f, fill = false))
+        }
+    }
     if (pickingDay) {
         KBottomSheet(stringResource(R.string.detail_pick_the_due_day), onDismiss = { pickingDay = false }) { close ->
             LazyColumn(Modifier.weight(1f, fill = false)) {

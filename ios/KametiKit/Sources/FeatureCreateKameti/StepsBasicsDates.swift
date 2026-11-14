@@ -91,6 +91,7 @@ struct BasicsStep: View {
 struct DatesStep: View {
     @Bindable var model: CreateWizardModel
     @State private var otherOpen = false
+    @State private var pickingTime = false
     // The overdue nudge and the owner summary are shown as in the design; the
     // backend has no fields for them yet, so they are not saved.
     @State private var overdueReminder = true
@@ -167,15 +168,28 @@ struct DatesStep: View {
             }
             .animation(.smooth(duration: 0.3), value: model.dueDay)
             .animation(.smooth(duration: 0.2), value: model.reminderDays)
-            HStack {
-                Text("At", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
-                Spacer()
-                Text("10:00 AM, Pakistan time", bundle: .module).kText(KTextToken.bodyStrong)
+            // The whole row opens the time list, not just the arrow.
+            Button { pickingTime = true } label: {
+                HStack {
+                    Text("At", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
+                    Spacer()
+                    Text(String(localized: "\(ReminderTime.label(model.reminderHour)), Pakistan time", bundle: .module))
+                        .kText(KTextToken.bodyStrong)
+                    Image(systemName: "chevron.down").font(.system(size: 13, weight: .semibold)).foregroundStyle(KColors.textSecondary)
+                }
+                .padding(.horizontal, KSpace.md)
+                .frame(minHeight: KSize.fieldHeight)
+                .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
+                .contentShape(RoundedRectangle(cornerRadius: KRadius.input))
             }
-            .padding(.horizontal, KSpace.md)
-            .frame(minHeight: KSize.fieldHeight)
-            .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
-            .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
+            .buttonStyle(.plain)
+        }
+        .kBottomSheet(isPresented: $pickingTime, title: String(localized: "Reminder time", bundle: .module), detents: [.medium, .large]) {
+            KReminderTimeList(selection: model.reminderHour) { hour in
+                model.reminderHour = hour
+                pickingTime = false
+            }
         }
     }
 

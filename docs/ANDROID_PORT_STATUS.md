@@ -8,7 +8,7 @@ Read this first when picking up the Android port in a new session. Update it at 
 
 - **All 12 phases are done.** What is left is the owner's setup (see "Waiting on the owner") and the owner's testing; after that, a pull request into `develop`.
 - **All 12 phases are committed and pushed** on branch `feature/android-scaffold` in `kameti-mobile` (the git repo is `kameti-mobile`, not the parent `kameti` folder): one commit for phases 1–7, one for 8–10, one for 11 and one for 12. There is no pull request yet, and nothing is merged into `develop`.
-- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 240 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. `./gradlew :app:assembleRelease` (shrunk with R8) also builds, and that build, signed with the debug key, starts on the emulator without crashing; nothing beyond its first screen was exercised. The screens have not been checked visually by Claude; the owner tests them.
+- **Last verified (2026-11-14):** `./gradlew test :app:assembleDebug :app:lintDebug` succeeds, 247 unit tests pass, the demo build starts on the Pixel 10 Pro emulator without crashing. `./gradlew :app:assembleRelease` (shrunk with R8) also builds, and that build, signed with the debug key, starts on the emulator without crashing; nothing beyond its first screen was exercised. The screens have not been checked visually by Claude; the owner tests them.
 - **Android app config is `demo`** (`android/app/src/main/assets/KametiConfig.json`, gitignored). Switch with `android/scripts/use-env.sh prod|dev|demo` run from `kameti-mobile`, then rebuild. The iOS config is untouched.
 - **Sign-in on prod does not work on Android yet** (see "Waiting on the owner"). Until then the tabs are reachable only in demo, or dev against a local Supabase.
 
@@ -87,7 +87,7 @@ adb -s emulator-5554 logcat -d -s AndroidRuntime:E   # check only that it did no
 
 ## Decisions already approved (2026-11-14)
 
-- Sign in with Apple on Android through Supabase web OAuth in a browser tab, returning via `com.brixel.kameti://login-callback`. Google sign-in is native (Credential Manager).
+- **No Sign in with Apple on Android** (the owner changed this on 2026-11-14, after the port: the button, the web sign-in and its `login-callback` link were removed). Google sign-in is native (Credential Manager). An account made with Apple on iOS can't sign in on Android; Profile still names Apple as the sign-in method for such an account.
 - System font (Roboto), not bundled Inter.
 - App icon picker included (alternate launcher entries).
 - minSdk 26, compileSdk and targetSdk 37, application ID `com.brixel.kameti`.
@@ -96,8 +96,7 @@ adb -s emulator-5554 logcat -d -s AndroidRuntime:E   # check only that it did no
 ## Waiting on the owner
 
 - **Google Cloud:** an Android OAuth client for package `com.brixel.kameti` with the debug SHA-1 `46:AE:62:40:60:E6:68:3F:60:FB:3A:BA:CD:69:4D:D3:96:3C:7B:11` (and later the release one).
-- **Supabase:** add `com.brixel.kameti://login-callback` to the redirect URLs, and an Apple Services ID on the Apple provider.
-- **Firebase:** add the Android app (package `com.brixel.kameti`) to the Firebase project and put its `google-services.json` in `android/app/` (git-ignored). Until then there is no push on Android. The backend's push sender must also accept the `android` platform tokens it now receives; that has not been checked.
+- **Firebase:** add the Android app (package `com.brixel.kameti`) to the Firebase project and put its `google-services.json` in `android/app/` (git-ignored). Until then there is no push on Android. The backend already accepts `android` tokens (`register_device` allows `ios` and `android`, and `send-push` sends to every token through FCM); a real push to an Android phone has not been tried.
 - **Release key:** create the upload keystore and `android/keystore.properties`; add the release SHA-1 to the Google OAuth client.
 - **Website:** add the release SHA-256 fingerprint (from Play Console → App signing) to `legal-site/.well-known/assetlinks.json` and deploy the site, so invite links open the store build without asking.
 
@@ -109,3 +108,11 @@ adb -s emulator-5554 logcat -d -s AndroidRuntime:E   # check only that it did no
 - Navigation: `Route` and `AppRouter` in `:navigation`; the shell gives each stack entry its own saved state and `ViewModelStore` (`feature/shell/RouteEntries.kt`), so a screen creates its model with `viewModel { … }`. Home's model is shared across the tab (`viewModel(key = "home-$userId")`).
 - Dates: a calendar day or month is `LocalDate`, a moment is `Instant`; "now" always comes from `KametiClock`.
 - supabase-kt details checked against the 3.9.0 sources: an order clause is sent as `created_at.desc.nullslast`; the client builder strips the URL scheme, so `:data` sets `useHTTPS` from the URL; in the dev config `127.0.0.1` / `localhost` is mapped to `10.0.2.2` for the emulator (`app/AppConfig.kt`).
+
+## Changes after phase 12 (2026-11-14), made on both platforms
+
+- **Slot sheet closes after Save slot** (Android only; iOS was fine): the sheet refused to close while the save was still reloading, so it now closes once the write is done (`StepSlots.kt`).
+- **Reminder time is editable**, on iOS and Android: step 2 of the wizard (the "At" row opens a list of hours) and Edit kameti (a "Reminder time" row). Whole hours from 6:00 AM to 10:00 PM, Pakistan time (`ReminderTime` in `KametiCore` / `:core`; the shared list is `KReminderTimeList` in `KametiUI` / `:ui`). `Kameti.reminderHour` defaults to 10 when the backend sends none; the activity log shows "Reminder time: 10:00 AM → 6:00 PM".
+- **Needs a backend migration:** `kameti-backend/supabase/migrations/20261114120000_reminder_hour.sql` (branch `feature/reminder-time`, tests in `supabase/tests/140_reminder_hour.test.sql`). It was applied to **kameti-prod on 2026-11-14** with `supabase db push` (the owner approved it); the 3 kametis there keep 10:00. The apps leave `p_reminder_hour` out of a call when it is 10 or unchanged, so they also work against a backend that hasn't got it. The branch is not committed or merged.
+- **After Start, the kameti opens on its Members tab** (new `Route.KametiMembers`), so the owner can send invites at once; both platforms.
+- **Sign in with Apple removed from Android** (see Decisions above).

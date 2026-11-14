@@ -35,6 +35,22 @@ class ParamsTest {
     }
 
     @Test
+    fun theReminderHourIsLeftOutUntilItIsNotTheDefault() {
+        val start = DateOnly.make(2026, 10)
+        // The default (10) is what the backend uses anyway, so a backend without the
+        // reminder-hour migration still takes the call.
+        val plain = Params.createKameti(NewKameti(name = "Office Kameti", startMonth = start, months = 20, slotAmount = Money(250_000)))
+        assertTrue("p_reminder_hour" !in plain)
+        val evening = Params.createKameti(
+            NewKameti(name = "Office Kameti", startMonth = start, months = 20, slotAmount = Money(250_000), reminderHour = 18),
+        )
+        assertEquals(number(18), evening["p_reminder_hour"])
+
+        assertTrue("p_reminder_hour" !in Params.updateKameti("k1", KametiChanges(dueDay = 12)))
+        assertEquals(number(9), Params.updateKameti("k1", KametiChanges(reminderHour = 9))["p_reminder_hour"])
+    }
+
+    @Test
     fun updateLeavesUnchangedFieldsNull() {
         val p = Params.updateKameti("k1", KametiChanges(name = "New name", dueDay = 12))
         assertEquals(text("k1"), p["p_kameti_id"])
