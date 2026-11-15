@@ -35,7 +35,35 @@ Watch for noise: `xcodebuild` rewrites `ios/Kameti/Kameti.xcodeproj/project.xcpr
   - SHA-256 `13:44:C3:90:08:6E:42:51:F4:63:CD:C5:02:79:C2:76:26:3F:33:33:48:1C:60:7B:D8:08:61:06:43:37:6A:6E`
   - **The owner must back up the `.jks` and `keystore.properties`.** If they are lost, only a Play upload-key reset recovers it.
 
-**Not confirmed:** whether the owner has uploaded `kameti-1.0-2.aab` (or `-1`) and whether a release was created in Internal testing. Ask them first. Also unknown: whether the app already had a different upload key registered in Play (if Play says the bundle is signed with the wrong key, find the original key; do not create another).
+**Play Console state (checked 2026-11-15 through Claude in Chrome, signed in as the owner's Google account; it did connect this time).** App `com.brixel.kameti` is a draft app; **Internal testing is Active, "Not reviewed"**, so a bundle was uploaded (the dashboard does not say which versionCode: check Test and release → Internal testing). Dashboard setup was 3 of 12 done (privacy policy, ads, store listing). Done by Claude in the console that day:
+
+| Item | Result |
+|---|---|
+| Data safety | **Filled and saved, not yet sent for review** (that happens in Publishing overview). Collects data, encrypted in transit, OAuth account creation, delete-account URL `https://kameti.fhbtechservices.com/delete-account`. Each type is *collected, not shared, not ephemeral, required, for App functionality*, Name, Email, User IDs (added: the account id), Other financial info, Other user-generated content, Device or other IDs also with Account management where it applied; **Phone number is "users can choose"** (optional). Partial-deletion question left unanswered (the app has none). |
+| Government apps | No |
+| Health apps | "My app does not have any health features" |
+| Financial features | "My app doesn't provide any financial features" (no money moves) |
+| Advertising ID | No (no ad SDK; only INTERNET and POST_NOTIFICATIONS) |
+
+**Later the same day:** the owner created a dedicated reviewer Google account and entered its username and password in **Sign-in details** (name "Reviewer account (Google sign-in)", instructions written by Claude, full-access box ticked); **Target audience** was then saved as **18 and over**. The App content page showed 3 declarations left: Content rating, Data safety (saved, awaiting send for review) and Trader status. The reviewer account must have signed in to the app once so it exists in Supabase (not confirmed), and Play's app-signing SHA-1 must be added to the Google OAuth client and Firebase or the reviewer's Google sign-in fails.
+
+**Then:** app category saved as **Productivity** (not Finance, to avoid extra financial-app review; it can be changed) and Store Listing contact details **published**: email `contact@fhbtechservices.com`, website `https://kameti.fhbtechservices.com`, phone left blank. The category change still needs sending for review in Publishing overview.
+
+**Finished at the owner's request (2026-11-15):** Content rating (category "All other app types", all answers No; result Everyone / All ages), Trader status (kept "trader applies", Terms of Service URL `https://kameti.fhbtechservices.com/terms`), and **Data safety re-entered and saved for real** (the first attempt was only a draft: its per-type answers were lost, so always press the final **Save** on the Preview step, not "Save as draft"). The dashboard's setup checklist then completed and the "Release your app" section unlocked. **Publishing overview's "Send app for review" is still greyed out** ("complete the required steps in the app dashboard"); the pending changes are the store listing, content rating, target audience, data safety and category. Not yet understood: it may need a closed/production release before review can be sent (an internal test release needs no review). The privacy page was deployed with wrangler the same day.
+
+**Store screenshots (2026-11-15, real data, no demo flavor):** the reviewer account on the emulator (signed in to prod) now owns "Family Kameti 2026" (12 people, Rs 50,000 a slot, Nov 2026 to Oct 2027, 8 of 12 paid for November; its owner name was changed to "Ahmed Raza" in Profile). Five 1080x2060 phone screenshots (status bar cropped) and a new 1024x500 feature graphic (two phone screens) are in `play-release-2026-11-15/screenshots/`. This kameti lives in the prod database under the reviewer account; it is also what Play's reviewer sees. Noted, not fixed: the Collect sheet and one member row can still show the owner's old Google name "Kameti Reviewer" (the member record keeps the name it was created with), and the Overview counter showed "0 partial" while a member had part paid before they were settled (not investigated).
+
+**Uploaded to the store listing (same day):** the five new screenshots and the new feature graphic replaced the older demo-data ones in Grow users → Store presence → Store listings → Default listing → Edit (reach it from the Store listings page; there is no direct menu item). It is saved as a **draft**: the last step has an **AI asset declaration** (Don't label / Label as created or edited using AI) that the owner has to choose, then **Save**, then send for review in Publishing overview.
+
+**Everything below this line in this list was done or superseded by the paragraph above; kept for history:**
+- **Sign-in details (app access):** the app needs Google sign-in, so Play wants a reviewer login. Claude cannot type passwords: the owner should make a dedicated test Google account and enter it. **Target audience and content is blocked until this is saved.**
+- **Content rating:** the questionnaire says completing it accepts IARC's Terms; left for the owner to accept (answers will be all "No": no violence, gambling, user-to-user chat, etc.).
+- **Trader status and Terms of Service:** defaults to "Yes, trader status applies" (Brixel Labs Inc.); involves accepting Terms and showing contact details, left for the owner.
+- **App category and contact details** (email shown publicly), then **send changes for review** in Publishing overview.
+- Make sure the privacy page is deployed (see below) before sending the Data safety form for review.
+- Watch-outs from the data safety answers: an Android app that records its owner's members' phone numbers and names should have the privacy policy say so (it does since #47).
+
+**Not confirmed (older note):** which bundle (`kameti-1.0-2.aab` or `-1`) the owner uploaded. Check in Internal testing. Also unknown: whether the app already had a different upload key registered in Play (if Play says the bundle is signed with the wrong key, find the original key; do not create another).
 
 ## Next steps, in order
 
