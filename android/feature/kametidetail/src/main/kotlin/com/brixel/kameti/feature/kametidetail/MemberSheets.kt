@@ -227,7 +227,7 @@ internal fun EditMemberSheet(data: KametiDetailData, model: KametiDetailViewMode
             )
         }
     }
-    if (reminding) RemindSheet(data.kameti, model.dependencies, onDismiss = { reminding = false }, onlyMemberId = member.id)
+    if (reminding) RemindSheet(data.kameti, data, model.dependencies, onDismiss = { reminding = false }, onlyMemberId = member.id)
     if (transferring) TransferShareSheet(data, model, currentMember) { transferring = false }
 }
 

@@ -188,7 +188,7 @@ struct ReminderTests {
 
     @Test func theMessageSaysWhatAndWhen() {
         let text = ReminderLogic.text(name: "Hira Malik", owed: Money(125_000), kameti: "Family kameti", dueDay: 10)
-        #expect(text == "Hi Hira, a reminder that Rs 1,25,000 for Family kameti is due by the 10th. Thank you!")
+        #expect(text == "Assalam O Alaikum Hira, a reminder that Rs 1,25,000 for Family kameti is due by the 10th. Thank you!")
         #expect(ReminderLogic.ordinal(1) == "1st" && ReminderLogic.ordinal(22) == "22nd" && ReminderLogic.ordinal(13) == "13th")
     }
 

@@ -36,6 +36,7 @@
     <string name="detail_archive_s">Archive %s?</string>
     <string name="detail_archived">Archived</string>
     <string name="detail_ask_the_owner_to_send_you_an_invite">Ask the owner to send you an invite.</string>
+    <string name="detail_assalam_o_alaikum_s_a_reminder_that_s">Assalam O Alaikum %1$s, a reminder that %2$s for %3$s is due by the %4$s. Thank you!</string>
     <string name="detail_balances_open">Balances open</string>
     <string name="detail_bank_1044">Bank</string>
     <string name="detail_bank_bf7a">bank</string>
@@ -143,7 +144,6 @@
     <string name="detail_have_1_slot">have 1 slot</string>
     <string name="detail_have_n_slots">have %d slots</string>
     <string name="detail_have_no_slot_yet">have no slot yet</string>
-    <string name="detail_hi_s_a_reminder_that_s_for_s">Hi %1$s, a reminder that %2$s for %3$s is due by the %4$s. Thank you!</string>
     <string name="detail_hi_s_heres_your_s_update_for_s">Hi %1$s, here\'s your %2$s update for %3$s.</string>
     <string name="detail_hi_s_we_received_s_from_you_on">Hi %1$s, we received %2$s from you on %3$s for %4$s.</string>
     <string name="detail_how_much_did_s_pay">How much did %s pay?</string>
@@ -184,6 +184,7 @@
     <string name="detail_member">Member</string>
     <string name="detail_members">Members</string>
     <string name="detail_members_pay_by">Members pay by</string>
+    <string name="detail_members_with_the_app_get_a_notification_instead">Members with the app get a notification instead.</string>
     <string name="detail_members_you_add_will_show_here">Members you add will show here.</string>
     <string name="detail_message_optional">Message (optional)</string>
     <string name="detail_method">Method</string>
@@ -198,6 +199,7 @@
     <string name="detail_n_months_s_per_slot">%1$d months · %2$s per slot</string>
     <string name="detail_n_of_n_havent_joined_yet">%1$d of %2$d haven\'t joined yet</string>
     <string name="detail_n_of_n_members_have_paid">%1$d of %2$d members have paid</string>
+    <string name="detail_n_owe_s">%1$d owe %2$s</string>
     <string name="detail_n_paid">%d paid</string>
     <string name="detail_n_partial">%d partial</string>
     <string name="detail_n_payments">%d payments</string>
@@ -243,6 +245,8 @@
     <string name="detail_nothing_here_yet">Nothing here yet</string>
     <string name="detail_nothing_owed_right_now">Nothing owed right now</string>
     <string name="detail_nothing_recorded_in_s">Nothing recorded in %s.</string>
+    <string name="detail_notification_message_optional">Notification message (optional)</string>
+    <string name="detail_notify">Notify</string>
     <string name="detail_now">Now</string>
     <string name="detail_one_member_still_owes_it_you_can_pay">" One member still owes it. You can pay out now; their dues stay on record."</string>
     <string name="detail_only_their_own_figures_anyone_with_the_link">Only their own figures. Anyone with the link can open it.</string>
@@ -298,6 +302,7 @@
     <string name="detail_reference_no_optional">Reference no. (optional)</string>
     <string name="detail_remaining_s">Remaining %s</string>
     <string name="detail_remind">Remind</string>
+    <string name="detail_remind_1_member_who_owes">Remind 1 member who owes</string>
     <string name="detail_remind_members">Remind members</string>
     <string name="detail_remind_n_members_who_owe">Remind %d members who owe</string>
     <string name="detail_remind_on_day_n">Remind on day %d</string>
@@ -384,6 +389,7 @@
     <string name="detail_send_s_an_invite_to_see_this_kameti">Send %1$s an invite to see this kameti in the app. It goes to %2$s.</string>
     <string name="detail_send_s_an_update">Send %s an update</string>
     <string name="detail_send_update">Send update</string>
+    <string name="detail_sent">Sent</string>
     <string name="detail_sent_to_s_the_code_is_only_shown">Sent to %s. The code is only shown when an invite is sent; resend to get a new one.</string>
     <string name="detail_settled">Settled</string>
     <string name="detail_settlement_note_optional">Settlement note (optional)</string>

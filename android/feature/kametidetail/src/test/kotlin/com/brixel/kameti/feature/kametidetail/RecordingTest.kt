@@ -223,9 +223,9 @@ class ReminderTest {
 
     @Test
     fun theMessageSaysWhatAndWhen() {
-        val template = "Hi %1\$s, a reminder that %2\$s for %3\$s is due by the %4\$s. Thank you!"
+        val template = "Assalam O Alaikum %1\$s, a reminder that %2\$s for %3\$s is due by the %4\$s. Thank you!"
         val text = ReminderLogic.text(template, "Hira Malik", Money(125_000), "Family kameti", 10)
-        assertEquals("Hi Hira, a reminder that Rs 1,25,000 for Family kameti is due by the 10th. Thank you!", text)
+        assertEquals("Assalam O Alaikum Hira, a reminder that Rs 1,25,000 for Family kameti is due by the 10th. Thank you!", text)
         assertEquals("1st", ReminderLogic.ordinal(1))
         assertEquals("22nd", ReminderLogic.ordinal(22))
         assertEquals("13th", ReminderLogic.ordinal(13))

@@ -8,6 +8,9 @@ public enum KIcon {
     /// A person with a plus: invite.
     public static func userPlus(size: CGFloat = 22) -> some View { icon("kUserPlus", size: size) }
 
+    /// The WhatsApp speech bubble with a handset, for "remind on WhatsApp".
+    public static func whatsApp(size: CGFloat = 22) -> some View { icon("kWhatsApp", size: size) }
+
     private static func icon(_ name: String, size: CGFloat) -> some View {
         Image(name, bundle: .module)
             .renderingMode(.template)
