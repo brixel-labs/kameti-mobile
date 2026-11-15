@@ -459,7 +459,7 @@ internal fun InviteCodeCard(onJoin: (String) -> Unit) {
                     imeAction = ImeAction.Go,
                     onImeAction = join,
                 )
-                val shape = RoundedCornerShape(KRadius.input)
+                val shape = RoundedCornerShape(KRadius.pill)
                 Box(
                     Modifier
                         .alpha(if (trimmed.isEmpty()) 0.5f else 1f)

@@ -60,7 +60,7 @@ public enum KRadius {
     public static let sm: CGFloat = 6
     public static let md: CGFloat = 10
     public static let input: CGFloat = 12
-    public static let button: CGFloat = 14
+    public static let button: CGFloat = 999
     public static let card: CGFloat = 16
     public static let xl: CGFloat = 24
     public static let pill: CGFloat = 999

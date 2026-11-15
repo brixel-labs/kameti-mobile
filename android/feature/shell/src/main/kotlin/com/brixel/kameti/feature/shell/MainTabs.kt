@@ -280,6 +280,12 @@ private fun RouteDestination(
     inboxModel: InboxViewModel,
     profileModel: ProfileViewModel,
 ) {
+    // After archiving: the kameti has left the live list, so show Home, reloaded.
+    val goHome = {
+        router.popToRoot()
+        router.tab = AppTab.Home
+        homeModel.refresh()
+    }
     when (route) {
         // Its view model lives in this stack entry, so it lasts as long as the screen is pushed.
         is Route.KametiDetail -> KametiDetailScreen(
@@ -287,6 +293,7 @@ private fun RouteDestination(
             onBack = { router.pop() },
             onResumeDraft = { router.push(Route.ResumeDraft(it)) },
             onOpenActivity = { router.push(Route.Activity(it)) },
+            onArchived = goHome,
         )
         is Route.KametiMembers -> KametiDetailScreen(
             model = viewModel {
@@ -295,6 +302,7 @@ private fun RouteDestination(
             onBack = { router.pop() },
             onResumeDraft = { router.push(Route.ResumeDraft(it)) },
             onOpenActivity = { router.push(Route.Activity(it)) },
+            onArchived = goHome,
         )
         // Opened straight into a recording action (Home's Record payment).
         is Route.KametiAction -> KametiDetailScreen(
@@ -304,6 +312,7 @@ private fun RouteDestination(
             onBack = { router.pop() },
             onResumeDraft = { router.push(Route.ResumeDraft(it)) },
             onOpenActivity = { router.push(Route.Activity(it)) },
+            onArchived = goHome,
         )
         Route.ArchivedKametis -> ArchivedKametisScreen(
             model = homeModel,

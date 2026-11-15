@@ -272,7 +272,7 @@ private fun Reminders(state: WizardState, model: CreateWizardViewModel) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             KText(stringResource(R.string.create_at), KTextToken.body, modifier = Modifier.weight(1f), color = KColors.textSecondary)
-            KText(stringResource(R.string.create_s_pakistan_time, ReminderTime.label(state.reminderHour)), KTextToken.bodyStrong)
+            KText(ReminderTime.label(state.reminderHour), KTextToken.bodyStrong)
             KIcon(KIcons.chevronDown, size = 18.dp)
         }
         if (pickingTime) {

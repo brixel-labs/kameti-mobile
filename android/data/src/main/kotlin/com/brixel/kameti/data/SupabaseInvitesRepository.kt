@@ -1,6 +1,7 @@
 package com.brixel.kameti.data
 
 import com.brixel.kameti.core.Failure
+import com.brixel.kameti.core.Timestamp
 import com.brixel.kameti.domain.Invite
 import com.brixel.kameti.domain.InviteLink
 import com.brixel.kameti.domain.InvitePreview
@@ -15,6 +16,10 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.serialization.Serializable
+
+@Serializable
+private class ViewLinkRow(val memberId: String, val token: String, val lastViewedAt: Timestamp? = null)
 
 internal class SupabaseInvitesRepository(private val client: SupabaseClient) : InvitesRepository {
     private fun memberParam(id: String) = params("p_member_id" to text(id))
@@ -33,6 +38,12 @@ internal class SupabaseInvitesRepository(private val client: SupabaseClient) : I
 
     override suspend fun viewLink(memberId: String, rotate: Boolean): MemberViewLink = call {
         client.postgrest.rpc("member_view_link", params("p_member_id" to text(memberId), "p_rotate" to flag(rotate))).decodeAs()
+    }
+
+    override suspend fun viewLinks(kametiId: String): List<MemberViewLink> = call {
+        client.from("member_view_links").select(Columns.raw("member_id,token,last_viewed_at")) {
+            filter { eq("kameti_id", kametiId) }
+        }.decodeList<ViewLinkRow>().map { MemberViewLink(it.memberId, MemberViewLink.BASE + it.token, it.lastViewedAt) }
     }
 
     override suspend fun turnOffViewLink(memberId: String) = call {

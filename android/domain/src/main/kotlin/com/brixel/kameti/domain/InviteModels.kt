@@ -71,7 +71,12 @@ data class Invite(
  * can read the same link again later, and turning it off deletes it.
  */
 @Serializable
-data class MemberViewLink(val memberId: String, val link: String, val lastViewedAt: Timestamp? = null)
+data class MemberViewLink(val memberId: String, val link: String, val lastViewedAt: Timestamp? = null) {
+    companion object {
+        /** Where a guest's page lives; the token is appended. */
+        const val BASE = "https://kameti.fhbtechservices.com/v/"
+    }
+}
 
 /**
  * Result of `create_invite` / `resend_invite`. [token] and [code] are

@@ -93,6 +93,8 @@ public protocol InvitesRepository: Sendable {
     /// `rotate` replaces it, which turns the old one off.
     func viewLink(memberId: String, rotate: Bool) async throws(Failure) -> MemberViewLink
     func turnOffViewLink(memberId: String) async throws(Failure)
+    /// The links that already exist in this kameti (owner only), so they can be shared without a tap each.
+    func viewLinks(kametiId: String) async throws(Failure) -> [MemberViewLink]
 
     // Invitee: exactly one of `token` (or the 6-character code) and `inviteId`.
     func previewInvite(token: String?, inviteId: String?) async throws(Failure) -> InvitePreview

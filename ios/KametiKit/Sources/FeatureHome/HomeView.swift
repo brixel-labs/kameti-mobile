@@ -532,7 +532,7 @@ struct InviteCodeCard: View {
                             .kText(KTextToken.bodyStrong, color: KColors.brand)
                             .padding(.horizontal, KSpace.lg)
                             .frame(minHeight: 48)
-                            .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.brand))
+                            .overlay(Capsule().stroke(KColors.brand))
                     }
                     .buttonStyle(.plain)
                     .disabled(trimmed.isEmpty)

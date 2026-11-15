@@ -1451,17 +1451,6 @@
         }
       }
     },
-    "%@, Pakistan time" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@, Pakistan time"
-          }
-        }
-      }
-    },
     "Delete draft" : {
       "extractionState" : "manual",
       "localizations" : {

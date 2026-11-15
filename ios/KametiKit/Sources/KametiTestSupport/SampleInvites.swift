@@ -122,6 +122,8 @@ final class SampleInvitesRepository: InvitesRepository {
 
     func turnOffViewLink(memberId: String) async throws(Failure) {}
 
+    func viewLinks(kametiId: String) async throws(Failure) -> [MemberViewLink] { [] }
+
     // MARK: Invitee
 
     func previewInvite(token: String?, inviteId: String?) async throws(Failure) -> InvitePreview {

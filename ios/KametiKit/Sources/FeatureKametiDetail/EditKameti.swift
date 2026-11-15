@@ -219,7 +219,7 @@ struct EditKametiView: View {
                 HStack {
                     Text("Reminder time", bundle: .module).kText(KTextToken.body, color: KColors.textSecondary)
                     Spacer()
-                    Text(String(localized: "\(ReminderTime.label(form.reminderHour)), Pakistan time", bundle: .module))
+                    Text(verbatim: ReminderTime.label(form.reminderHour))
                         .kText(KTextToken.bodyStrong)
                     Image(systemName: "chevron.down").font(.system(size: 13, weight: .semibold)).foregroundStyle(KColors.textSecondary)
                 }

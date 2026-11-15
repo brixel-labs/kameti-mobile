@@ -175,7 +175,7 @@ object KRadius {
     val sm = 6.dp
     val md = 10.dp
     val input = 12.dp
-    val button = 14.dp
+    val button = 999.dp
     val card = 16.dp
     val xl = 24.dp
     val pill = 999.dp

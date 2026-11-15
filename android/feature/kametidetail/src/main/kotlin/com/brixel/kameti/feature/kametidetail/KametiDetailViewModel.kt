@@ -156,6 +156,9 @@ class KametiDetailViewModel(
         }
         val contactsCall = async { attempt { if (owner) deps.contacts.contacts() else emptyList() } }
         val invitesCall = async { attempt { if (owner) deps.invites.invites(id) else emptyList() } }
+        val linksCall = async { attempt { if (owner) deps.invites.viewLinks(id) else emptyList() } }
+        // Links the owner already made: kept for guests, never created here.
+        linksCall.await().getOrNull()?.let { list -> viewLinkState.value = list.associateBy { it.memberId } }
         KametiDetailData(
             kameti = kameti,
             userId = userId,
@@ -343,6 +346,13 @@ class KametiDetailViewModel(
             return failure
         }
         return null
+    }
+
+    /** The member's view-only link for a quick send: the one that exists, or a new one; `null` when it can't be made. */
+    suspend fun ensureViewLink(memberId: String): MemberViewLink? {
+        viewLinkState.value[memberId]?.let { return it }
+        openViewLink(memberId)
+        return viewLinkState.value[memberId]
     }
 
     suspend fun turnOffViewLink(memberId: String): Failure? {

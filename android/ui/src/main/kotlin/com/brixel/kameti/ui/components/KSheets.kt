@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -63,9 +64,13 @@ fun KBottomSheet(
     content: @Composable ColumnScope.(close: () -> Unit) -> Unit,
 ) {
     val locked by rememberUpdatedState(dismissDisabled)
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = expanded, confirmValueChange = { !locked })
+    // `close` is often called right after the work that kept the sheet locked finished, before the
+    // next recomposition has unlocked it: closing on purpose must never be vetoed by the stale lock.
+    var closing by remember { mutableStateOf(false) }
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = expanded, confirmValueChange = { closing || !locked })
     val scope = rememberCoroutineScope()
     val close: () -> Unit = {
+        closing = true
         scope.launch { state.hide() }.invokeOnCompletion { if (!state.isVisible) onDismiss() }
     }
     ModalBottomSheet(
@@ -81,7 +86,13 @@ fun KBottomSheet(
         },
         properties = ModalBottomSheetProperties(shouldDismissOnBackPress = !dismissDisabled),
     ) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding().kDismissesKeyboard()) {
+        // A full-page sheet has a fixed height that leaves a gap under the status bar from its first frame
+        // (rounded top and the screen dimmed above), so it neither jumps to edge-to-edge nor covers the status bar.
+        Column(
+            Modifier.fillMaxWidth()
+                .then(if (expanded) Modifier.fillMaxHeight(FULL_PAGE_SHEET_HEIGHT) else Modifier)
+                .navigationBarsPadding().kDismissesKeyboard(),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = KSpace.xl).padding(top = KSpace.sm, bottom = KSpace.md),
                 verticalAlignment = Alignment.CenterVertically,
@@ -104,6 +115,9 @@ fun KBottomSheet(
         }
     }
 }
+
+/** How much of the screen's height a full-page sheet takes; the rest is the gap above it. */
+private const val FULL_PAGE_SHEET_HEIGHT = 0.93f
 
 /** A title and message for a result or a notice sheet. */
 data class KSheetMessage(val title: String, val message: String, val tone: Tone = Tone.Info) {

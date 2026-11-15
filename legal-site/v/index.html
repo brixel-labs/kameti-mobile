@@ -91,7 +91,7 @@ function dm(s){var x=d(s);return x.getDate()+' '+MON[x.getMonth()].slice(0,3)}
 function days(a,b){return Math.round((d(a)-d(b))/864e5)}
 function plural(n,w){return n+' '+w+(n===1?'':'s')}
 var app=document.getElementById('app'),tab='o',v=null;
-function token(){var m=location.pathname.match(/\/v\/([A-Za-z0-9]{64})/);return m?m[1]:(new URLSearchParams(location.search).get('t')||'')}
+function token(){var m=location.pathname.match(/\/v\/([A-Za-z0-9_-]{12}|[A-Za-z0-9]{64})(?:[/?#]|$)/);return m?m[1]:(new URLSearchParams(location.search).get('t')||'')}
 function off(msg){document.title='Link unavailable — Kameti';app.innerHTML='<div class="state"><div><div class="ico">'+I.off+'</div><h1>This link isn\'t working</h1><p class="sm" style="font-size:14px">'+esc(msg||'It may have been turned off, or it is incomplete. Ask the person who runs your kameti for a new link.')+'</p></div></div>'}
 function chip(st,m){
  var map={paid:['good','Paid'],partial:['warn','Part paid'],unpaid:['warn','Due'],overdue:['bad','Overdue'],advance:['good','Paid ahead'],upcoming:['mute','Upcoming']};

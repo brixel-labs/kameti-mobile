@@ -27,8 +27,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.brixel.kameti.core.Money
 import com.brixel.kameti.domain.Member
@@ -49,9 +53,9 @@ import com.brixel.kameti.ui.KMoneyText
 import com.brixel.kameti.ui.KPill
 import com.brixel.kameti.ui.KSpace
 import com.brixel.kameti.ui.KText
-import com.brixel.kameti.ui.KTonalButton
 import com.brixel.kameti.ui.KTextStyle
 import com.brixel.kameti.ui.KTextToken
+import com.brixel.kameti.ui.KTonalButton
 import com.brixel.kameti.ui.subtitle
 import com.brixel.kameti.ui.subtitleSmall
 import com.brixel.kameti.ui.textSubtitle
@@ -69,24 +73,43 @@ internal fun DetailRow(
     title: String,
     leading: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    /** The rest of a sentence that starts with the bold [title] ("has 2 slots"); null for a plain title. */
+    titleRest: String? = null,
     subtitle: String? = null,
     showsDivider: Boolean = true,
+    subtitleStyle: KTextStyle = KTextToken.subtitle,
     onClick: (() -> Unit)? = null,
+    /** A line under the subtitle, such as a button, indented by [belowStart] to line up with the text. */
+    below: (@Composable () -> Unit)? = null,
+    belowStart: Dp = 0.dp,
+    /** The trailing view sits at the bottom of the text, level with its last line, instead of in the middle (room for a long name). */
+    pinTrailing: Boolean = false,
     trailing: @Composable () -> Unit = {},
 ) {
     Column(modifier.then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)) {
         Row(
-            Modifier.padding(vertical = KSpace.md),
+            Modifier.padding(top = KSpace.md, bottom = if (below != null) 0.dp else KSpace.md),
             horizontalArrangement = Arrangement.spacedBy(KSpace.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             leading()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                KText(title, KTextToken.bodyStrong)
-                if (subtitle != null) KText(subtitle, KTextToken.subtitle, color = KColors.textSubtitle)
+                if (titleRest != null) {
+                    KText(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(title) }
+                            append(" " + titleRest)
+                        },
+                        KTextToken.body,
+                    )
+                } else {
+                    KText(title, KTextToken.bodyStrong)
+                }
+                if (subtitle != null) KText(subtitle, subtitleStyle, color = KColors.textSubtitle)
             }
-            trailing()
+            if (pinTrailing) Box(Modifier.align(Alignment.Bottom)) { trailing() } else trailing()
         }
+        if (below != null) Box(Modifier.padding(start = belowStart, top = KSpace.sm, bottom = KSpace.md)) { below() }
         if (showsDivider) KDivider()
     }
 }
@@ -96,17 +119,28 @@ internal fun DetailRow(
 internal fun MemberRow(
     member: Member,
     members: List<Member>,
+    title: String? = null,
+    titleRest: String? = null,
     subtitle: String? = null,
     showsDivider: Boolean = true,
+    subtitleStyle: KTextStyle = KTextToken.subtitle,
     onClick: (() -> Unit)? = null,
+    below: (@Composable () -> Unit)? = null,
+    pinTrailing: Boolean = false,
     trailing: @Composable () -> Unit = {},
 ) {
     DetailRow(
-        title = member.name,
+        title = title ?: member.name,
+        titleRest = titleRest,
         leading = { KAvatar(member.name, DetailLogic.colorIndex(member, members), size = KAvatarSize.Medium) },
         subtitle = subtitle,
         showsDivider = showsDivider,
+        subtitleStyle = subtitleStyle,
         onClick = onClick,
+        below = below,
+        // Past the avatar (36) and its gap (12).
+        belowStart = KAvatarSize.Medium.dimension + KSpace.md,
+        pinTrailing = pinTrailing,
         trailing = trailing,
     )
 }

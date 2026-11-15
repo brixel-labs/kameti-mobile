@@ -69,6 +69,7 @@ class UnusedRepositories : LedgerRepository, PaymentsRepository, InvitesReposito
     override suspend fun invites(kametiId: String): List<Invite> = notStubbed()
     override suspend fun viewLink(memberId: String, rotate: Boolean): MemberViewLink = notStubbed()
     override suspend fun turnOffViewLink(memberId: String) = notStubbed()
+    override suspend fun viewLinks(kametiId: String): List<MemberViewLink> = notStubbed()
     override suspend fun previewInvite(token: String?, inviteId: String?): InvitePreview = notStubbed()
     override suspend fun acceptInvite(token: String?, inviteId: String?): Member = notStubbed()
     override suspend fun declineInvite(token: String?, inviteId: String?): Member = notStubbed()

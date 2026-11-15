@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material.icons.outlined.ManageAccounts
@@ -78,13 +79,16 @@ import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -106,7 +110,10 @@ object KIcons {
     val arrowDown = Icons.Rounded.ArrowDownward // arrow.down
     val arrowRight = Icons.AutoMirrored.Rounded.ArrowForward // arrow.right
     val arrowUpRight = Icons.Rounded.NorthEast // arrow.up.right
-    val swap = Icons.Rounded.SwapHoriz // arrow.left.arrow.right
+    /** Two opposite arrows (transfer), drawn to look like iOS's arrow.left.arrow.right. */
+    val swap: ImageVector by lazy {
+        outlineIcon("Swap", "M21 8.5H3", "M7.5 4L3 8.5L7.5 13", "M3 15.5H21", "M16.5 11L21 15.5L16.5 20")
+    }
     val refresh = Icons.Rounded.Refresh // arrow.clockwise
     val undo = Icons.AutoMirrored.Rounded.Undo // arrow.uturn.backward
     val more = Icons.Rounded.MoreHoriz // ellipsis
@@ -175,9 +182,47 @@ object KIcons {
     val receipt = Icons.AutoMirrored.Outlined.ReceiptLong // receipt
     val moon = Icons.Outlined.DarkMode // moon
     val appIcon = Icons.Outlined.Apps // app
+    val link = Icons.Outlined.Link // link
     val offline = Icons.Outlined.WifiOff // wifi.slash
     val cloudProblem = Icons.Outlined.CloudOff // exclamationmark.icloud
+
+    /** A broken link (turn a link off), the same outline as on iOS. */
+    val linkOff: ImageVector by lazy {
+        outlineIcon(
+            "LinkOff",
+            "M9 15l3 -3m2 -2l1 -1",
+            "M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464",
+            "M3 3l18 18",
+            "M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463",
+        )
+    }
+
+    /** A person with a plus (invite), the same outline as on iOS. */
+    val userPlus: ImageVector by lazy {
+        outlineIcon("UserPlus", "M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0", "M16 19h6", "M19 16v6", "M6 21v-2a4 4 0 0 1 4 -4h4")
+    }
+
+    /** A forward-turning arrow (the same on every screen that shares something), drawn as an outline. */
+    val shareArrow: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "ShareArrow", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f,
+        ).addPath(
+            pathData = addPathNodes("M13 4v4c-6.575 1.028 -9.02 6.788 -10 12c-.037 .206 5.384 -5.962 10 -6v4l8 -7l-8 -7z"),
+            stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round,
+        ).build()
+    }
 }
+
+/** A 24-unit outline icon of round-capped 2-wide strokes, one path per string. */
+private fun outlineIcon(name: String, vararg paths: String): ImageVector =
+    ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f).apply {
+        paths.forEach {
+            addPath(
+                pathData = addPathNodes(it), stroke = SolidColor(Color.Black), strokeLineWidth = 2f,
+                strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round,
+            )
+        }
+    }.build()
 
 /**
  * An icon from [KIcons]. Decorative by default; pass [label] for an icon that

@@ -6,25 +6,45 @@ import SwiftUI
 /// A list row: avatar or icon, title, optional subtitle and a trailing view.
 struct DetailRow<Leading: View, Trailing: View>: View {
     let title: String
+    /// The rest of a sentence that starts with the bold [title] ("has 2 slots"); nil for a plain title.
+    var titleRest: String?
     var subtitle: String?
     var showsDivider = true
+    var subtitleStyle = KTextToken.subtitle
+    /// Leaves room under the subtitle for a button laid over the row (a nested Button inside a row Button doesn't tap reliably).
+    var reservesFooter = false
+    /// The trailing view sits at the bottom of the text, level with its last line, instead of in the middle (room for a long name).
+    var pinsTrailing = false
     @ViewBuilder let leading: Leading
     @ViewBuilder let trailing: Trailing
+
+    /// "**Ata Rabbi** has 1 slot": the name in bold, the rest regular.
+    private func sentence(_ rest: String) -> AttributedString {
+        var name = AttributedString(title)
+        name.inlinePresentationIntent = .stronglyEmphasized
+        return name + AttributedString(" " + rest)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: KSpace.md) {
                 leading
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).kText(KTextToken.bodyStrong)
+                    if let titleRest {
+                        Text(sentence(titleRest)).kText(KTextToken.body)
+                    } else {
+                        Text(title).kText(KTextToken.bodyStrong)
+                    }
                     if let subtitle {
-                        Text(subtitle).kText(KTextToken.subtitle, color: KColors.textSubtitle)
+                        Text(subtitle).kText(subtitleStyle, color: KColors.textSubtitle)
                     }
                 }
                 Spacer(minLength: KSpace.sm)
-                trailing
+                trailing.frame(maxHeight: pinsTrailing ? .infinity : nil, alignment: .bottom)
             }
-            .padding(.vertical, KSpace.md)
+            .padding(.top, KSpace.md)
+            .padding(.bottom, reservesFooter ? 0 : KSpace.md)
+            if reservesFooter { Color.clear.frame(height: 54) }
             if showsDivider { Divider() }
         }
         // The whole row is tappable, including the empty space between the
@@ -35,11 +55,13 @@ struct DetailRow<Leading: View, Trailing: View>: View {
 
 extension DetailRow where Leading == KAvatar {
     init(
-        member: Member, in members: [Member], title: String? = nil, subtitle: String? = nil,
-        showsDivider: Bool = true, @ViewBuilder trailing: () -> Trailing
+        member: Member, in members: [Member], title: String? = nil, titleRest: String? = nil, subtitle: String? = nil,
+        showsDivider: Bool = true, subtitleStyle: KTextStyle = KTextToken.subtitle, reservesFooter: Bool = false,
+        pinsTrailing: Bool = false, @ViewBuilder trailing: () -> Trailing
     ) {
         self.init(
-            title: title ?? member.name, subtitle: subtitle, showsDivider: showsDivider,
+            title: title ?? member.name, titleRest: titleRest, subtitle: subtitle, showsDivider: showsDivider, subtitleStyle: subtitleStyle, reservesFooter: reservesFooter,
+            pinsTrailing: pinsTrailing,
             leading: { KAvatar(name: member.name, colorIndex: Self.colorIndex(of: member, in: members), size: .medium) },
             trailing: trailing
         )

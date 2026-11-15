@@ -132,6 +132,8 @@ class SampleInvitesRepository(
 
     override suspend fun turnOffViewLink(memberId: String) {}
 
+    override suspend fun viewLinks(kametiId: String): List<MemberViewLink> = emptyList()
+
     override suspend fun invites(kametiId: String): List<Invite> =
         synchronized(lock) { invites.filter { it.kametiId == kametiId }.reversed() }
 

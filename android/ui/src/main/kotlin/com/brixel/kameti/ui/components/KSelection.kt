@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -238,8 +240,8 @@ fun <T> KUnderlineTabs(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     inset: Dp = 0.dp,
-    /** Tabs that get a small dot: something there needs attention. */
-    badges: Set<T> = emptySet(),
+    /** Tabs that show a small count pill beside the title: that many things there need attention. */
+    badges: Map<T, Int> = emptyMap(),
 ) {
     val density = LocalDensity.current
     val scroll = rememberScrollState()
@@ -279,16 +281,21 @@ fun <T> KUnderlineTabs(
                             .padding(bottom = 12.5.dp, top = KSpace.xs),
                         contentAlignment = Alignment.Center,
                     ) {
-                        KText(
-                            tab.label, KTextToken.bodyStrong,
-                            color = if (isOn) KColors.brand else KColors.textSecondary,
-                            maxLines = 1, textAlign = TextAlign.Center,
-                        )
-                        if (tab.value in badges) {
-                            Box(
-                                Modifier.align(Alignment.TopEnd).offset(x = 2.dp, y = 2.dp).size(7.dp)
-                                    .background(KColors.warning, CircleShape).clearAndSetSemantics {},
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            KText(
+                                tab.label, KTextToken.bodyStrong,
+                                color = if (isOn) KColors.brand else KColors.textSecondary,
+                                maxLines = 1, textAlign = TextAlign.Center,
                             )
+                            val count = badges[tab.value] ?: 0
+                            if (count > 0) {
+                                KText(
+                                    count.toString(), KTextStyle(size = 11f, weight = FontWeight.SemiBold), color = KColors.warning,
+                                    modifier = Modifier.defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
+                                        .background(KColors.warningSubtle, CircleShape).padding(horizontal = 6.dp)
+                                        .wrapContentSize(Alignment.Center).clearAndSetSemantics {},
+                                )
+                            }
                         }
                     }
                 }

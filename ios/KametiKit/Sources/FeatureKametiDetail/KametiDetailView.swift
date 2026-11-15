@@ -10,16 +10,18 @@ public struct KametiDetailView: View {
     private let model: KametiDetailViewModel
     private let onResumeDraft: ((String) -> Void)?
     private let onOpenActivity: ((String) -> Void)?
+    private let onArchived: (() -> Void)?
     @State private var editing = false
     @State private var confirmingArchive = false
     @State private var confirmingDuplicate = false
     @State private var confirmingEditSetup = false
     @State private var archiveFailure: Failure?
 
-    public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil, onOpenActivity: ((String) -> Void)? = nil) {
+    public init(model: KametiDetailViewModel, onResumeDraft: ((String) -> Void)? = nil, onOpenActivity: ((String) -> Void)? = nil, onArchived: (() -> Void)? = nil) {
         self.model = model
         self.onResumeDraft = onResumeDraft
         self.onOpenActivity = onOpenActivity
+        self.onArchived = onArchived
     }
 
     public var body: some View {
@@ -111,7 +113,14 @@ public struct KametiDetailView: View {
             message: String(localized: "It becomes read-only for you and every member and moves to Archived, at the end of Past on Home. You can restore it any time.", bundle: .module),
             confirmTitle: String(localized: "Archive", bundle: .module), isDestructive: true
         ) {
-            guard let failure = await model.archive() else { return .dismiss }
+            guard let failure = await model.archive() else {
+                // Back to Home once the sheet has finished closing.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(350))
+                    onArchived?()
+                }
+                return .dismiss
+            }
             return .result(KSheetMessage(String(localized: "Couldn't change this kameti", bundle: .module), message: Self.message(for: failure), tone: .error))
         }
         .kConfirmSheet(

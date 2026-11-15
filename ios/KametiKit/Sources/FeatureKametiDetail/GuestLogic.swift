@@ -41,6 +41,14 @@ struct PendingReceipt: Identifiable, Equatable, Sendable {
 /// The short text for a member who isn't on the app (their own figures only, nobody else's): a
 /// receipt right after a payment, or the owner's "Send update". Sent by WhatsApp or the share sheet.
 enum GuestUpdate {
+    /// "Owes Rs 1,50,000", "Ahead by Rs 25,000" or "All paid up": the guest's standing in one line.
+    static func statusLine(for member: Member, in data: KametiDetailData) -> String {
+        guard let balance = data.balances.first(where: { $0.memberId == member.id }) else { return "" }
+        if balance.owes.isPositive { return String(localized: "Owes \(balance.owes.format())", bundle: .module) }
+        if balance.credit.isPositive { return String(localized: "Ahead by \(balance.credit.format())", bundle: .module) }
+        return String(localized: "All paid up", bundle: .module)
+    }
+
     static func text(for member: Member, in data: KametiDetailData, receipt: PendingReceipt? = nil, viewLink: String? = nil) -> String {
         let first = MemberLogic.firstName(member.name)
         let kameti = data.kameti.name
