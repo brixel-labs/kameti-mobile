@@ -2,7 +2,7 @@
 
 Read this first when picking up the Android port in a new session. Update it at the end of every phase (and whenever the state below changes).
 
-**Last updated:** 2026-11-15, after the guest view link and quick-send work (kameti-mobile#42, #43, #44; kameti-backend#24).
+**Last updated:** 2026-11-15, after the remind sheet rework (kameti-mobile#46) and the first Play Console internal-test build (see "First Play release" below).
 
 ## Where things stand
 
@@ -96,9 +96,18 @@ adb -s emulator-5554 logcat -d -s AndroidRuntime:E   # check only that it did no
 
 - **Done:** the Android OAuth client in Google Cloud and the Firebase Android app (both for the debug SHA-1 `46:AE:62:40:60:E6:68:3F:60:FB:3A:BA:CD:69:4D:D3:96:3C:7B:11`).
 - **Push test:** a real push to an Android phone has not been tried. The backend already accepts `android` tokens (`register_device`, `send-push` through FCM).
-- **Release key:** create the upload keystore and `android/keystore.properties`; add the release SHA-1 to the Google OAuth client and to the Firebase app.
+- **Release key:** **created 2026-11-15** (`~/.android/kameti-upload.jks`, details in the git-ignored `android/keystore.properties`; the owner must back both up). Still to do after Play enrolls the app: add Play's app-signing SHA-1 (Play Console, App integrity) to the Google OAuth client and to the Firebase app, or Google sign-in fails in the store build.
 - **Website:** add the release SHA-256 fingerprint (from Play Console → App signing) to `legal-site/.well-known/assetlinks.json` and deploy the site, so invite links open the store build without asking.
 - **Not tried:** the iOS build on the physical iPhone 17 Pro Max (it was locked), and the first run of the Android CI job (it runs on the next push to `develop`).
+
+## First Play release (2026-11-15)
+
+Full details and the next steps are in `docs/ANDROID_RELEASE_HANDOFF.md`. In short:
+
+- A signed release bundle exists: **versionCode 2, versionName 1.0**, prod config, signed with the new upload key (SHA-1 `89:A2:44:D1:99:8C:A7:96:76:C7:14:DE:40:CA:24:27:28:5C:7F:BA`). Build it with `cd android && export JAVA_HOME=$(/usr/libexec/java_home -v 21) && ./gradlew :app:bundleRelease`; the result is `android/app/build/outputs/bundle/release/app-release.aab`. versionCode only ever goes up: the next upload needs 3.
+- **Not confirmed:** whether the owner has uploaded it to Play Console (Internal testing). Claude in Chrome was never connected, and the built-in browser was signed in to the wrong Google account, so the owner does the Play Console steps by hand.
+- Store listing assets and texts, the data safety answers and the privacy page update were prepared (see the handoff). The privacy page is edited in the working tree but **not deployed** (the site is a Cloudflare Worker deployed by hand).
+- An Android layout fix went in the same working tree: the big pot amount on Home and Overview used to wrap and show only "Rs" for long amounts (`ui/.../KMoney.kt`, `PotHeadline`); it now stacks under the amount like iOS.
 
 ## Technical notes worth keeping
 
