@@ -265,7 +265,7 @@ struct EditMemberSheet: View {
             return .result(KSheetMessage(String(localized: "Couldn't remove \(member.name)", bundle: .module), message: failure.userMessage, tone: .error))
         }
         .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind \(MemberLogic.firstName(member.name))", bundle: .module), detents: [.medium, .large]) {
-            RemindSheet(kameti: data.kameti, dependencies: model.dependencies, onlyMemberId: member.id) { reminding = false }
+            RemindSheet(kameti: data.kameti, data: data, dependencies: model.dependencies, onlyMemberId: member.id) { reminding = false }
         }
         .kBottomSheet(
             isPresented: $transferring,

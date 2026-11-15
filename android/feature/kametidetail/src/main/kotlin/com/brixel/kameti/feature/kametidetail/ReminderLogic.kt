@@ -6,7 +6,7 @@ import java.net.URLEncoder
 /** The text and WhatsApp link for reminding someone who doesn't have the app (FR-84). */
 object ReminderLogic {
     /**
-     * [template] is the app's "Hi %1$s, a reminder that %2$s for %3$s is due
+     * [template] is the app's "Assalam O Alaikum %1$s, a reminder that %2$s for %3$s is due
      * by the %4$s. Thank you!" string.
      */
     fun text(template: String, name: String, owed: Money, kameti: String, dueDay: Int): String =

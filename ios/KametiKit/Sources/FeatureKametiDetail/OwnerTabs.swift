@@ -186,7 +186,7 @@ struct OwnerTabs: View {
             ReceiptSheet(data: data, receipts: model.pendingReceipts) { model.pendingReceipts = [] }
         }
         .kBottomSheet(isPresented: $reminding, title: String(localized: "Remind members", bundle: .module), detents: [.large]) {
-            RemindSheet(kameti: data.kameti, dependencies: model.dependencies) { reminding = false }
+            RemindSheet(kameti: data.kameti, data: data, dependencies: model.dependencies) { reminding = false }
         }
         .kBottomSheet(isPresented: $addingMember, title: String(localized: "Add member", bundle: .module), detents: [.large]) {
             AddMemberSheet(data: data, model: model) {
@@ -382,7 +382,8 @@ struct OverviewTab: View {
             )
             let counts = DetailLogic.statusCounts(data.months, monthIndex: current.monthIndex)
             let rows = data.months.filter { $0.monthIndex == current.monthIndex }
-            let owing = DetailLogic.owing(data.months, monthIndex: current.monthIndex)
+            // Not me: the reminder list never includes the owner, so the count mustn't either.
+            let owing = DetailLogic.owing(data.months, monthIndex: current.monthIndex).filter { $0.memberId != data.me?.id }
             let byId = Dictionary(data.members.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let toGo = current.target - current.received
 
@@ -420,7 +421,8 @@ struct OverviewTab: View {
 
             if !owing.isEmpty, let onRemind {
                 Button(action: onRemind) {
-                    Label(String(localized: "Remind \(owing.count) members who owe", bundle: .module), systemImage: "bell")
+                    Label(owing.count == 1 ? String(localized: "Remind 1 member who owes", bundle: .module)
+                                           : String(localized: "Remind \(owing.count) members who owe", bundle: .module), systemImage: "bell")
                         .kText(KTextToken.bodyStrong, color: KColors.brand)
                         .frame(maxWidth: .infinity, minHeight: 48)
                         .overlay(Capsule().stroke(KColors.brand, lineWidth: 1.5))

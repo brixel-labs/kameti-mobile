@@ -7,7 +7,7 @@ import SwiftUI
 /// The text and WhatsApp link for reminding someone who doesn't have the app (FR-84).
 enum ReminderLogic {
     static func text(name: String, owed: Money, kameti: String, dueDay: Int) -> String {
-        String(localized: "Hi \(MemberLogic.firstName(name)), a reminder that \(owed.format()) for \(kameti) is due by the \(ordinal(dueDay)). Thank you!", bundle: .module)
+        String(localized: "Assalam O Alaikum \(MemberLogic.firstName(name)), a reminder that \(owed.format()) for \(kameti) is due by the \(ordinal(dueDay)). Thank you!", bundle: .module)
     }
 
     /// "0300 1234567" → wa.me/923001234567 with the message; no phone → nil (use the share sheet).
@@ -28,46 +28,48 @@ enum ReminderLogic {
     }
 }
 
-/// Owner's "Remind members who owe" (FR-82): a push to everyone with the app,
-/// once a day, with an optional message; WhatsApp for the rest (FR-84).
+/// Owner's "Remind members who owe" (FR-82, FR-84): everyone who owes in one
+/// list, each with the one action that suits them: a notification for people
+/// with the app (once a day each, with an optional message), WhatsApp for the rest.
 struct RemindSheet: View {
     let kameti: Kameti
+    /// The kameti's people, slots and dues, for each person's row.
+    let data: KametiDetailData
     let dependencies: KametiDependencies
     /// From a member's sheet: just that person.
     var onlyMemberId: String?
     let onDone: () -> Void
 
     @State private var targets: ReminderTargets?
-    @State private var selected: Set<String> = []
     @State private var message = ""
-    @State private var isBusy = false
+    @State private var notifyingId: String?
+    @State private var sentIds: Set<String> = []
+    @State private var alreadyIds: Set<String> = []
     @State private var failure: Failure?
-    @State private var sent: ReminderResult?
 
-    private var withApp: [ReminderTargets.Member] { targets?.members.filter(\.hasApp) ?? [] }
-    private var withoutApp: [ReminderTargets.Member] { targets?.members.filter { !$0.hasApp } ?? [] }
+    private var members: [ReminderTargets.Member] { targets?.members ?? [] }
+    private var canNotifyAny: Bool { members.contains { $0.hasApp && !isReminded($0) } }
+
+    private func isReminded(_ member: ReminderTargets.Member) -> Bool {
+        member.remindedToday || alreadyIds.contains(member.id)
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: KSpace.lg) {
                 if let targets {
-                    if let sent {
-                        VStack(alignment: .leading, spacing: KSpace.xs) {
-                            Label(sent.sent == 1 ? String(localized: "Reminder sent to 1 member.", bundle: .module)
-                                                 : String(localized: "Reminder sent to \(sent.sent) members.", bundle: .module),
-                                  systemImage: "checkmark.circle.fill")
-                                .kText(KTextToken.bodyStrong, color: KColors.positive)
-                            if !sent.skipped.isEmpty {
-                                Text("\(ListFormatter.localizedString(byJoining: sent.skipped)) already had a reminder today.", bundle: .module)
-                                    .kText(KTextToken.bodySm, color: KColors.textSecondary)
-                            }
-                        }
-                    } else if !withApp.isEmpty, withApp.allSatisfy(\.remindedToday) {
-                        note(String(localized: "You've already reminded everyone here today. You can remind them again tomorrow.", bundle: .module), tint: KColors.info, background: KColors.infoSubtle)
+                    if onlyMemberId == nil, !members.isEmpty {
+                        Text(summary).kText(KTextToken.body, color: KColors.textSecondary)
+                            .padding(.bottom, -KSpace.sm)
                     }
-                    if !withApp.isEmpty { appSection(targets) }
-                    if !withoutApp.isEmpty { whatsAppSection(targets) }
-                    if targets.members.isEmpty {
+                    if !members.isEmpty {
+                        list(targets)
+                        Text("Members with the app get a notification instead.", bundle: .module)
+                            .kText(KTextToken.caption, color: KColors.textSecondary)
+                            .padding(.top, -KSpace.sm)
+                    }
+                    if canNotifyAny { messageField(targets) }
+                    if members.isEmpty {
                         ContentUnavailableView(onlyMemberId == nil ? String(localized: "Nobody owes right now", bundle: .module)
                                                                    : String(localized: "Nothing owed right now", bundle: .module),
                                                systemImage: "checkmark.seal")
@@ -90,103 +92,96 @@ struct RemindSheet: View {
         .task { await load() }
     }
 
-    // MARK: Sections
+    /// "2 owe Rs 3,50,000".
+    private var summary: String {
+        let total = members.reduce(Money.zero) { $0 + $1.owed }
+        return String(localized: "\(members.count) owe \(total.format())", bundle: .module)
+    }
 
-    @ViewBuilder private func appSection(_ targets: ReminderTargets) -> some View {
-        let canSend = sent == nil && withApp.contains { !$0.remindedToday }
-        VStack(alignment: .leading, spacing: KSpace.sm) {
-            label(String(localized: "In the app · they get a notification", bundle: .module))
-            VStack(spacing: 0) {
-                ForEach(Array(withApp.enumerated()), id: \.element.id) { index, member in
-                    Button {
-                        if selected.contains(member.id) { selected.remove(member.id) } else { selected.insert(member.id) }
-                    } label: {
-                        row(member, last: index == withApp.count - 1) {
-                            if member.remindedToday {
-                                Text("Reminded today", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
-                            } else {
-                                Image(systemName: selected.contains(member.id) ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 22))
-                                    .foregroundStyle(selected.contains(member.id) ? KColors.brand : KColors.borderStrong)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!canSend || member.remindedToday)
+    // MARK: List
+
+    private func list(_ targets: ReminderTargets) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(members.enumerated()), id: \.element.id) { index, member in
+                row(member, last: index == members.count - 1) {
+                    if member.hasApp { appAction(member) } else { whatsAppAction(member, targets) }
                 }
             }
-            .padding(.horizontal, KSpace.lg)
-            .background(KColors.surface, in: RoundedRectangle(cornerRadius: 16))
-        }
-        if canSend {
-            VStack(alignment: .leading, spacing: 6) {
-                label(String(localized: "Message (optional)", bundle: .module))
-                TextField(String(localized: "Rs … is due by the \(ReminderLogic.ordinal(targets.dueDay)) · \(kameti.name)", bundle: .module), text: $message, axis: .vertical)
-                    .lineLimit(2...4)
-                    .padding(KSpace.md)
-                    .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(KColors.border))
-                Text("Each person sees what they owe unless you write your own. You can remind each person once a day.", bundle: .module)
-                    .kText(KTextToken.caption, color: KColors.textSecondary)
-            }
-            Button(action: send) {
-                ZStack {
-                    Text(selected.count == 1 ? String(localized: "Send reminder to 1", bundle: .module)
-                                             : String(localized: "Send reminder to \(selected.count)", bundle: .module))
-                        .opacity(isBusy ? 0 : 1)
-                    if isBusy { ProgressView().controlSize(.small).tint(KColors.textOnBrand) }
-                }
-                .kText(KTextToken.bodyStrong, color: KColors.textOnBrand)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.glassProminent)
-            .tint(KColors.brand)
-            .controlSize(.large)
-            .disabled(selected.isEmpty)
-            .allowsHitTesting(!isBusy)
         }
     }
 
-    private func whatsAppSection(_ targets: ReminderTargets) -> some View {
-        VStack(alignment: .leading, spacing: KSpace.sm) {
-            label(String(localized: "Without the app · remind on WhatsApp", bundle: .module))
-            VStack(spacing: 0) {
-                ForEach(Array(withoutApp.enumerated()), id: \.element.id) { index, member in
-                    let text = ReminderLogic.text(name: member.name, owed: member.owed, kameti: kameti.name, dueDay: targets.dueDay)
-                    row(member, last: index == withoutApp.count - 1) {
-                        if let url = ReminderLogic.whatsAppURL(phone: member.phone, text: text) {
-                            Link(destination: url) { whatsAppLabel }
-                        } else {
-                            ShareLink(item: text) { whatsAppLabel }
-                        }
-                    }
+    @ViewBuilder private func appAction(_ member: ReminderTargets.Member) -> some View {
+        if sentIds.contains(member.id) {
+            Label(String(localized: "Sent", bundle: .module), systemImage: "checkmark.circle.fill")
+                .kText(KTextToken.caption, color: KColors.positive)
+        } else if isReminded(member) {
+            Text("Reminded today", bundle: .module).kText(KTextToken.caption, color: KColors.textSecondary)
+        } else {
+            Button { notify(member) } label: {
+                ZStack {
+                    Label(String(localized: "Notify", bundle: .module), systemImage: "bell")
+                        .opacity(notifyingId == member.id ? 0 : 1)
+                    if notifyingId == member.id { ProgressView().controlSize(.small).tint(KColors.brand) }
                 }
+                .kText(KTextStyle(size: 12, weight: .semibold), color: KColors.brand)
+                .padding(.horizontal, KSpace.md).frame(minHeight: 30)
+                .overlay(Capsule().strokeBorder(KColors.brand.opacity(0.4)))
+                .contentShape(Capsule())
             }
-            .padding(.horizontal, KSpace.lg)
-            .background(KColors.surface, in: RoundedRectangle(cornerRadius: 16))
+            .buttonStyle(.plain)
+            .allowsHitTesting(notifyingId == nil)
+        }
+    }
+
+    @ViewBuilder private func whatsAppAction(_ member: ReminderTargets.Member, _ targets: ReminderTargets) -> some View {
+        let text = ReminderLogic.text(name: member.name, owed: member.owed, kameti: kameti.name, dueDay: targets.dueDay)
+        if let url = ReminderLogic.whatsAppURL(phone: member.phone, text: text) {
+            Link(destination: url) { whatsAppLabel }
+        } else {
+            ShareLink(item: text) { whatsAppLabel }
         }
     }
 
     private var whatsAppLabel: some View {
-        Label(String(localized: "WhatsApp", bundle: .module), systemImage: "message.fill")
-            .kText(KTextStyle(size: 13, weight: .semibold), color: KColors.positive)
-            .padding(.horizontal, KSpace.md).frame(minHeight: 36)
-            .overlay(Capsule().strokeBorder(KColors.positive.opacity(0.4)))
-            .contentShape(Capsule())
+        HStack(spacing: KSpace.xs) {
+            KIcon.whatsApp(size: 15)
+            Text("WhatsApp", bundle: .module)
+        }
+        .kText(KTextStyle(size: 12, weight: .semibold), color: KColors.positive)
+        .padding(.horizontal, KSpace.md).frame(minHeight: 30)
+        .overlay(Capsule().strokeBorder(KColors.positive.opacity(0.4)))
+        .contentShape(Capsule())
     }
 
-    private func row<Trailing: View>(_ member: ReminderTargets.Member, last: Bool, @ViewBuilder trailing: () -> Trailing) -> some View {
-        HStack(spacing: KSpace.md) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(member.name).kText(KTextToken.bodyStrong)
-                Text(String(localized: "Owes \(member.owed.format())", bundle: .module)).kText(KTextToken.bodySm, color: KColors.warning)
-            }
-            Spacer(minLength: KSpace.sm)
-            trailing()
+    private func messageField(_ targets: ReminderTargets) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            label(String(localized: "Notification message (optional)", bundle: .module))
+            TextField(String(localized: "Rs … is due by the \(ReminderLogic.ordinal(targets.dueDay)) · \(kameti.name)", bundle: .module), text: $message, axis: .vertical)
+                .lineLimit(2...4)
+                .padding(KSpace.md)
+                .background(KColors.surface, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(KColors.border))
         }
-        .padding(.vertical, KSpace.md)
-        .overlay(alignment: .bottom) { if !last { Divider() } }
-        .contentShape(Rectangle())
+    }
+
+    /// A list row like the Members tab's (avatar, name, a line under it, a divider),
+    /// with what they owe under the name and the action on the right.
+    private func row<Trailing: View>(_ member: ReminderTargets.Member, last: Bool, @ViewBuilder trailing: () -> Trailing) -> some View {
+        let person = data.members.first { $0.id == member.memberId }
+        let colorIndex = person.flatMap { Int($0.color ?? "") } ?? max(person.flatMap { data.members.firstIndex(of: $0) } ?? 0, 0)
+        return VStack(spacing: 0) {
+            HStack(spacing: KSpace.md) {
+                KAvatar(name: member.name, colorIndex: colorIndex, size: .medium)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(member.name).kText(KTextToken.bodyStrong)
+                    Text(String(localized: "Owes \(member.owed.format())", bundle: .module)).kText(KTextToken.bodySm, color: KColors.warning)
+                }
+                Spacer(minLength: KSpace.sm)
+                trailing()
+            }
+            .padding(.vertical, KSpace.md)
+            if !last { Divider() }
+        }
     }
 
     private func label(_ text: String) -> some View {
@@ -211,28 +206,27 @@ struct RemindSheet: View {
                 loaded = ReminderTargets(dueDay: loaded.dueDay, members: loaded.members.filter { $0.memberId == onlyMemberId })
             }
             targets = loaded
-            selected = Set(loaded.members.filter { $0.hasApp && !$0.remindedToday }.map(\.id))
         } catch {
             failure = error
         }
     }
 
-    private func send() {
+    /// One person's notification, with the optional message.
+    private func notify(_ member: ReminderTargets.Member) {
         kDismissKeyboard()
-        isBusy = true
+        notifyingId = member.id
         failure = nil
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        let all = Set(withApp.filter { !$0.remindedToday }.map(\.id))
         Task {
             do throws(Failure) {
-                sent = try await dependencies.notifications.sendReminder(
-                    kametiId: kameti.id, message: trimmed.isEmpty ? nil : trimmed,
-                    memberIds: selected == all ? nil : Array(selected)
+                let result = try await dependencies.notifications.sendReminder(
+                    kametiId: kameti.id, message: trimmed.isEmpty ? nil : trimmed, memberIds: [member.id]
                 )
+                if result.sent > 0 { sentIds.insert(member.id) } else { alreadyIds.insert(member.id) }
             } catch {
                 failure = error
             }
-            isBusy = false
+            notifyingId = nil
         }
     }
 }

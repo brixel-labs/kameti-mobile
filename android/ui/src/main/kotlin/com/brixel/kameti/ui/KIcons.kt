@@ -202,6 +202,15 @@ object KIcons {
         outlineIcon("UserPlus", "M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0", "M16 19h6", "M19 16v6", "M6 21v-2a4 4 0 0 1 4 -4h4")
     }
 
+    /** The WhatsApp speech bubble with a handset (remind on WhatsApp), the same outline as on iOS. */
+    val whatsApp: ImageVector by lazy {
+        outlineIcon(
+            "WhatsApp",
+            "M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9",
+            "M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1",
+        )
+    }
+
     /** A forward-turning arrow (the same on every screen that shares something), drawn as an outline. */
     val shareArrow: ImageVector by lazy {
         ImageVector.Builder(

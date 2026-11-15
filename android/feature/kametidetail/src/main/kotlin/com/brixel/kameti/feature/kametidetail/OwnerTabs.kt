@@ -255,7 +255,7 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
     if (collecting) CollectMonthSheet(data, model) { collecting = false }
     voiding?.let { target -> VoidSheet(target, model) { voiding = null } }
     payingOut?.let { month -> PayoutSheet(data, model, month) { payingOut = null } }
-    if (reminding) RemindSheet(data.kameti, model.dependencies, onDismiss = { reminding = false })
+    if (reminding) RemindSheet(data.kameti, data, model.dependencies, onDismiss = { reminding = false })
     // The member as loaded now, so the sheet follows invite and name changes.
     editingMember?.let { id ->
         val member = data.members.firstOrNull { it.id == id }
@@ -384,7 +384,8 @@ private fun CurrentMonth(
     onPayOut: (() -> Unit)?,
     onRecord: (String) -> Unit,
 ) {
-    val owing = DetailLogic.owing(data.months, current.monthIndex)
+    // Not me: the reminder list never includes the owner, so the count mustn't either.
+    val owing = DetailLogic.owing(data.months, current.monthIndex).filter { it.memberId != data.me?.id }
     val recipients = DetailLogic.recipients(data.kameti, current.monthIndex, data.slots, data.shares, data.members)
     val counts = DetailLogic.statusCounts(data.months, current.monthIndex)
     val rows = data.months.filter { it.monthIndex == current.monthIndex }
@@ -437,7 +438,11 @@ private fun CurrentMonth(
         ) {
             KIcon(KIcons.bell, tint = KColors.brand)
             KText(
-                stringResource(R.string.detail_remind_n_members_who_owe, owing.size),
+                if (owing.size == 1) {
+                    stringResource(R.string.detail_remind_1_member_who_owes)
+                } else {
+                    stringResource(R.string.detail_remind_n_members_who_owe, owing.size)
+                },
                 KTextToken.bodyStrong,
                 color = KColors.brand,
             )
