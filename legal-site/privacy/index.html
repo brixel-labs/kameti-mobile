@@ -24,7 +24,7 @@
 
   <main id="main">
     <h1>Privacy Policy</h1>
-    <p class="meta">Last updated: November 11, 2026</p>
+    <p class="meta">Last updated: November 15, 2026</p>
     <p class="lede">
       Kameti is an app for keeping the records of a rotating savings group (a kameti or committee):
       who pays, how much, and who receives each month. It is made by Brixel Labs Inc. (&ldquo;we&rdquo;,
@@ -38,6 +38,7 @@
       <li><strong>Kameti records an owner enters.</strong> The kameti&rsquo;s name and settings; members&rsquo; names and, optionally, their email address and phone number; slots and shares; payments and payouts (amounts, dates, method and notes); and notes about the kameti.</li>
       <li><strong>Invitations.</strong> The email address an owner invites, and whether the invite was sent, delivered, accepted or declined.</li>
       <li><strong>Activity history.</strong> A log of changes (for example &ldquo;payment recorded&rdquo;) so everyone can see what happened and when.</li>
+      <li><strong>Notifications.</strong> If you allow notifications, a device token (an identifier for your phone) so we can send you reminders and updates. It is removed when you sign out or delete your account.</li>
       <li><strong>On your device only.</strong> Preferences such as light or dark appearance and notification switches.</li>
     </ul>
     <p>We do not use advertising, we do not sell personal information, and we do not track you across other apps or websites.</p>
@@ -46,7 +47,8 @@
     <ul>
       <li>The <strong>owner</strong> of a kameti sees all of its records, including the contact details they entered.</li>
       <li>A <strong>member</strong> who joins sees their own dues and payments, the payout schedule, and notes the owner chooses to share. Other members see your name, never your email address or phone number.</li>
-      <li>Nobody outside a kameti can see anything in it.</li>
+      <li>An owner can make a <strong>read-only link</strong> for a member who doesn&rsquo;t use the app. Anyone who has the link sees only that member&rsquo;s own figures and the payout schedule, never other members&rsquo; amounts or contact details. The owner can share it, so treat it like any private link.</li>
+      <li>Nobody else outside a kameti can see anything in it.</li>
     </ul>
 
     <h2>How we use it</h2>
@@ -57,7 +59,8 @@
       <li><strong>Supabase</strong>: database and sign-in. Data is stored in Singapore.</li>
       <li><strong>Resend</strong>: sending invitation emails.</li>
       <li><strong>Apple and Google</strong>: signing in with your Apple or Google account.</li>
-      <li><strong>Vercel</strong>: hosting this website.</li>
+      <li><strong>Google Firebase Cloud Messaging</strong>: delivering notifications to your phone (on iPhone they pass through Apple&rsquo;s notification service).</li>
+      <li><strong>Cloudflare</strong>: hosting this website.</li>
     </ul>
     <p>We may also disclose information if the law requires it.</p>
 
@@ -72,7 +75,7 @@
     <p>Kameti is not meant for children under 13, and we do not knowingly collect their information.</p>
 
     <h2>Changes</h2>
-    <p>We will update this page, and its date, before the app starts collecting anything new (for example, push notifications).</p>
+    <p>We will update this page, and its date, before the app starts collecting anything new.</p>
 
     <h2>Contact</h2>
     <p>Questions or requests: <a href="mailto:kameti@fhbtechservices.com">kameti@fhbtechservices.com</a>. Brixel Labs Inc., Canada.</p>
