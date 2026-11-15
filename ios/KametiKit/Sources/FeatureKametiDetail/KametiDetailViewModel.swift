@@ -285,6 +285,21 @@ public final class KametiDetailViewModel {
 
     public private(set) var sentInvites: [String: SentInvite] = [:]
 
+    /// Guests' private view-only links the owner has opened this session.
+    public private(set) var viewLinks: [String: MemberViewLink] = [:]
+
+    /// The member's view-only link, created on first use.
+    public func openViewLink(memberId: String, rotate: Bool = false) async -> Failure? {
+        do throws(Failure) { viewLinks[memberId] = try await dependencies.invites.viewLink(memberId: memberId, rotate: rotate) } catch { return error }
+        return nil
+    }
+
+    public func turnOffViewLink(memberId: String) async -> Failure? {
+        do throws(Failure) { try await dependencies.invites.turnOffViewLink(memberId: memberId) } catch { return error }
+        viewLinks[memberId] = nil
+        return nil
+    }
+
     /// Creates (or with `resend`, replaces) a member's invite and emails it
     /// when email is set up, then reloads.
     public func invite(memberId: String, resend: Bool = false) async -> Failure? {

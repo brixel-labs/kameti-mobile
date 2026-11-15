@@ -6,6 +6,7 @@ import com.brixel.kameti.domain.InviteLink
 import com.brixel.kameti.domain.InvitePreview
 import com.brixel.kameti.domain.InvitesRepository
 import com.brixel.kameti.domain.Member
+import com.brixel.kameti.domain.MemberViewLink
 import com.brixel.kameti.domain.MyInvitation
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.exceptions.RestException
@@ -28,6 +29,15 @@ internal class SupabaseInvitesRepository(private val client: SupabaseClient) : I
 
     override suspend fun revokeInvite(memberId: String): Member = call {
         client.postgrest.rpc("revoke_invite", memberParam(memberId)).decodeAs()
+    }
+
+    override suspend fun viewLink(memberId: String, rotate: Boolean): MemberViewLink = call {
+        client.postgrest.rpc("member_view_link", params("p_member_id" to text(memberId), "p_rotate" to flag(rotate))).decodeAs()
+    }
+
+    override suspend fun turnOffViewLink(memberId: String) = call {
+        client.postgrest.rpc("turn_off_member_view_link", memberParam(memberId))
+        Unit
     }
 
     override suspend fun approveJoin(memberId: String): Member = call {

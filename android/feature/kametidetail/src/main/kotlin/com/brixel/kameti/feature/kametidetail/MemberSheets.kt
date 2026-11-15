@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -329,6 +330,8 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
     val scope = rememberCoroutineScope()
     val sentInvites by model.sentInvites.collectAsStateWithLifecycle()
     val sent = sentInvites[member.id]
+    val viewLinks by model.viewLinks.collectAsStateWithLifecycle()
+    val viewLink = viewLinks[member.id]
     val first = firstName(member.name)
     val strings = rememberStrings()
     val wentWrong = stringResource(R.string.detail_something_went_wrong)
@@ -502,8 +505,44 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
                     ),
                 )
                 GuestMessageButton(
-                    stringResource(R.string.detail_send_update), GuestUpdate.text(strings, member, data), state.phone, prominent = true,
+                    stringResource(R.string.detail_send_update),
+                    GuestUpdate.text(strings, member, data, viewLink = viewLink?.link),
+                    state.phone, prominent = true,
                 )
+                if (viewLink != null) {
+                    Column(verticalArrangement = Arrangement.spacedBy(KSpace.sm)) {
+                        KText(
+                            viewLink.link, KTextToken.bodySm, color = KColors.textSecondary, maxLines = 1,
+                            modifier = Modifier.fillMaxWidth().background(KColors.surfaceSunken, RoundedCornerShape(10.dp))
+                                .padding(horizontal = KSpace.md, vertical = KSpace.sm + 2.dp),
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(KSpace.sm), verticalAlignment = Alignment.CenterVertically) {
+                            SmallButton(
+                                stringResource(if (copied) R.string.detail_copied else R.string.detail_copy_link),
+                                if (copied) KIcons.check else KIcons.duplicate, KColors.textPrimary, KColors.surface,
+                                border = KColors.border,
+                            ) {
+                                copy(context, viewLink.link)
+                                copied = true
+                                scope.launch {
+                                    delay(1500)
+                                    copied = false
+                                }
+                            }
+                            SmallButton(
+                                stringResource(R.string.detail_share), KIcons.share, KColors.textPrimary, KColors.surface,
+                                border = KColors.border,
+                            ) { share(context, viewLink.link) }
+                            Spacer(Modifier.weight(1f))
+                            danger(stringResource(R.string.detail_turn_off)) { run { model.turnOffViewLink(member.id) } }
+                        }
+                        note(stringResource(R.string.detail_s_sees_only_their_own_figures_anyone_with, first))
+                    }
+                } else {
+                    TextAction(stringResource(R.string.detail_get_view_only_link), enabled = !busy) {
+                        run { model.openViewLink(member.id) }
+                    }
+                }
                 if (data.kameti.status != KametiStatus.Archived) {
                     TextAction(stringResource(R.string.detail_invite_to_the_app_instead), enabled = !busy) {
                         run { model.setNoApp(member.id, false) }

@@ -117,6 +117,8 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
     val isArchived = data.kameti.status == KametiStatus.Archived
     val current = data.current
     val monthName = current?.let { DetailLogic.monthName(it.monthStart) }.orEmpty()
+    // Someone hasn't joined yet (guests don't count): a dot on the Members tab while the kameti runs.
+    val needsInvites = data.kameti.status == KametiStatus.Active && !SetupProgress.of(data).isComplete
     val canPayOutNow = !isArchived && current != null && canPayOut(data, current)
 
     var choosingAction by remember { mutableStateOf(false) }
@@ -159,6 +161,7 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
             selection = tabs[pager.currentPage].value,
             onSelect = { tab -> scope.launch { pager.animateScrollToPage(tabs.indexOfFirst { it.value == tab }) } },
             inset = KSpace.xl,
+            badges = if (needsInvites) setOf(OwnerTab.Members) else emptySet(),
         )
         HorizontalPager(state = pager, modifier = Modifier.weight(1f), beyondViewportPageCount = 1) { page ->
             val isNotes = tabs[page].value == OwnerTab.Notes

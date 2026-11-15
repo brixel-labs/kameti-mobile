@@ -41,7 +41,7 @@ struct PendingReceipt: Identifiable, Equatable, Sendable {
 /// The short text for a member who isn't on the app (their own figures only, nobody else's): a
 /// receipt right after a payment, or the owner's "Send update". Sent by WhatsApp or the share sheet.
 enum GuestUpdate {
-    static func text(for member: Member, in data: KametiDetailData, receipt: PendingReceipt? = nil) -> String {
+    static func text(for member: Member, in data: KametiDetailData, receipt: PendingReceipt? = nil, viewLink: String? = nil) -> String {
         let first = MemberLogic.firstName(member.name)
         let kameti = data.kameti.name
         var lines: [String] = []
@@ -68,6 +68,9 @@ enum GuestUpdate {
         ) {
             let month = DetailLogic.monthTitle(DetailLogic.monthStart(of: data.kameti, monthIndex: turn.monthIndex))
             lines.append(String(localized: "Your payout is in \(month): \(turn.payout.format()).", bundle: .module))
+        }
+        if let viewLink {
+            lines.append(String(localized: "See everything any time: \(viewLink)", bundle: .module))
         }
         return lines.joined(separator: "\n")
     }

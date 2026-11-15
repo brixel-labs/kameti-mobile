@@ -48,6 +48,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -237,6 +238,8 @@ fun <T> KUnderlineTabs(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     inset: Dp = 0.dp,
+    /** Tabs that get a small dot: something there needs attention. */
+    badges: Set<T> = emptySet(),
 ) {
     val density = LocalDensity.current
     val scroll = rememberScrollState()
@@ -281,6 +284,12 @@ fun <T> KUnderlineTabs(
                             color = if (isOn) KColors.brand else KColors.textSecondary,
                             maxLines = 1, textAlign = TextAlign.Center,
                         )
+                        if (tab.value in badges) {
+                            Box(
+                                Modifier.align(Alignment.TopEnd).offset(x = 2.dp, y = 2.dp).size(7.dp)
+                                    .background(KColors.warning, CircleShape).clearAndSetSemantics {},
+                            )
+                        }
                     }
                 }
             }

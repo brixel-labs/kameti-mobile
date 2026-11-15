@@ -200,8 +200,11 @@ struct AppAccessCard: View {
                  ? String(localized: "\(firstName) gets updates by WhatsApp. Add a phone number below and save to open the chat directly.", bundle: .module)
                  : String(localized: "\(firstName) gets updates by WhatsApp.", bundle: .module))
             GuestMessageButton(
-                title: String(localized: "Send update", bundle: .module), text: GuestUpdate.text(for: member, in: data), phone: phone, prominent: true
+                title: String(localized: "Send update", bundle: .module),
+                text: GuestUpdate.text(for: member, in: data, viewLink: model.viewLinks[member.id]?.link),
+                phone: phone, prominent: true
             )
+            viewLinkSection
             if data.kameti.status != .archived {
                 Button { run { await model.setNoApp(memberId: member.id, false) } } label: {
                     Text("Invite to the app instead", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
@@ -211,6 +214,52 @@ struct AppAccessCard: View {
                 .buttonStyle(.plain)
                 .disabled(busy)
             }
+        }
+    }
+
+    /// The guest's private view-only page: copy or share it, or turn it off.
+    @ViewBuilder private var viewLinkSection: some View {
+        if let viewLink = model.viewLinks[member.id] {
+            VStack(alignment: .leading, spacing: KSpace.sm) {
+                Text(viewLink.link).kText(KTextToken.bodySm, color: KColors.textSecondary).lineLimit(1).truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, KSpace.md).padding(.vertical, KSpace.sm + 2)
+                    .background(KColors.surfaceSunken, in: RoundedRectangle(cornerRadius: 10))
+                HStack(spacing: KSpace.sm) {
+                    Button {
+                        UIPasteboard.general.string = viewLink.link
+                        copied = true
+                        Task { try? await Task.sleep(for: .seconds(1.5)); copied = false }
+                    } label: {
+                        smallLabel(copied ? String(localized: "Copied", bundle: .module) : String(localized: "Copy link", bundle: .module),
+                                   symbol: copied ? "checkmark" : "doc.on.doc", prominent: false)
+                    }
+                    .buttonStyle(.plain)
+                    ShareLink(item: viewLink.link) {
+                        smallLabel(String(localized: "Share", bundle: .module), symbol: "square.and.arrow.up", prominent: false)
+                    }
+                    .buttonStyle(.plain)
+                    Spacer(minLength: 0)
+                    Button { run { await model.turnOffViewLink(memberId: member.id) } } label: {
+                        Text("Turn off", bundle: .module).kText(KTextStyle(size: 13, weight: .semibold), color: KColors.negative)
+                            .padding(.horizontal, KSpace.md).frame(minHeight: 36)
+                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(KColors.negative.opacity(0.35)))
+                            .contentShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(busy)
+                }
+                note(String(localized: "\(firstName) sees only their own figures. Anyone with this link can open it, so send it just to them.", bundle: .module))
+            }
+        } else {
+            Button { run { await model.openViewLink(memberId: member.id) } } label: {
+                Label(String(localized: "Get view-only link", bundle: .module), systemImage: "link")
+                    .kText(KTextToken.bodyStrong, color: KColors.brand)
+                    .frame(maxWidth: .infinity, minHeight: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(busy)
         }
     }
 

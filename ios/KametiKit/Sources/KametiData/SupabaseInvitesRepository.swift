@@ -23,6 +23,16 @@ public final class SupabaseInvitesRepository: InvitesRepository {
         try await run { try await client.rpc("revoke_invite", params: memberParam(memberId)).execute().value }
     }
 
+    public func viewLink(memberId: String, rotate: Bool) async throws(Failure) -> MemberViewLink {
+        try await run {
+            try await client.rpc("member_view_link", params: ["p_member_id": JSONValue.string(memberId), "p_rotate": JSONValue.bool(rotate)]).execute().value
+        }
+    }
+
+    public func turnOffViewLink(memberId: String) async throws(Failure) {
+        try await run { _ = try await client.rpc("turn_off_member_view_link", params: memberParam(memberId)).execute() }
+    }
+
     public func approveJoin(memberId: String) async throws(Failure) -> Member {
         try await run { try await client.rpc("approve_join", params: memberParam(memberId)).execute().value }
     }

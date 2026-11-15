@@ -581,6 +581,7 @@ public struct KGripHandle: View {
 public struct KUnderlineTabs<Tab: Hashable>: View {
     private let tabs: [(tab: Tab, title: String)]
     private let inset: CGFloat
+    private let badges: Set<Tab>
     @Binding private var selection: Tab
     @Namespace private var underline
     @State private var available: CGFloat = 0
@@ -589,8 +590,9 @@ public struct KUnderlineTabs<Tab: Hashable>: View {
 
     /// `inset` pads the tabs from the screen edges while the divider under
     /// them still runs the full width.
-    public init(_ tabs: [(tab: Tab, title: String)], selection: Binding<Tab>, inset: CGFloat = 0) {
-        self.tabs = tabs; _selection = selection; self.inset = inset
+    /// `badges` are tabs that get a small dot: something there needs attention.
+    public init(_ tabs: [(tab: Tab, title: String)], selection: Binding<Tab>, inset: CGFloat = 0, badges: Set<Tab> = []) {
+        self.tabs = tabs; _selection = selection; self.inset = inset; self.badges = badges
     }
 
     public var body: some View {
@@ -633,6 +635,12 @@ public struct KUnderlineTabs<Tab: Hashable>: View {
                     .lineLimit(1)
                     .fixedSize()
                     .padding(.horizontal, KSpace.md)
+                    .overlay(alignment: .topTrailing) {
+                        if badges.contains(item.tab) {
+                            Circle().fill(KColors.warning).frame(width: 7, height: 7).offset(x: -2, y: -3)
+                                .accessibilityHidden(true)
+                        }
+                    }
                 ZStack {
                     Rectangle().fill(.clear).frame(height: 2.5)
                     if isOn {

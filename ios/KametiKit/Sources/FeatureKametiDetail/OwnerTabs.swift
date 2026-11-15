@@ -63,6 +63,11 @@ struct OwnerTabs: View {
         data.current.map { DetailLogic.monthTitle($0.monthStart).split(separator: " ").first.map(String.init) ?? "" } ?? ""
     }
 
+    /// Someone hasn't joined yet (guests don't count): a dot on the Members tab while the kameti runs.
+    private var needsInvites: Bool {
+        data.kameti.status == .active && !isArchived && !SetupProgress.of(data).isComplete
+    }
+
     private var titles: [(tab: Tab, title: String)] {
         [
             (.overview, String(localized: "Overview", bundle: .module)),
@@ -81,7 +86,7 @@ struct OwnerTabs: View {
                 }
                 .padding(.horizontal, KSpace.xl).padding(.vertical, KSpace.sm)
             }
-            KUnderlineTabs(titles, selection: $tab, inset: KSpace.xl)
+            KUnderlineTabs(titles, selection: $tab, inset: KSpace.xl, badges: needsInvites ? [.members] : [])
                 .background(KColors.background)
             // The system paging view: swipe left or right between the tabs, or
             // tap a tab; the page moves the way you'd expect.

@@ -113,6 +113,15 @@ final class SampleInvitesRepository: InvitesRepository {
         state.withLock { s in s.invites.filter { $0.kametiId == kametiId }.reversed() }
     }
 
+    /// The demo keeps one link per member for the session.
+    func viewLink(memberId: String, rotate: Bool) async throws(Failure) -> MemberViewLink {
+        guard kametis.memberRow(memberId) != nil else { throw Failure.server(code: "not_found", detail: nil) }
+        let token = String((String(repeating: memberId.unicodeScalars.map { String($0.value, radix: 16) }.joined(), count: 64)).prefix(64))
+        return MemberViewLink(memberId: memberId, link: "https://kameti.fhbtechservices.com/v/\(token)")
+    }
+
+    func turnOffViewLink(memberId: String) async throws(Failure) {}
+
     // MARK: Invitee
 
     func previewInvite(token: String?, inviteId: String?) async throws(Failure) -> InvitePreview {

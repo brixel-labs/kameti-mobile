@@ -64,6 +64,7 @@
     <string name="detail_copied">Copied</string>
     <string name="detail_copy_14bc">Copy</string>
     <string name="detail_copy_b9f2">" (copy)"</string>
+    <string name="detail_copy_link">Copy link</string>
     <string name="detail_copy_n">" (copy %d)"</string>
     <string name="detail_couldnt_change_this_kameti">Couldn\'t change this kameti</string>
     <string name="detail_couldnt_delete_this_note">Couldn\'t delete this note</string>
@@ -129,6 +130,7 @@
     <string name="detail_full">Full</string>
     <string name="detail_full_month_s">Full month %s</string>
     <string name="detail_full_pot">Full pot</string>
+    <string name="detail_get_view_only_link">Get view-only link</string>
     <string name="detail_goes_to">Goes to</string>
     <string name="detail_half_s">Half %s</string>
     <string name="detail_hi_s_a_reminder_that_s_for_s">Hi %1$s, a reminder that %2$s for %3$s is due by the %4$s. Thank you!</string>
@@ -340,6 +342,7 @@
     <string name="detail_s_removed">%s removed</string>
     <string name="detail_s_s_details_changed">%s\'s details changed</string>
     <string name="detail_s_s_join_request_rejected">%s\'s join request rejected</string>
+    <string name="detail_s_sees_only_their_own_figures_anyone_with">%s sees only their own figures. Anyone with this link can open it, so send it just to them.</string>
     <string name="detail_s_settled">+ %s · settled</string>
     <string name="detail_s_short">%s short.</string>
     <string name="detail_s_still_owes_s">+ %1$s · still owes %2$s</string>
@@ -358,6 +361,7 @@
     <string name="detail_schedule">Schedule</string>
     <string name="detail_search_n_members">Search %d members</string>
     <string name="detail_search_notes">Search notes</string>
+    <string name="detail_see_everything_any_time_s">See everything any time: %s</string>
     <string name="detail_send">Send</string>
     <string name="detail_send_1_invite">Send 1 invite?</string>
     <string name="detail_send_a_receipt">Send a receipt?</string>
@@ -417,6 +421,7 @@
     <string name="detail_transfer_to_s">Transfer to %s</string>
     <string name="detail_try_again">Try again</string>
     <string name="detail_try_another_filter_or_search">Try another filter or search.</string>
+    <string name="detail_turn_off">Turn off</string>
     <string name="detail_unpaid">Unpaid</string>
     <string name="detail_upcoming">Upcoming</string>
     <string name="detail_view_only">View only</string>

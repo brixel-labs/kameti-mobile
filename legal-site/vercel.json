@@ -2,7 +2,8 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/join/:token", "destination": "/join" }
+    { "source": "/join/:token", "destination": "/join" },
+    { "source": "/v/:token", "destination": "/v" }
   ],
   "headers": [
     {
@@ -14,7 +15,7 @@
       "headers": [{ "key": "Content-Type", "value": "application/json" }]
     },
     {
-      "source": "/join/(.*)",
+      "source": "/(join|v)/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
         { "key": "Referrer-Policy", "value": "no-referrer" }

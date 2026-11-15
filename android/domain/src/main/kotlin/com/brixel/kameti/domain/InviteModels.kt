@@ -67,6 +67,13 @@ data class Invite(
 }
 
 /**
+ * A guest's private view-only page (a member who doesn't use the app). Unlike an invite, the owner
+ * can read the same link again later, and turning it off deletes it.
+ */
+@Serializable
+data class MemberViewLink(val memberId: String, val link: String, val lastViewedAt: Timestamp? = null)
+
+/**
  * Result of `create_invite` / `resend_invite`. [token] and [code] are
  * readable exactly once: hand them to the email function or the owner.
  */

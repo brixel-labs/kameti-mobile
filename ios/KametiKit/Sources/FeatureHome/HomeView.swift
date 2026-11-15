@@ -264,8 +264,27 @@ struct HomeKametiCard: View {
                     }
                     if item.isOwner { ownerBody } else { memberBody }
                     peopleRow
+                    pendingInvitesRow
                 }
             }
+        }
+    }
+
+    // MARK: Pending invites
+
+    /// Owner: "3 haven't joined yet", so setup left over shows without opening the kameti.
+    @ViewBuilder private var pendingInvitesRow: some View {
+        if item.isOwner, item.pendingInvites > 0, item.kameti.status == .active {
+            HStack(spacing: KSpace.sm) {
+                Image(systemName: "person.badge.clock").font(.system(size: 14, weight: .semibold))
+                Text(item.pendingInvites == 1
+                     ? String(localized: "1 person hasn't joined yet", bundle: .module)
+                     : String(localized: "\(item.pendingInvites) people haven't joined yet", bundle: .module))
+                    .kText(KTextToken.bodySm, color: KColors.warning)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(KColors.warning)
+            .accessibilityElement(children: .combine)
         }
     }
 

@@ -89,6 +89,10 @@ public protocol InvitesRepository: Sendable {
     /// (the link is still valid: share it by hand).
     func sendInviteEmail(_ link: InviteLink) async throws(Failure) -> Bool
     func invites(kametiId: String) async throws(Failure) -> [Invite]
+    /// A guest's private view-only link: created on first use, the same link afterwards.
+    /// `rotate` replaces it, which turns the old one off.
+    func viewLink(memberId: String, rotate: Bool) async throws(Failure) -> MemberViewLink
+    func turnOffViewLink(memberId: String) async throws(Failure)
 
     // Invitee: exactly one of `token` (or the 6-character code) and `inviteId`.
     func previewInvite(token: String?, inviteId: String?) async throws(Failure) -> InvitePreview
