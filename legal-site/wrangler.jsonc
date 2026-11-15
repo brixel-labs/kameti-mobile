@@ -1,0 +1,12 @@
+{
+  // Kameti's site: static files, served as a Cloudflare Worker with assets.
+  // Deploy from this folder: npx wrangler deploy
+  "name": "kameti-site",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./",
+    // /privacy, not /privacy/: the same clean URLs the site always had. Also keeps the
+    // /join/* and /v/* rewrites in _redirects from looping.
+    "html_handling": "drop-trailing-slash"
+  }
+}

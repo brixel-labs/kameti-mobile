@@ -1,15 +1,24 @@
 # Kameti Legal & Support Site
 
 Standalone static site for Kameti's legal, support and invite pages. Plain HTML/CSS, no build
-step, no dependencies, the same setup as the Deenflow legal site. It is its own Cloudflare Pages
-project, separate from the app and from the company site (`fhbtechservices.com`).
+step, no dependencies, the same setup as the Deenflow legal site. It is its own Cloudflare project,
+separate from the app and from the company site (`fhbtechservices.com`).
 
 Production domain: `kameti.fhbtechservices.com`.
 
-Cloudflare Pages project: build output directory `legal-site` (no build command), production branch
-`develop`. Every push to `develop` redeploys it, and every other pushed branch gets a preview URL.
-`_redirects` and `_headers` (in this folder) do what `vercel.json` used to: serve one page for every
-`/join/*` and `/v/*` path, set the `.well-known` content types, and keep those paths out of search.
+Cloudflare Worker with static assets, named `kameti-site` (Workers & Pages in the dashboard; custom domain
+`kameti.fhbtechservices.com`). It is **not** connected to git: pushing to `develop` does not deploy it. Deploy by hand
+from this folder after the change is merged:
+
+```bash
+cd legal-site && npx wrangler deploy
+```
+
+`wrangler.jsonc` holds the project settings (`html_handling: drop-trailing-slash` keeps `/privacy` without a trailing
+slash and stops the `/join/*` and `/v/*` rewrites looping), `.assetsignore` keeps the config and this README out of the
+upload, and `_redirects` and `_headers` do what `vercel.json` used to: serve one page for every `/join/*` and `/v/*` path,
+set the `.well-known` content types, and keep those paths out of search. A rewrite must not point at `/join/index.html`
+or `/v/index.html`: Cloudflare rejects that as a loop.
 
 ## Pages
 
