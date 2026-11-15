@@ -106,6 +106,23 @@ fun KIconButton(
     }
 }
 
+/**
+ * The back (or close) button at the top of a screen: a larger arrow on a 48 dp touch area.
+ * [label] is read by screen readers.
+ */
+@Composable
+fun KNavButton(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(KSize.minTouch)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        KIcon(icon, tint = KColors.textPrimary, size = 30.dp, label = label)
+    }
+}
+
 enum class KTonalStyle { Tonal, Neutral }
 
 /**

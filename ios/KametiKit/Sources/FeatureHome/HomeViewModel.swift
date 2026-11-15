@@ -27,13 +27,15 @@ public struct HomeKametiSummary: Identifiable, Equatable, Sendable {
     /// Everyone in it, in turn order from this month (people without a share
     /// last), for the avatar row.
     public var people: [Person] = []
+    /// Owner view: people who haven't joined yet (guests don't count).
+    public var pendingInvites = 0
 
     /// The same card's details on a freshly loaded kameti row.
     func replacing(_ kameti: Kameti) -> HomeKametiSummary {
         var copy = HomeKametiSummary(kameti: kameti, isOwner: isOwner)
         copy.currentMonth = currentMonth; copy.owes = owes; copy.monthlyDue = monthlyDue; copy.dueDate = dueDate
         copy.recipients = recipients; copy.nextTurn = nextTurn; copy.payoutDate = payoutDate
-        copy.people = people
+        copy.people = people; copy.pendingInvites = pendingInvites
         return copy
     }
 
@@ -262,6 +264,9 @@ public final class HomeViewModel {
         }
         let balances = try? await balancesCall.get()
         let me = DetailLogic.myMember(in: members, userId: userId)
+        if item.isOwner {
+            item.pendingInvites = members.filter { $0.profileId != userId && $0.joinStatus != .joined && !$0.noApp }.count
+        }
         func person(_ member: Member) -> HomeKametiSummary.Person {
             let index = Int(member.color ?? "") ?? max(members.firstIndex(of: member) ?? 0, 0)
             return HomeKametiSummary.Person(name: member.id == me?.id ? "You" : member.name, colorIndex: index)

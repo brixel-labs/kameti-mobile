@@ -47,7 +47,9 @@ internal data class PendingReceipt(val memberId: String, val amount: Money, val 
  * receipt right after a payment, or the owner's "Send update". Sent by WhatsApp or the share sheet.
  */
 internal object GuestUpdate {
-    fun text(strings: Strings, member: Member, data: KametiDetailData, receipt: PendingReceipt? = null): String {
+    fun text(
+        strings: Strings, member: Member, data: KametiDetailData, receipt: PendingReceipt? = null, viewLink: String? = null,
+    ): String {
         val first = firstName(member.name)
         val kameti = data.kameti.name
         val lines = mutableListOf<String>()
@@ -74,6 +76,7 @@ internal object GuestUpdate {
             val month = DetailLogic.monthTitle(DetailLogic.monthStart(data.kameti, turn.monthIndex))
             lines += strings.get(R.string.detail_your_payout_is_in_s_s, month, turn.payout.format())
         }
+        if (viewLink != null) lines += strings.get(R.string.detail_see_everything_any_time_s, viewLink)
         return lines.joinToString("\n")
     }
 }

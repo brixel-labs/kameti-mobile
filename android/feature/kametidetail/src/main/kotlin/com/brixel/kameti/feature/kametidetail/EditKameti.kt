@@ -192,7 +192,7 @@ internal fun EditKametiSheet(data: KametiDetailData, model: KametiDetailViewMode
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     KText(stringResource(R.string.detail_reminder_time), KTextToken.body, modifier = Modifier.weight(1f), color = KColors.textSecondary)
-                    KText(stringResource(R.string.detail_s_pakistan_time, ReminderTime.label(form.reminderHour)), KTextToken.bodyStrong)
+                    KText(ReminderTime.label(form.reminderHour), KTextToken.bodyStrong)
                     KIcon(KIcons.chevronDown, size = 18.dp)
                 }
                 KText(

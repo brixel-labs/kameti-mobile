@@ -59,6 +59,8 @@ struct AppAccessCard: View {
     @State private var confirmingUnlink = false
     @State private var reviewing = false
     @State private var copied = false
+    @State private var sharedLink: SharedLink?
+    @State private var activeRow: String?
 
     private var state: AccessState { AccessState.of(member, in: data) }
     private var sent: KametiDetailViewModel.SentInvite? { model.sentInvites[member.id] }
@@ -80,6 +82,7 @@ struct AppAccessCard: View {
             }
             .padding(KSpace.lg)
             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(KColors.border))
+            .sheet(item: $sharedLink) { ShareSheet(items: [$0.text]).presentationDetents([.medium, .large]) }
             .kConfirmSheet(
                 isPresented: $confirmingRevoke, title: String(localized: "Revoke \(firstName)'s invite?", bundle: .module),
                 message: String(localized: "The link and code stop working. You can send a new invite later.", bundle: .module),
@@ -129,7 +132,7 @@ struct AppAccessCard: View {
                 ? KPill(String(localized: "Declined", bundle: .module), foreground: KColors.negative, background: KColors.negativeSubtle)
                 : KPill(String(localized: "Not invited", bundle: .module), foreground: KColors.textSecondary, background: KColors.surfaceSunken)
         case .guest:
-            KPill(String(localized: "Without the app", bundle: .module), symbol: "message.fill", foreground: KColors.info, background: KColors.infoSubtle)
+            KPill(String(localized: "Guest mode", bundle: .module), foreground: KColors.info, background: KColors.infoSubtle)
         }
     }
 
@@ -187,31 +190,72 @@ struct AppAccessCard: View {
             }
             // Someone who won't use the app: stop waiting for them and send updates by WhatsApp instead.
             if data.kameti.status != .archived {
-                Button { run { await model.setNoApp(memberId: member.id, true) } } label: {
-                    Text("Doesn't use the app", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
-                        .frame(maxWidth: .infinity, minHeight: 36)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(busy)
+                actionRow(
+                    icon: Image(systemName: "person.slash").font(.system(size: 18, weight: .medium)),
+                    title: String(localized: "Mark as guest", bundle: .module), loading: busy && activeRow == "guest"
+                ) { run(row: "guest") { await model.setNoApp(memberId: member.id, true) } }
             }
-        case .guest(let phone):
-            note(phone == nil
-                 ? String(localized: "\(firstName) gets updates by WhatsApp. Add a phone number below and save to open the chat directly.", bundle: .module)
-                 : String(localized: "\(firstName) gets updates by WhatsApp.", bundle: .module))
-            GuestMessageButton(
-                title: String(localized: "Send update", bundle: .module), text: GuestUpdate.text(for: member, in: data), phone: phone, prominent: true
-            )
+        case .guest:
+            note(String(localized: "\(firstName) doesn't use the app. Share their updates and private page by message, email or any app you like.", bundle: .module))
+            guestActions
+        }
+    }
+
+    /// What the owner can do for a guest, as a list: share their private page (it opens the share sheet, which also copies),
+    /// or invite them to the app instead. Their page keeps one address.
+    @ViewBuilder private var guestActions: some View {
+        VStack(spacing: 0) {
+            actionRow(
+                icon: Image(systemName: "arrowshape.turn.up.right").font(.system(size: 18, weight: .medium)),
+                title: String(localized: "Share view-only link", bundle: .module),
+                subtitle: String(localized: "Only their own figures. Anyone with the link can open it.", bundle: .module)
+                , loading: busy && activeRow == "share"
+            ) { shareViewLink() }
             if data.kameti.status != .archived {
-                Button { run { await model.setNoApp(memberId: member.id, false) } } label: {
-                    Text("Invite to the app instead", bundle: .module).kText(KTextToken.bodyStrong, color: KColors.brand)
-                        .frame(maxWidth: .infinity, minHeight: 36)
-                        .contentShape(Rectangle())
+                Divider()
+                actionRow(icon: KIcon.userPlus(), title: String(localized: "Invite to the app", bundle: .module), loading: busy && activeRow == "invite") {
+                    run(row: "invite") { await model.setNoApp(memberId: member.id, false) }
                 }
-                .buttonStyle(.plain)
-                .disabled(busy)
             }
         }
+    }
+
+    /// Makes the guest's link if there is none, then opens the share sheet with it.
+    private func shareViewLink() {
+        run(row: "share") {
+            if model.viewLinks[member.id] == nil, let failure = await model.openViewLink(memberId: member.id) { return failure }
+            if let link = model.viewLinks[member.id]?.link { sharedLink = SharedLink(text: link) }
+            return nil
+        }
+    }
+
+    private struct SharedLink: Identifiable {
+        let id = UUID()
+        let text: String
+    }
+
+    private func actionRow<Icon: View>(icon: Icon, title: String, subtitle: String? = nil, destructive: Bool = false, loading: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: KSpace.md) {
+                icon.foregroundStyle(destructive ? KColors.negative : KColors.brand).frame(width: 24)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).kText(KTextToken.bodyStrong, color: destructive ? KColors.negative : KColors.textPrimary)
+                    if let subtitle { Text(subtitle).kText(KTextToken.bodySm, color: KColors.textSecondary).multilineTextAlignment(.leading) }
+                }
+                Spacer(minLength: KSpace.sm)
+                // The chevron turns into a spinner while this row's work runs.
+                ZStack {
+                    if loading { ProgressView().controlSize(.small) } else {
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(KColors.textTertiary)
+                    }
+                }
+                .frame(width: 20)
+            }
+            .padding(.vertical, KSpace.md)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(busy)
     }
 
     private var resendButton: some View {
@@ -245,7 +289,7 @@ struct AppAccessCard: View {
     }
 
     private func note(_ text: String) -> some View {
-        Text(text).kText(KTextToken.bodySm, color: KColors.textSecondary).fixedSize(horizontal: false, vertical: true)
+        Text(text).kText(KTextToken.body, color: KColors.textSecondary).fixedSize(horizontal: false, vertical: true)
     }
 
     private func codeBox(_ code: String) -> some View {
@@ -300,12 +344,15 @@ struct AppAccessCard: View {
         return .result(KSheetMessage(String(localized: "Something went wrong", bundle: .module), message: failure.userMessage, tone: .error))
     }
 
-    private func run(_ work: @escaping () async -> Failure?) {
+    /// `row` names the list row that was tapped, so its chevron turns into a spinner while the work runs.
+    private func run(row: String? = nil, _ work: @escaping () async -> Failure?) {
         busy = true
+        activeRow = row
         failure = nil
         Task {
             failure = await work()
             busy = false
+            activeRow = nil
         }
     }
 }

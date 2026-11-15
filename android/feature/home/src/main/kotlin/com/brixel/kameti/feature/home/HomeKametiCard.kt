@@ -92,6 +92,7 @@ internal fun HomeKametiCard(item: HomeKametiSummary, currentMonth: LocalDate, on
                 }
                 if (item.isOwner) OwnerBody(item) else MemberBody(item, currentMonth)
                 PeopleRow(item)
+                PendingInvitesRow(item)
             }
         }
     }
@@ -117,6 +118,29 @@ private fun RolePill(item: HomeKametiSummary) {
             KPill(stringResource(R.string.home_paid_out), KColors.positive, KColors.positiveSubtle)
         item.isOwner -> KPill(stringResource(R.string.home_owner), KColors.onBrandSubtle, KColors.brandSubtle)
         else -> KPill(stringResource(R.string.home_view_only), KColors.textSecondary, KColors.surfaceSunken)
+    }
+}
+
+// Pending invites
+
+/** Owner: "3 people haven't joined yet", so setup left over shows without opening the kameti. */
+@Composable
+private fun PendingInvitesRow(item: HomeKametiSummary) {
+    if (!item.isOwner || item.pendingInvites <= 0 || item.kameti.status != KametiStatus.Active) return
+    Row(
+        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        horizontalArrangement = Arrangement.spacedBy(KSpace.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        KIcon(KIcons.personWaiting, tint = KColors.warning, size = 18.dp)
+        KText(
+            if (item.pendingInvites == 1) {
+                stringResource(R.string.home_1_person_hasnt_joined_yet)
+            } else {
+                stringResource(R.string.home_n_people_havent_joined_yet, item.pendingInvites)
+            },
+            KTextToken.bodySm, color = KColors.warning,
+        )
     }
 }
 

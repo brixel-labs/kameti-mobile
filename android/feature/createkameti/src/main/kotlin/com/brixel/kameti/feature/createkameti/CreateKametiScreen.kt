@@ -41,6 +41,7 @@ import com.brixel.kameti.ui.KConfirmOutcome
 import com.brixel.kameti.ui.KBottomSheet
 import com.brixel.kameti.ui.KIconButton
 import com.brixel.kameti.ui.KIcons
+import com.brixel.kameti.ui.KNavButton
 import com.brixel.kameti.ui.KMessageSheet
 import com.brixel.kameti.ui.KSheetMessage
 import com.brixel.kameti.ui.KSpace
@@ -87,9 +88,9 @@ fun CreateKametiScreen(
     ) {
         Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = KSpace.xs), verticalAlignment = Alignment.CenterVertically) {
             if (state.isAtStart) {
-                KIconButton(KIcons.close, stringResource(R.string.create_close), onClose, tint = KColors.textPrimary)
+                KNavButton(KIcons.close, stringResource(R.string.create_close), onClose)
             } else {
-                KIconButton(KIcons.chevronLeft, stringResource(R.string.create_back), { model.back() }, tint = KColors.textPrimary)
+                KNavButton(KIcons.chevronLeft, stringResource(R.string.create_back), { model.back() })
             }
             KText(
                 stringResource(if (state.isResumed) R.string.create_finish_setting_up else R.string.create_new_kameti),

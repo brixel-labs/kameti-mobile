@@ -740,8 +740,8 @@ struct SlotSplitView: View {
                             .padding(.leading, KSpace.xs)
                             .padding(.trailing, KSpace.md)
                             .padding(.vertical, KSpace.xs)
-                            .background(KColors.surface, in: Capsule())
-                            .overlay(Capsule().stroke(KColors.border))
+                            .background(KColors.surface, in: RoundedRectangle(cornerRadius: KRadius.input))
+                            .overlay(RoundedRectangle(cornerRadius: KRadius.input).stroke(KColors.border))
                             .opacity(atLimit ? 0.5 : 1)
                         }
                         .buttonStyle(.plain)

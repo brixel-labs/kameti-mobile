@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Your kameti — Kameti</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+<meta name="theme-color" content="#f6f8f7" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0e1513" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+<style>
+:root{--bg:#f6f8f7;--sf:#fff;--tx:#10201b;--tx2:#566963;--tx3:#8a9b95;--ln:#e3eae7;--br:#0e6b52;--brs:#e3f2ec;--on:#fff;--wn:#9a5b00;--wns:#fdf1dc;--rd:#a02c2c;--rds:#fbe6e6;--glass:rgba(255,255,255,.66);--glassln:rgba(255,255,255,.7);--glasssh:0 8px 30px rgba(16,32,27,.16),0 1px 0 rgba(255,255,255,.6) inset;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1513;--sf:#16201d;--tx:#eaf2ef;--tx2:#9db0a9;--tx3:#6f837c;--ln:#24332e;--br:#3fbf94;--brs:#173229;--on:#08130f;--wn:#f0b65a;--wns:#33280f;--rd:#f19a9a;--rds:#3a1c1c;--glass:rgba(30,40,37,.62);--glassln:rgba(255,255,255,.12);--glasssh:0 8px 30px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.08) inset;color-scheme:dark}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.hd{position:sticky;top:0;z-index:5;background:var(--sf);border-bottom:1px solid var(--ln);padding-top:env(safe-area-inset-top)}
+.hd-in{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:12px 16px}
+.ico{width:36px;height:36px;border-radius:11px;background:var(--br);color:var(--on);display:grid;place-items:center;flex:none}
+.ico svg{width:20px;height:20px}
+.nm{font-weight:600;font-size:15px;line-height:1.2}.sm{font-size:12px;color:var(--tx2)}
+.vo{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:4px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--ln);color:var(--tx2);white-space:nowrap}
+.vo svg{width:13px;height:13px}
+.nav{display:none;gap:4px;margin-left:20px}
+.nav button{border:0;background:none;color:var(--tx2);font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px}
+.nav button[aria-current=true]{background:var(--brs);color:var(--br)}
+main{max-width:960px;margin:0 auto;padding:20px 16px calc(120px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px}
+.pane[hidden]{display:none}
+.cols{display:flex;flex-direction:column;gap:16px}.stack,.col{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:18px;padding:18px}
+.lbl{font-size:11px;color:var(--tx3);letter-spacing:.05em;text-transform:uppercase;font-weight:500}
+.big{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.1;margin:8px 0 12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.good{background:var(--brs);color:var(--br)}.warn{background:var(--wns);color:var(--wn)}.bad{background:var(--rds);color:var(--rd)}.mute{background:var(--bg);color:var(--tx2);border:1px solid var(--ln)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.two .card{padding:16px}.two .v{font-size:19px;font-weight:600;margin:8px 0 2px}
+.pb{height:8px;border-radius:99px;background:var(--ln);overflow:hidden;margin:12px 0 8px}.pb i{display:block;height:100%;background:var(--br);border-radius:99px}
+.turn{background:var(--brs);border-color:transparent}.turn .lbl{color:var(--br)}.turn .v{font-size:26px;font-weight:600;margin:8px 0}
+h2{font-size:18px;font-weight:600;margin:0 0 4px}.hello{font-size:15px;color:var(--tx2)}.hello b{color:var(--tx);font-weight:600}
+.li{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--ln)}.li:last-child{border:0}
+.li .row{flex:1}.li b{font-weight:500}
+.dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none}.dot svg{width:16px;height:16px}
+.lst{padding:4px 18px}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.m{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;min-height:68px}
+.m b{display:block;font-size:11px;color:var(--tx3);font-weight:500;margin-bottom:2px}.m span{font-size:14px;font-weight:500;overflow-wrap:anywhere}
+.m.past{opacity:.6}.m.now{border:1.5px solid var(--br)}.m.me{background:var(--brs);border-color:var(--br)}.m.me span{color:var(--br)}
+.foot{font-size:11px;color:var(--tx3);text-align:center;margin-top:8px}
+.state{min-height:70vh;display:grid;place-items:center;text-align:center;padding:30px}.state>div{max-width:340px}
+.state .ico{width:56px;height:56px;border-radius:18px;margin:0 auto 14px;background:var(--wns);color:var(--wn)}.state .ico svg{width:28px;height:28px}
+.state h1{font-size:20px;margin:0 0 6px}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));z-index:10;display:flex;gap:2px;padding:5px;width:min(340px,calc(100% - 32px));border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);border:.5px solid var(--glassln);box-shadow:var(--glasssh)}
+.bar button{flex:1;border:0;background:none;border-radius:999px;padding:7px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--tx2);font-size:10.5px;font-weight:500;letter-spacing:.01em;transition:background .2s,color .2s}
+.bar button svg{width:23px;height:23px}
+.bar button[aria-current=true]{background:color-mix(in srgb,var(--br) 15%,transparent);color:var(--br)}
+.bar button:active{transform:scale(.97)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.bar{background:var(--sf)}}
+@media (min-width:720px){
+ .nav{display:flex}.bar{display:none}main{padding:28px 28px 40px;gap:20px}.hd-in{padding:14px 28px}
+ .cols{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}.big{font-size:38px}
+ .mg{grid-template-columns:repeat(4,1fr);gap:12px}.split{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
+}
+@media (min-width:960px){.mg{grid-template-columns:repeat(6,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><div class="state"><div class="sm">Loading…</div></div></div>
+<script>
+(function(){
+var CFG=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+ ?{url:'http://127.0.0.1:55421',key:'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'}
+ :{url:'https://lrioybmzlzqyyhqzobcq.supabase.co',key:'sb_publishable_WgKdIEramLTAd_It_YbfRA_KYpYH_WG'};
+var I={
+ users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 4.5a3.2 3.2 0 0 1 0 6.2M18 14.8c1.8.7 3 2.4 3 5.2"/></svg>',
+ eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+ home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>',
+ pay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>',
+ cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',
+ ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+ off:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5l5-5M8 8l-1.5 1.5a3.5 3.5 0 0 0 5 5M16 16l1.5-1.5a3.5 3.5 0 0 0-5-5M4 4l16 16"/></svg>'
+};
+var MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function rs(n){return 'Rs '+Number(n).toLocaleString('en-IN')}
+function d(s){var p=String(s).slice(0,10).split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function mon(s,short){var x=d(s);return (short?MON[x.getMonth()].slice(0,3):MON[x.getMonth()])+' '+(short?String(x.getFullYear()).slice(2):x.getFullYear())}
+function dm(s){var x=d(s);return x.getDate()+' '+MON[x.getMonth()].slice(0,3)}
+function days(a,b){return Math.round((d(a)-d(b))/864e5)}
+function plural(n,w){return n+' '+w+(n===1?'':'s')}
+var app=document.getElementById('app'),tab='o',v=null;
+function token(){var m=location.pathname.match(/\/v\/([A-Za-z0-9_-]{12}|[A-Za-z0-9]{64})(?:[/?#]|$)/);return m?m[1]:(new URLSearchParams(location.search).get('t')||'')}
+function off(msg){document.title='Link unavailable — Kameti';app.innerHTML='<div class="state"><div><div class="ico">'+I.off+'</div><h1>This link isn\'t working</h1><p class="sm" style="font-size:14px">'+esc(msg||'It may have been turned off, or it is incomplete. Ask the person who runs your kameti for a new link.')+'</p></div></div>'}
+function chip(st,m){
+ var map={paid:['good','Paid'],partial:['warn','Part paid'],unpaid:['warn','Due'],overdue:['bad','Overdue'],advance:['good','Paid ahead'],upcoming:['mute','Upcoming']};
+ var c=map[st]||['mute',st];return '<span class="chip '+c[0]+'">'+c[1]+'</span>'}
+function dueChip(t,today){
+ var st=t.status;
+ if(st==='paid'||st==='advance')return '<span class="chip good">Paid</span><span class="sm">Nothing due</span>';
+ if(st==='upcoming')return '<span class="chip mute">Upcoming</span><span class="sm">due '+dm(t.due_date)+'</span>';
+ var n=days(t.due_date,today);
+ if(st==='overdue'||n<0)return '<span class="chip bad">Overdue</span><span class="sm">was due '+dm(t.due_date)+'</span>';
+ var txt=n===0?'Due today':'Due in '+plural(n,'day');
+ return '<span class="chip warn">'+(st==='partial'?'Part paid · ':'')+txt+'</span><span class="sm">by '+dm(t.due_date)+'</span>'}
+function overview(){
+ var k=v.kameti,t=v.this_month,cur=v.current_month_index,paidMonths=v.months.filter(function(m){return m.due>0&&m.allocated>=m.due}).length;
+ var first=v.member.name.split(' ')[0],owner=k.owner_name||'the organiser';
+ var amount=(t.status==='paid'||t.status==='advance')?t.due:(t.due-t.allocated);
+ var s='<div class="hello">Hi <b>'+esc(first)+'</b>, here are your numbers.</div><div class="cols"><div class="col">';
+ s+='<div class="card"><div class="lbl">'+(cur<1?'First month':'Due this month')+'</div><div class="big">'+rs(amount)+'</div><div class="row">'+dueChip(t,v.today)+'</div></div>';
+ s+='<div class="two"><div class="card"><div class="lbl">Paid so far</div><div class="v">'+rs(v.total_paid)+'</div><div class="sm">'+paidMonths+' of '+k.months_n+' months</div></div>';
+ s+='<div class="card"><div class="lbl">Still to pay</div><div class="v">'+rs(Math.max(v.total_due-v.total_paid,0))+'</div><div class="sm">'+(v.owes>0?rs(v.owes)+' due so far':v.credit>0?rs(v.credit)+' ahead':'On track')+'</div></div></div>';
+ if(v.pot&&v.pot.member_count>0){var pc=v.pot.target?Math.min(100,Math.round(v.pot.covered*100/v.pot.target)):0;
+  s+='<div class="card"><div class="row"><b style="font-weight:500">'+MON[d(v.months[Math.max(0,Math.min(v.months.length,Math.max(1,cur))-1)].month_start).getMonth()]+' pot</b><span class="sm">'+v.pot.paid_count+' of '+v.pot.member_count+' paid</span></div><div class="pb"><i style="width:'+pc+'%"></i></div><div class="sm">'+rs(v.pot.covered)+' of '+rs(v.pot.target)+' collected</div></div>'}
+ s+='</div><div class="col">';
+ if(v.my_turns.length){s+='<div class="card turn"><div class="row"><div class="lbl">Your payout turn</div></div>';
+  v.my_turns.forEach(function(p){var away=p.payout_month_index-cur,got=p.paid_out>=p.amount;
+   s+='<div class="v">'+rs(p.amount)+'</div><div class="sm" style="color:var(--tx);margin-bottom:6px">'+(got?'Received for '+mon(p.month_start)+'.':away===0?'Your turn is <b>this month</b>, '+mon(p.month_start)+'.':away<0?mon(p.month_start)+' has passed.':'You receive it in <b>'+mon(p.month_start)+'</b>, '+plural(away,'month')+' away.')+'</div>'});
+  s+='</div>'}
+ s+='<div class="card"><div style="font-weight:500;margin-bottom:4px">Something look wrong?</div><div class="sm" style="font-size:13px">'+esc(owner)+' records every payment. Tell them and they\'ll fix it.</div></div>';
+ return s+'</div></div>'}
+function payments(){
+ var s='<h2>Your payments</h2><div class="sm" style="margin-bottom:16px">Recorded by '+esc(v.kameti.owner_name||'the organiser')+'. Nothing here moves money.</div><div class="split"><div class="stack">';
+ s+='<div class="card lst">';
+ v.months.forEach(function(m){var ok=m.status==='paid'||m.status==='advance',st=m.status;
+  s+='<div class="li"><div class="dot '+(ok?'good':st==='upcoming'?'mute':st==='overdue'?'bad':'warn')+'">'+(ok?I.ok:I.clock)+'</div><div class="row"><div><b>'+mon(m.month_start)+'</b><div class="sm">'+(m.allocated>0&&!ok?rs(m.allocated)+' of '+rs(m.due):rs(m.due))+'</div></div>'+chip(st)+'</div></div>'});
+ s+='</div></div><div class="stack">';
+ s+='<div class="card"><div class="row"><span class="sm">Total paid</span><b>'+rs(v.total_paid)+'</b></div><div class="row" style="margin-top:10px"><span class="sm">Total over '+v.kameti.months_n+' months</span><b>'+rs(v.total_due)+'</b></div></div>';
+ s+='<div class="card lst"><div class="lbl" style="padding-top:14px">Payments received</div>';
+ if(!v.payments.length)s+='<div class="sm" style="padding:12px 0 16px">No payments recorded yet.</div>';
+ v.payments.forEach(function(p){s+='<div class="li"><div class="row"><div><b>'+rs(p.amount)+'</b><div class="sm">'+({cash:'Cash',bank_transfer:'Bank transfer',other:'Other'}[p.method]||'')+'</div></div><span class="sm">'+dm(p.received_on)+' '+d(p.received_on).getFullYear()+'</span></div></div>'});
+ return s+'</div></div></div>'}
+function schedule(){
+ var s='<h2>Payout schedule</h2><div class="sm">Who receives the pot each month.</div><div class="mg">';
+ v.schedule.forEach(function(x){var mine=x.is_me,cur=x.is_current,past=x.month_index<v.current_month_index;
+  var who=mine?'You':x.names.map(function(n){return n.split(' ')[0]}).join(' + ')||'Open';
+  var amt=mine?v.my_turns.filter(function(p){return p.payout_month_index===x.month_index})[0]:null;
+  s+='<div class="m'+(mine?' me':'')+(cur?' now':'')+(past&&!mine?' past':'')+'"><b>'+mon(x.month_start,true)+'</b><span>'+esc(who)+'</span>'+(amt?'<div class="sm" style="color:var(--br)">'+rs(amt.amount)+'</div>':cur?'<div class="sm" style="color:var(--br)">This month</div>':'')+'</div>'});
+ return s+'</div>'}
+function render(){
+ var k=v.kameti,upd=v.updated_at?', updated '+dm(v.updated_at)+' '+d(v.updated_at).getFullYear():'';
+ document.title=k.name+' — Kameti';
+ var tabs=[['o','Overview',I.home],['p','Payments',I.pay],['s','Schedule',I.cal]];
+ var nav=tabs.map(function(t){return '<button data-t="'+t[0]+'" aria-current="'+(tab===t[0])+'">'+t[1]+'</button>'}).join('');
+ var bar=tabs.map(function(t){return '<button data-t="'+t[0]+'" aria-current="'+(tab===t[0])+'">'+t[2]+'<span>'+t[1]+'</span></button>'}).join('');
+ app.innerHTML='<header class="hd"><div class="hd-in"><div class="ico">'+I.users+'</div><div><div class="nm">'+esc(k.name)+'</div><div class="sm">Run by '+esc(k.owner_name||'the organiser')+'</div></div><nav class="nav" aria-label="Sections">'+nav+'</nav><span class="vo">'+I.eye+'View only</span></div></header>'
+  +'<main>'+(tab==='o'?overview():tab==='p'?payments():schedule())+'<div class="foot">Private link, only for you'+esc(upd)+'</div></main>'
+  +'<nav class="bar" aria-label="Sections">'+bar+'</nav>';
+ app.querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(){tab=b.dataset.t;render();window.scrollTo(0,0)}})}
+var t=token();
+if(!t){off();return}
+fetch(CFG.url+'/rest/v1/rpc/get_guest_view',{method:'POST',headers:{'Content-Type':'application/json',apikey:CFG.key,Authorization:'Bearer '+CFG.key},referrerPolicy:'no-referrer',body:JSON.stringify({p_token:t})})
+ .then(function(r){if(!r.ok)throw 0;return r.json()})
+ .then(function(j){if(!j){off();return}v=j;render()})
+ .catch(function(){off('We couldn\'t load this page. Check your connection and try again.')});
+})();
+</script>
+</body>
+</html>

@@ -183,14 +183,21 @@ private struct RouteDestination: View {
     let homeModel: HomeViewModel
     let profileModel: ProfileViewModel
 
+    /// After archiving: the kameti has left the live list, so show Home, reloaded.
+    private func goHome() {
+        router.popToRoot()
+        router.tab = .home
+        onFinished()
+    }
+
     var body: some View {
         switch route {
         case .kametiDetail(let id):
-            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router)
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, onArchived: goHome)
         case .kametiMembers(let id):
-            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, opensOnMembers: true)
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, opensOnMembers: true, onArchived: goHome)
         case .kametiAction(let id, let action):
-            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, action: action)
+            KametiDetailScreen(kametiId: id, userId: userId, dependencies: dependencies, preview: knownKameti(id), router: router, action: action, onArchived: goHome)
         case .createKameti:
             CreateKametiScreen(userId: userId, dependencies: dependencies, router: router, onFinished: onFinished)
         case .resumeDraft(let id):
@@ -254,23 +261,26 @@ private struct JoinInviteScreen: View {
 private struct KametiDetailScreen: View {
     @State private var model: KametiDetailViewModel
     let router: AppRouter
+    let onArchived: () -> Void
 
     init(
         kametiId: String, userId: String, dependencies: KametiDependencies, preview: Kameti?, router: AppRouter,
-        action: RecordAction? = nil, opensOnMembers: Bool = false
+        action: RecordAction? = nil, opensOnMembers: Bool = false, onArchived: @escaping () -> Void = {}
     ) {
         let model = KametiDetailViewModel(kametiId: kametiId, userId: userId, dependencies: dependencies, preview: preview)
         model.pendingAction = action
         model.opensOnMembers = opensOnMembers
         _model = State(initialValue: model)
         self.router = router
+        self.onArchived = onArchived
     }
 
     var body: some View {
         KametiDetailView(
             model: model,
             onResumeDraft: { router.push(.resumeDraft(id: $0)) },
-            onOpenActivity: { router.push(.activity(kametiId: $0)) }
+            onOpenActivity: { router.push(.activity(kametiId: $0)) },
+            onArchived: onArchived
         )
     }
 }

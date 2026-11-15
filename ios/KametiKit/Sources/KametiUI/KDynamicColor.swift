@@ -55,6 +55,8 @@ public extension KColors {
 public extension KTextToken {
     /// 13 pt medium, for a subtitle under a title.
     static let subtitle = KTextStyle(size: 13, weight: .medium, tracking: 0, tabular: false)
+    /// 15 pt medium, for the lines under a name in a list or a sheet.
+    static let subtitleLg = KTextStyle(size: 15, weight: .medium, tracking: 0, tabular: false)
     /// 12 pt medium, for a small caption under a title.
     static let subtitleSmall = KTextStyle(size: 12, weight: .medium, tracking: 0, tabular: false)
 }

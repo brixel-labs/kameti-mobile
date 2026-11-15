@@ -22,8 +22,10 @@
     <string name="detail_add_member">Add member</string>
     <string name="detail_add_s">Add %s</string>
     <string name="detail_advance">Advance</string>
+    <string name="detail_ahead_by_s">Ahead by %s</string>
     <string name="detail_all">All</string>
     <string name="detail_all_n">All · %d</string>
+    <string name="detail_all_paid_up">All paid up</string>
     <string name="detail_all_your_saved_people_are_in_this_kameti">All your saved people are in this kameti. Add someone new instead.</string>
     <string name="detail_amount">Amount</string>
     <string name="detail_amount_received">Amount received</string>
@@ -130,7 +132,17 @@
     <string name="detail_full_month_s">Full month %s</string>
     <string name="detail_full_pot">Full pot</string>
     <string name="detail_goes_to">Goes to</string>
+    <string name="detail_guest">Guest</string>
+    <string name="detail_guest_mode">Guest mode</string>
+    <string name="detail_guests">Guests</string>
+    <string name="detail_guests_n">Guests · %d</string>
     <string name="detail_half_s">Half %s</string>
+    <string name="detail_has_1_slot">has 1 slot</string>
+    <string name="detail_has_n_slots">has %d slots</string>
+    <string name="detail_has_no_slot_yet">has no slot yet</string>
+    <string name="detail_have_1_slot">have 1 slot</string>
+    <string name="detail_have_n_slots">have %d slots</string>
+    <string name="detail_have_no_slot_yet">have no slot yet</string>
     <string name="detail_hi_s_a_reminder_that_s_for_s">Hi %1$s, a reminder that %2$s for %3$s is due by the %4$s. Thank you!</string>
     <string name="detail_hi_s_heres_your_s_update_for_s">Hi %1$s, here\'s your %2$s update for %3$s.</string>
     <string name="detail_hi_s_we_received_s_from_you_on">Hi %1$s, we received %2$s from you on %3$s for %4$s.</string>
@@ -140,8 +152,9 @@
     <string name="detail_invite_n">Invite %d</string>
     <string name="detail_invite_sent">Invite sent</string>
     <string name="detail_invite_sent_to_s">Invite sent to %s</string>
-    <string name="detail_invite_them_so_they_can_see_their_payments">Invite them so they can see their payments.</string>
+    <string name="detail_invite_them_to_see_their_payments">Invite them to see their payments.</string>
     <string name="detail_invite_to_s_revoked">Invite to %s revoked</string>
+    <string name="detail_invite_to_the_app">Invite to the app</string>
     <string name="detail_invite_to_the_app_instead">Invite to the app instead</string>
     <string name="detail_invited">Invited</string>
     <string name="detail_invited_s">Invited · %s</string>
@@ -165,6 +178,7 @@
     <string name="detail_lighter_bar_marked_in_this_session_not_saved">Lighter bar = marked in this session, not saved yet</string>
     <string name="detail_make_private">Make private</string>
     <string name="detail_mark_all_paid">Mark all paid</string>
+    <string name="detail_mark_as_guest">Mark as guest</string>
     <string name="detail_mark_paid_out_s">Mark paid out · %s</string>
     <string name="detail_mark_s">Mark %s</string>
     <string name="detail_member">Member</string>
@@ -231,6 +245,7 @@
     <string name="detail_nothing_recorded_in_s">Nothing recorded in %s.</string>
     <string name="detail_now">Now</string>
     <string name="detail_one_member_still_owes_it_you_can_pay">" One member still owes it. You can pay out now; their dues stay on record."</string>
+    <string name="detail_only_their_own_figures_anyone_with_the_link">Only their own figures. Anyone with the link can open it.</string>
     <string name="detail_only_you_can_see_private_notes">Only you can see private notes.</string>
     <string name="detail_opens_the_schedule">Opens the schedule</string>
     <string name="detail_other_1a24">Other</string>
@@ -318,11 +333,10 @@
     <string name="detail_s_cant_be_removed_they_hold_s_and">%1$s can\'t be removed: they hold %2$s and have %3$s on the ledger.</string>
     <string name="detail_s_cant_be_removed_while_holding_s_transfer">%1$s can\'t be removed while holding %2$s. Transfer the shares to someone else first.</string>
     <string name="detail_s_declined_the_invite">%s declined the invite</string>
+    <string name="detail_s_doesnt_use_the_app_share_their_updates">%s doesn\'t use the app. Share their updates and private page by message, email or any app you like.</string>
     <string name="detail_s_each_shared_slot">%s each · shared slot</string>
     <string name="detail_s_extra_becomes_credit_for_later_months">%s extra becomes credit for later months.</string>
     <string name="detail_s_from_s">%1$s from %2$s</string>
-    <string name="detail_s_gets_updates_by_whatsapp">%s gets updates by WhatsApp.</string>
-    <string name="detail_s_gets_updates_by_whatsapp_add_a_phone">%s gets updates by WhatsApp. Add a phone number below and save to open the chat directly.</string>
     <string name="detail_s_has_no_share_that_can_move">%s has no share that can move.</string>
     <string name="detail_s_is_taken_from_s_s_payout_and">%1$s is taken from %2$s\'s payout and recorded as a payment.</string>
     <string name="detail_s_joined">%s joined</string>
@@ -334,7 +348,6 @@
     <string name="detail_s_owes_s_take_it_from_the_payout">%1$s owes %2$s. Take it from the payout?</string>
     <string name="detail_s_paid_out">%s paid out</string>
     <string name="detail_s_paid_so_far">%s paid so far</string>
-    <string name="detail_s_pakistan_time">%s, Pakistan time</string>
     <string name="detail_s_pay_the_owner_by_cash_or_bank">%s · pay the owner by cash or bank</string>
     <string name="detail_s_payout">%s payout</string>
     <string name="detail_s_removed">%s removed</string>
@@ -350,6 +363,7 @@
     <string name="detail_s_will_get_an_email_with_a_link">%s will get an email with a link and a code to join. They show as Invited until they accept.</string>
     <string name="detail_s_will_see_this_note">%s will see this note.</string>
     <string name="detail_s_will_still_owe_s_for_s">%1$s will still owe %2$s for %3$s.</string>
+    <string name="detail_s_without_the_app">%s · Without the app</string>
     <string name="detail_s_your_due">%s · YOUR DUE</string>
     <string name="detail_save_1_payment_s">Save 1 payment · %s</string>
     <string name="detail_save_changes">Save changes</string>
@@ -358,6 +372,7 @@
     <string name="detail_schedule">Schedule</string>
     <string name="detail_search_n_members">Search %d members</string>
     <string name="detail_search_notes">Search notes</string>
+    <string name="detail_see_everything_any_time_s">See everything any time: %s</string>
     <string name="detail_send">Send</string>
     <string name="detail_send_1_invite">Send 1 invite?</string>
     <string name="detail_send_a_receipt">Send a receipt?</string>
@@ -367,18 +382,24 @@
     <string name="detail_send_reminder_to_1">Send reminder to 1</string>
     <string name="detail_send_reminder_to_n">Send reminder to %d</string>
     <string name="detail_send_s_an_invite_to_see_this_kameti">Send %1$s an invite to see this kameti in the app. It goes to %2$s.</string>
+    <string name="detail_send_s_an_update">Send %s an update</string>
     <string name="detail_send_update">Send update</string>
     <string name="detail_sent_to_s_the_code_is_only_shown">Sent to %s. The code is only shown when an invite is sent; resend to get a new one.</string>
     <string name="detail_settled">Settled</string>
     <string name="detail_settlement_note_optional">Settlement note (optional)</string>
     <string name="detail_share">Share</string>
+    <string name="detail_share_an_update_with_s">Share an update with %s</string>
     <string name="detail_share_link">Share link</string>
+    <string name="detail_share_update">Share update</string>
+    <string name="detail_share_view_only_link">Share view-only link</string>
     <string name="detail_share_with_the_people_involved">Share with the people involved</string>
     <string name="detail_shared">Shared</string>
     <string name="detail_shared_n">Shared · %d</string>
     <string name="detail_shared_slot">Shared slot</string>
     <string name="detail_shared_with_s_month_n">Shared with %1$s · month %2$d</string>
     <string name="detail_shares_changed_on_the_s">Shares changed on the %s</string>
+    <string name="detail_show_all_n_guests">Show all %d guests</string>
+    <string name="detail_show_fewer">Show fewer</string>
     <string name="detail_slot_amount">Slot amount</string>
     <string name="detail_slot_n_paid_out_s">Slot %1$d · paid out %2$s</string>
     <string name="detail_slot_n_s">Slot %1$d · %2$s</string>
@@ -402,6 +423,8 @@
     <string name="detail_the_person_its_about_will_see_this_note">The person it\'s about will see this note.</string>
     <string name="detail_the_shortfall_is_split_by_share_change_the">The shortfall is split by share. Change the amounts if you paid differently.</string>
     <string name="detail_their_name">Their name</string>
+    <string name="detail_they_dont_use_the_app_send_them_an">They don\'t use the app. Send them an update on WhatsApp.</string>
+    <string name="detail_they_dont_use_the_app_share_an_update">They don\'t use the app. Share an update with them.</string>
     <string name="detail_they_dont_use_the_app_so_send_them">They don\'t use the app, so send them a receipt.</string>
     <string name="detail_they_have_no_shares_or_payments_so_nothing">They have no shares or payments, so nothing on the ledger changes. This can\'t be undone.</string>
     <string name="detail_this_kameti_is_a_draft">This kameti is a draft</string>
@@ -419,6 +442,7 @@
     <string name="detail_try_another_filter_or_search">Try another filter or search.</string>
     <string name="detail_unpaid">Unpaid</string>
     <string name="detail_upcoming">Upcoming</string>
+    <string name="detail_update_member_details">Update member details</string>
     <string name="detail_view_only">View only</string>
     <string name="detail_void_payment">Void payment</string>
     <string name="detail_void_payout">Void payout</string>

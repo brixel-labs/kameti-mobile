@@ -6,6 +6,7 @@ import com.brixel.kameti.core.Attempt
 import com.brixel.kameti.core.Failure
 import com.brixel.kameti.core.Money
 import com.brixel.kameti.core.attempt
+import com.brixel.kameti.domain.JoinStatus
 import com.brixel.kameti.domain.Kameti
 import com.brixel.kameti.domain.KametiDependencies
 import com.brixel.kameti.domain.KametiStatus
@@ -55,6 +56,8 @@ data class HomeKametiSummary(
      * last), for the avatar row.
      */
     val people: List<Person> = emptyList(),
+    /** Owner view: people who haven't joined yet (guests don't count). */
+    val pendingInvites: Int = 0,
 ) {
     val id: String get() = kameti.id
 
@@ -231,6 +234,7 @@ class HomeViewModel(
         )
 
         var item = original.copy(
+            pendingInvites = if (original.isOwner) members.count { it.profileId != userId && it.joinStatus != JoinStatus.Joined && !it.noApp } else 0,
             currentMonth = month,
             people = turnOrder(members, slots, shares, from = month?.monthIndex ?: 1).map { entry ->
                 person(entry.member).copy(

@@ -12,6 +12,7 @@ import com.brixel.kameti.domain.InvitesRepository
 import com.brixel.kameti.domain.JoinStatus
 import com.brixel.kameti.domain.KametiStatus
 import com.brixel.kameti.domain.Member
+import com.brixel.kameti.domain.MemberViewLink
 import com.brixel.kameti.domain.MyInvitation
 import java.util.UUID
 import kotlinx.serialization.json.JsonPrimitive
@@ -121,6 +122,17 @@ class SampleInvitesRepository(
 
     /** Email isn't set up in the demo: the owner shares the code or link. */
     override suspend fun sendInviteEmail(link: InviteLink): Boolean = false
+
+    /** The demo keeps one link per member for the session. */
+    override suspend fun viewLink(memberId: String, rotate: Boolean): MemberViewLink {
+        if (kametis.memberRow(memberId) == null) fail("not_found")
+        val token = memberId.map { "%02x".format(it.code) }.joinToString("").repeat(64).take(64)
+        return MemberViewLink(memberId, "https://kameti.fhbtechservices.com/v/$token")
+    }
+
+    override suspend fun turnOffViewLink(memberId: String) {}
+
+    override suspend fun viewLinks(kametiId: String): List<MemberViewLink> = emptyList()
 
     override suspend fun invites(kametiId: String): List<Invite> =
         synchronized(lock) { invites.filter { it.kametiId == kametiId }.reversed() }

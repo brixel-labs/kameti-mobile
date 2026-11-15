@@ -504,6 +504,28 @@
           }
         }
       }
+    },
+    "1 person hasn't joined yet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 person hasn't joined yet"
+          }
+        }
+      }
+    },
+    "%lld people haven't joined yet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld people haven't joined yet"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

@@ -72,6 +72,7 @@ fun KametiDetailScreen(
     modifier: Modifier = Modifier,
     onResumeDraft: ((String) -> Unit)? = null,
     onOpenActivity: ((String) -> Unit)? = null,
+    onArchived: (() -> Unit)? = null,
 ) {
     val state by model.state.collectAsStateWithLifecycle()
     val loaded = (state as? KametiDetailViewModel.State.Loaded)?.data
@@ -134,7 +135,7 @@ fun KametiDetailScreen(
         MoreMenu(
             data = loaded, model = model, isShowing = showingMenu, onHide = { showingMenu = false },
             title = known?.name ?: stringResource(R.string.detail_kameti),
-            onResumeDraft = onResumeDraft, onOpenActivity = onOpenActivity,
+            onResumeDraft = onResumeDraft, onOpenActivity = onOpenActivity, onArchived = onArchived,
         )
     }
 }
@@ -163,6 +164,7 @@ private fun MoreMenu(
     title: String,
     onResumeDraft: ((String) -> Unit)?,
     onOpenActivity: ((String) -> Unit)?,
+    onArchived: (() -> Unit)?,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -232,7 +234,16 @@ private fun MoreMenu(
             title = stringResource(R.string.detail_archive_s, title),
             confirmTitle = stringResource(R.string.detail_archive),
             onDismiss = { confirmingArchive = false },
-            onConfirm = { model.archive()?.let { failed(it) } ?: KConfirmOutcome.Dismiss },
+            onConfirm = {
+                model.archive()?.let { failed(it) } ?: run {
+                    // Back to Home once the sheet has finished closing.
+                    scope.launch {
+                        delay(350)
+                        onArchived?.invoke()
+                    }
+                    KConfirmOutcome.Dismiss
+                }
+            },
             message = stringResource(R.string.detail_it_becomes_read_only_for_you_and_every),
             isDestructive = true,
         )

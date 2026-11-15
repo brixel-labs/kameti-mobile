@@ -122,7 +122,6 @@
     <string name="create_s_no_reminders">%s · no reminders</string>
     <string name="create_s_of_s">%1$s of %2$s</string>
     <string name="create_s_over_n_slots">%1$s over %2$d slots</string>
-    <string name="create_s_pakistan_time">%s, Pakistan time</string>
     <string name="create_s_reminders_s">%1$s · reminders %2$s</string>
     <string name="create_s_s_n_months">%1$s → %2$s · %3$d months</string>
     <string name="create_s_still_to_assign">%s still to assign</string>

@@ -63,6 +63,11 @@ struct OwnerTabs: View {
         data.current.map { DetailLogic.monthTitle($0.monthStart).split(separator: " ").first.map(String.init) ?? "" } ?? ""
     }
 
+    /// Someone hasn't joined yet (guests don't count): a dot on the Members tab while the kameti runs.
+    private var needsInvites: Bool {
+        data.kameti.status == .active && !isArchived && !SetupProgress.of(data).isComplete
+    }
+
     private var titles: [(tab: Tab, title: String)] {
         [
             (.overview, String(localized: "Overview", bundle: .module)),
@@ -81,7 +86,7 @@ struct OwnerTabs: View {
                 }
                 .padding(.horizontal, KSpace.xl).padding(.vertical, KSpace.sm)
             }
-            KUnderlineTabs(titles, selection: $tab, inset: KSpace.xl)
+            KUnderlineTabs(titles, selection: $tab, inset: KSpace.xl, badges: needsInvites ? [.members: SetupProgress.of(data).waiting.count] : [:])
                 .background(KColors.background)
             // The system paging view: swipe left or right between the tabs, or
             // tap a tab; the page moves the way you'd expect.
@@ -191,7 +196,7 @@ struct OwnerTabs: View {
         }
         .kBottomSheet(
             isPresented: Binding(get: { editingMember != nil }, set: { if !$0 { editingMember = nil } }),
-            title: String(localized: "Edit member", bundle: .module), detents: [.large]
+            title: String(localized: "Update member details", bundle: .module), detents: [.large]
         ) {
             if let member = editingMember {
                 EditMemberSheet(data: data, model: model, member: member) { editingMember = nil }.id(member.id)
@@ -327,13 +332,15 @@ struct OwnerTabs: View {
                 data: data, onRemind: isArchived || data.kameti.status != .active ? nil : { reminding = true },
                 onPayOut: isArchived ? nil : data.current.flatMap { current in canPayOut(current) ? { payingOut = current.monthIndex } : nil },
                 // The setup card opens Members, where the invites go out.
-                onOpenMembers: isArchived || data.kameti.status != .active ? nil : { withAnimation(.smooth(duration: 0.28)) { self.tab = .members } }
+                onOpenMembers: isArchived || data.kameti.status != .active ? nil : { withAnimation(.smooth(duration: 0.28)) { self.tab = .members } },
+                model: model, showsGuests: !isArchived
             ) {
                 if !isArchived { recording = RecordTarget(memberId: $0) }
             }
         case .members:
             MembersTab(
                 data: data,
+                model: isArchived ? nil : model,
                 onSelect: isArchived ? nil : { editingMember = $0 },
                 onInviteAll: isArchived ? nil : {
                     inviteBatch = inviteRows
@@ -358,6 +365,9 @@ struct OverviewTab: View {
     var onPayOut: (() -> Void)?
     /// Set for a running kameti: opens the Members tab from the setup card.
     var onOpenMembers: (() -> Void)?
+    let model: KametiDetailViewModel
+    /// Not for an archived kameti: nothing more is sent about it.
+    var showsGuests = true
     let onRecord: (String) -> Void
 
     var body: some View {
@@ -365,6 +375,7 @@ struct OverviewTab: View {
         // available either way: payments don't depend on anyone having the app.
         let progress = SetupProgress.of(data)
         if let onOpenMembers, !progress.isComplete { SetupCard(progress: progress, action: onOpenMembers) }
+        if showsGuests { GuestsCard(data: data, model: model) }
         if let current = data.current {
             let recipients = DetailLogic.recipients(
                 kameti: data.kameti, monthIndex: current.monthIndex, slots: data.slots, shares: data.shares, members: data.members
@@ -524,6 +535,8 @@ struct StatusTextPill: View {
 /// joined, and one row per member with slots, balance and join state.
 struct MembersTab: View {
     let data: KametiDetailData
+    /// Set for the owner of a live kameti: a guest's row gets a one-tap Send.
+    var model: KametiDetailViewModel?
     /// Opens the edit sheet for a member (owner only, so always set here).
     var onSelect: ((Member) -> Void)?
     var onInviteAll: (() -> Void)?
@@ -586,21 +599,44 @@ struct MembersTab: View {
                 ForEach(Array(list.enumerated()), id: \.element.id) { index, member in
                     let balance = balances[member.id]
                     let slots = DetailLogic.slotCount(of: member, shares: data.shares)
+                    let isGuest: Bool = { if case .guest = AccessState.of(member, in: data) { return true } else { return false } }()
+                    // A sentence about the person, their name in bold: "You have 2 slots", "Ata Rabbi has 1 slot".
+                    let isMe = member.profileId == data.userId
+                    let what: String = switch slots {
+                    case 0: isMe ? String(localized: "have no slot yet", bundle: .module) : String(localized: "has no slot yet", bundle: .module)
+                    case 1: isMe ? String(localized: "have 1 slot", bundle: .module) : String(localized: "has 1 slot", bundle: .module)
+                    default: isMe ? String(localized: "have \(slots) slots", bundle: .module) : String(localized: "has \(slots) slots", bundle: .module)
+                    }
+                    let dueLine: String? = slots == 0 ? nil : balance.map { String(localized: "\($0.monthlyDue.format())/mo", bundle: .module) }
+                    let details = dueLine ?? ""
                     Button { onSelect?(member) } label: { DetailRow(
                         member: member, in: data.members,
-                        subtitle: slots == 0 ? String(localized: "No slot yet", bundle: .module) : balance.map {
-                            slots == 1
-                                ? String(localized: "1 slot · \($0.monthlyDue.format())/mo", bundle: .module)
-                                : String(localized: "\(slots) slots · \($0.monthlyDue.format())/mo", bundle: .module)
-                        },
-                        showsDivider: index < list.count - 1
+                        title: isMe ? String(localized: "You", bundle: .module) : nil,
+                        titleRest: what,
+                        subtitle: details.isEmpty ? nil : details,
+                        showsDivider: index < list.count - 1,
+                        subtitleStyle: KTextToken.subtitleLg,
+                        reservesFooter: isGuest && model != nil,
+                        pinsTrailing: true
                     ) {
                         VStack(alignment: .trailing, spacing: 4) {
                             if let balance { BalanceChip(balance: balance) }
-                            joinCaption(member)
+                            // A guest is tagged instead of captioned (they don't use the app, so there is no join status to show).
+                            if isGuest {
+                                KPill(String(localized: "Guest", bundle: .module), foreground: KColors.info, background: KColors.infoSubtle)
+                            } else {
+                                joinCaption(member)
+                            }
                         }
                     } }
                     .buttonStyle(.plain)
+                    .overlay(alignment: .bottomLeading) {
+                        if isGuest, let model {
+                            // Third line, under the name: past the avatar (36) and its gap (12).
+                            GuestQuickSend(member: member, data: data, model: model, style: .plain)
+                                .padding(.leading, 48).padding(.bottom, KSpace.md)
+                        }
+                    }
                     .disabled(onSelect == nil)
                     .accessibilityHint(Text("Edit or remove", bundle: .module))
                 }

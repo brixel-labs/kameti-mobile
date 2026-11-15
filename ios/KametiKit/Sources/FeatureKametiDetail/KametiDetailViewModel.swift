@@ -94,6 +94,7 @@ public final class KametiDetailViewModel {
             }
             async let contactsCall = attempt { owner ? try await deps.contacts.contacts() : [] }
             async let invitesCall = attempt { owner ? try await deps.invites.invites(kametiId: id) : [] }
+            async let linksCall = attempt { owner ? try await deps.invites.viewLinks(kametiId: id) : [] }
             let slots = try await slotsCall.get()
             let shares = try await sharesCall.get()
             let collections = try await collectionsCall.get()
@@ -104,6 +105,8 @@ public final class KametiDetailViewModel {
             let months = try await monthsCall.get()
             let contacts = (try? await contactsCall.get()) ?? []
             let invites = (try? await invitesCall.get()) ?? []
+            // Links the owner already made: kept for guests, never created here.
+            if let links = try? await linksCall.get() { viewLinks = Dictionary(links.map { ($0.memberId, $0) }, uniquingKeysWith: { first, _ in first }) }
             state = .loaded(KametiDetailData(
                 kameti: kameti, userId: userId, members: members, slots: slots, shares: shares,
                 collections: collections, balances: balances, months: months, payments: payments,
@@ -284,6 +287,29 @@ public final class KametiDetailViewModel {
     }
 
     public private(set) var sentInvites: [String: SentInvite] = [:]
+
+    /// Guests' private view-only links the owner has opened this session.
+    public private(set) var viewLinks: [String: MemberViewLink] = [:]
+
+    /// The member's view-only link, created on first use.
+    public func openViewLink(memberId: String, rotate: Bool = false) async -> Failure? {
+        do throws(Failure) { viewLinks[memberId] = try await dependencies.invites.viewLink(memberId: memberId, rotate: rotate) } catch { return error }
+        return nil
+    }
+
+    /// The member's view-only link for a quick send: the one that exists, or a new one. `nil` when it
+    /// can't be made; the update then goes without the link.
+    public func ensureViewLink(memberId: String) async -> MemberViewLink? {
+        if let existing = viewLinks[memberId] { return existing }
+        _ = await openViewLink(memberId: memberId)
+        return viewLinks[memberId]
+    }
+
+    public func turnOffViewLink(memberId: String) async -> Failure? {
+        do throws(Failure) { try await dependencies.invites.turnOffViewLink(memberId: memberId) } catch { return error }
+        viewLinks[memberId] = nil
+        return nil
+    }
 
     /// Creates (or with `resend`, replaces) a member's invite and emails it
     /// when email is set up, then reloads.

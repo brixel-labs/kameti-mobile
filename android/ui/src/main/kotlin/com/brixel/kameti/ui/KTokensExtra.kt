@@ -32,6 +32,7 @@ val KColors.positiveDeepSubtitle: Color
 val KTextToken.subtitle: KTextStyle get() = KTextStyle(size = 13f, weight = FontWeight.Medium)
 
 /** 12 sp medium, for a small caption under a title. */
+val KTextToken.subtitleLg: KTextStyle get() = KTextStyle(size = 15f, weight = FontWeight.Medium)
 val KTextToken.subtitleSmall: KTextStyle get() = KTextStyle(size = 12f, weight = FontWeight.Medium)
 
 /** One height for every single-line control (field, stepper, select). */

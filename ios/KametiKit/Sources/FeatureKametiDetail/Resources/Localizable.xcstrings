@@ -2563,17 +2563,6 @@
         }
       }
     },
-    "%@, Pakistan time" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@, Pakistan time"
-          }
-        }
-      }
-    },
     "Reminders go at %@, Pakistan time. Paid members are never reminded." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2618,13 +2607,13 @@
         }
       }
     },
-    "Invite them so they can see their payments." : {
+    "Invite them to see their payments." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Invite them so they can see their payments."
+            "value" : "Invite them to see their payments."
           }
         }
       }
@@ -2636,28 +2625,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Without the app"
-          }
-        }
-      }
-    },
-    "%@ gets updates by WhatsApp. Add a phone number below and save to open the chat directly." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ gets updates by WhatsApp. Add a phone number below and save to open the chat directly."
-          }
-        }
-      }
-    },
-    "%@ gets updates by WhatsApp." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ gets updates by WhatsApp."
           }
         }
       }
@@ -2812,6 +2779,314 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your payout is in %1$@: %2$@."
+          }
+        }
+      }
+    },
+    "Share" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        }
+      }
+    },
+    "See everything any time: %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See everything any time: %@"
+          }
+        }
+      }
+    },
+    "Guests" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guests"
+          }
+        }
+      }
+    },
+    "They don't use the app. Send them an update on WhatsApp." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They don't use the app. Send them an update on WhatsApp."
+          }
+        }
+      }
+    },
+    "Send %@ an update" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send %@ an update"
+          }
+        }
+      }
+    },
+    "Ahead by %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahead by %@"
+          }
+        }
+      }
+    },
+    "All paid up" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All paid up"
+          }
+        }
+      }
+    },
+    "%@ · Without the app" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · Without the app"
+          }
+        }
+      }
+    },
+    "Share update" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share update"
+          }
+        }
+      }
+    },
+    "Share an update with %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share an update with %@"
+          }
+        }
+      }
+    },
+    "Guests · %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guests · %lld"
+          }
+        }
+      }
+    },
+    "Show all %lld guests" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show all %lld guests"
+          }
+        }
+      }
+    },
+    "Show fewer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show fewer"
+          }
+        }
+      }
+    },
+    "Update member details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update member details"
+          }
+        }
+      }
+    },
+    "Mark as guest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark as guest"
+          }
+        }
+      }
+    },
+    "Invite to the app" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite to the app"
+          }
+        }
+      }
+    },
+    "has 1 slot" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "has 1 slot"
+          }
+        }
+      }
+    },
+    "has %lld slots" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "has %lld slots"
+          }
+        }
+      }
+    },
+    "have 1 slot" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "have 1 slot"
+          }
+        }
+      }
+    },
+    "have %lld slots" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "have %lld slots"
+          }
+        }
+      }
+    },
+    "has no slot yet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "has no slot yet"
+          }
+        }
+      }
+    },
+    "have no slot yet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "have no slot yet"
+          }
+        }
+      }
+    },
+    "Guest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guest"
+          }
+        }
+      }
+    },
+    "Guest mode" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guest mode"
+          }
+        }
+      }
+    },
+    "Share view-only link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share view-only link"
+          }
+        }
+      }
+    },
+    "Only their own figures. Anyone with the link can open it." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only their own figures. Anyone with the link can open it."
+          }
+        }
+      }
+    },
+    "%@ doesn't use the app. Share their updates and private page by message, email or any app you like." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ doesn't use the app. Share their updates and private page by message, email or any app you like."
+          }
+        }
+      }
+    },
+    "They don't use the app. Share an update with them." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They don't use the app. Share an update with them."
           }
         }
       }

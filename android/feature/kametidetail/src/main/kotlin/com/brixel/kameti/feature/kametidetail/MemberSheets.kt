@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,6 +66,7 @@ import com.brixel.kameti.ui.KTextField
 import com.brixel.kameti.ui.KTextStyle
 import com.brixel.kameti.ui.KTextToken
 import com.brixel.kameti.ui.kDismissesKeyboard
+import com.brixel.kameti.ui.subtitleLg
 import com.brixel.kameti.ui.subtitleSmall
 import com.brixel.kameti.ui.textSubtitle
 import com.brixel.kameti.ui.userMessage
@@ -109,7 +112,7 @@ internal fun EditMemberSheet(data: KametiDetailData, model: KametiDetailViewMode
     val owes = data.balances.firstOrNull { it.memberId == member.id }?.owes
         ?.takeIf { data.kameti.status == KametiStatus.Active && it.isPositive }
 
-    KBottomSheet(stringResource(R.string.detail_edit_member), onDismiss, expanded = true, dismissDisabled = isBusy) { close ->
+    KBottomSheet(stringResource(R.string.detail_update_member_details), onDismiss, expanded = true, dismissDisabled = isBusy) { close ->
         Column(
             Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).kDismissesKeyboard()
                 .padding(horizontal = KSpace.xl).padding(top = KSpace.xxs, bottom = KSpace.xl),
@@ -255,7 +258,7 @@ private fun Identity(member: Member, data: KametiDetailData) {
         KAvatar(member.name, DetailLogic.colorIndex(member, data.members))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             KText(member.name, KTextToken.title)
-            KText(summary, KTextToken.subtitleSmall, color = KColors.textSubtitle)
+            KText(summary, KTextToken.subtitleLg, color = KColors.textSubtitle)
         }
     }
 }
@@ -279,15 +282,47 @@ private fun blockMessage(block: MemberLogic.RemovalBlock, first: String): String
     }
 }
 
+/** A row in an action list inside a card: icon, title (and a line under it), chevron. */
+@Composable
+private fun ActionListRow(
+    icon: ImageVector,
+    title: String,
+    enabled: Boolean = true,
+    subtitle: String? = null,
+    isDestructive: Boolean = false,
+    isLoading: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.5f)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick).padding(vertical = KSpace.md),
+        horizontalArrangement = Arrangement.spacedBy(KSpace.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        KIcon(icon, tint = if (isDestructive) KColors.negative else KColors.brand, size = 22.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            KText(title, KTextToken.bodyStrong, color = if (isDestructive) KColors.negative else KColors.textPrimary)
+            if (subtitle != null) KText(subtitle, KTextToken.bodySm, color = KColors.textSecondary)
+        }
+        // The chevron turns into a spinner while this row's work runs.
+        Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) {
+            if (isLoading) KSpinner(size = 18.dp) else KIcon(KIcons.chevronRight, tint = KColors.textTertiary, size = 18.dp)
+        }
+    }
+}
+
 /** A plain brand-coloured text button under a card's content. */
 @Composable
-private fun TextAction(title: String, enabled: Boolean = true, onClick: () -> Unit) {
-    KText(
-        title, KTextToken.bodyStrong,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 36.dp).alpha(if (enabled) 1f else 0.5f)
+private fun TextAction(title: String, enabled: Boolean = true, icon: ImageVector? = null, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 36.dp).alpha(if (enabled) 1f else 0.5f)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick).padding(vertical = KSpace.sm),
-        color = KColors.brand, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-    )
+        horizontalArrangement = Arrangement.spacedBy(KSpace.sm, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) KIcon(icon, tint = KColors.brand, size = 18.dp)
+        KText(title, KTextToken.bodyStrong, color = KColors.brand, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    }
 }
 
 /** A compact button inside a card: an optional icon and a short label. */
@@ -329,6 +364,8 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
     val scope = rememberCoroutineScope()
     val sentInvites by model.sentInvites.collectAsStateWithLifecycle()
     val sent = sentInvites[member.id]
+    val viewLinks by model.viewLinks.collectAsStateWithLifecycle()
+    val viewLink = viewLinks[member.id]
     val first = firstName(member.name)
     val strings = rememberStrings()
     val wentWrong = stringResource(R.string.detail_something_went_wrong)
@@ -338,19 +375,23 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
     var confirmingUnlink by remember { mutableStateOf(false) }
     var reviewing by remember { mutableStateOf(false) }
     var copied by remember { mutableStateOf(false) }
+    var activeRow by remember { mutableStateOf<String?>(null) }
 
-    fun run(work: suspend () -> Failure?) {
+    /** [row] names the list row that was tapped, so its chevron turns into a spinner while the work runs. */
+    fun run(row: String? = null, work: suspend () -> Failure?) {
         busy = true
+        activeRow = row
         failure = null
         scope.launch {
             failure = work()
             busy = false
+            activeRow = null
         }
     }
 
     @Composable
     fun note(text: String, modifier: Modifier = Modifier) {
-        KText(text, KTextToken.bodySm, modifier = modifier, color = KColors.textSecondary)
+        KText(text, KTextToken.body, modifier = modifier, color = KColors.textSecondary)
     }
 
     @Composable
@@ -409,7 +450,7 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
                         KPill(stringResource(R.string.detail_not_invited), KColors.textSecondary, KColors.surfaceSunken)
                     }
                 is AccessState.Guest ->
-                    KPill(stringResource(R.string.detail_without_the_app), KColors.info, KColors.infoSubtle, icon = KIcons.message)
+                    KPill(stringResource(R.string.detail_guest_mode), KColors.info, KColors.infoSubtle)
             }
         }
         when (state) {
@@ -495,25 +536,39 @@ private fun AppAccessCard(data: KametiDetailData, model: KametiDetailViewModel, 
                     note(stringResource(R.string.detail_add_an_email_above_and_save_then_you, first))
                 }
             is AccessState.Guest -> {
-                note(
-                    stringResource(
-                        if (state.phone == null) R.string.detail_s_gets_updates_by_whatsapp_add_a_phone else R.string.detail_s_gets_updates_by_whatsapp,
-                        first,
-                    ),
-                )
-                GuestMessageButton(
-                    stringResource(R.string.detail_send_update), GuestUpdate.text(strings, member, data), state.phone, prominent = true,
-                )
-                if (data.kameti.status != KametiStatus.Archived) {
-                    TextAction(stringResource(R.string.detail_invite_to_the_app_instead), enabled = !busy) {
-                        run { model.setNoApp(member.id, false) }
+                note(stringResource(R.string.detail_s_doesnt_use_the_app_share_their_updates, first))
+                // What the owner can do for a guest, as a list: share their private page (the share sheet also copies),
+                // or invite them to the app instead. Their page keeps one address.
+                Column {
+                    ActionListRow(
+                        KIcons.shareArrow, stringResource(R.string.detail_share_view_only_link), enabled = !busy,
+                        subtitle = stringResource(R.string.detail_only_their_own_figures_anyone_with_the_link),
+                        isLoading = busy && activeRow == "share",
+                    ) {
+                        run("share") {
+                            val failed = if (viewLink == null) model.openViewLink(member.id) else null
+                            val link = model.viewLinks.value[member.id]?.link
+                            if (failed == null && link != null) share(context, link)
+                            failed
+                        }
+                    }
+                    if (data.kameti.status != KametiStatus.Archived) {
+                        KDivider()
+                        ActionListRow(
+                            KIcons.userPlus, stringResource(R.string.detail_invite_to_the_app), enabled = !busy,
+                            isLoading = busy && activeRow == "invite",
+                        ) {
+                            run("invite") { model.setNoApp(member.id, false) }
+                        }
                     }
                 }
             }
         }
         // Someone who won't use the app: stop waiting for them and send updates by WhatsApp instead.
         if (state is AccessState.NotInvited && data.kameti.status != KametiStatus.Archived) {
-            TextAction(stringResource(R.string.detail_doesnt_use_the_app), enabled = !busy) { run { model.setNoApp(member.id, true) } }
+            ActionListRow(
+                KIcons.personOff, stringResource(R.string.detail_mark_as_guest), enabled = !busy, isLoading = busy && activeRow == "guest",
+            ) { run("guest") { model.setNoApp(member.id, true) } }
         }
         FailureLine(failure)
     }

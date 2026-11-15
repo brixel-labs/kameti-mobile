@@ -1,5 +1,11 @@
 package com.brixel.kameti.feature.kametidetail
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -89,6 +95,7 @@ import com.brixel.kameti.ui.KTonalButton
 import com.brixel.kameti.ui.KTonalStyle
 import com.brixel.kameti.ui.KUnderlineTabs
 import com.brixel.kameti.ui.subtitle
+import com.brixel.kameti.ui.subtitleLg
 import com.brixel.kameti.ui.subtitleSmall
 import com.brixel.kameti.ui.textSubtitle
 import com.brixel.kameti.ui.userMessage
@@ -117,6 +124,8 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
     val isArchived = data.kameti.status == KametiStatus.Archived
     val current = data.current
     val monthName = current?.let { DetailLogic.monthName(it.monthStart) }.orEmpty()
+    // Someone hasn't joined yet (guests don't count): a dot on the Members tab while the kameti runs.
+    val needsInvites = data.kameti.status == KametiStatus.Active && !SetupProgress.of(data).isComplete
     val canPayOutNow = !isArchived && current != null && canPayOut(data, current)
 
     var choosingAction by remember { mutableStateOf(false) }
@@ -159,6 +168,7 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
             selection = tabs[pager.currentPage].value,
             onSelect = { tab -> scope.launch { pager.animateScrollToPage(tabs.indexOfFirst { it.value == tab }) } },
             inset = KSpace.xl,
+            badges = if (needsInvites) mapOf(OwnerTab.Members to SetupProgress.of(data).waiting.size) else emptyMap(),
         )
         HorizontalPager(state = pager, modifier = Modifier.weight(1f), beyondViewportPageCount = 1) { page ->
             val isNotes = tabs[page].value == OwnerTab.Notes
@@ -189,6 +199,8 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
                             onRemind = if (isArchived || data.kameti.status != KametiStatus.Active) null else ({ reminding = true }),
                             onPayOut = if (canPayOutNow) ({ payingOut = current?.monthIndex }) else null,
                             onRecord = { if (!isArchived) recording = RecordTarget(it) },
+                            model = model,
+                            showsGuests = !isArchived,
                             // The setup card opens Members, where the invites go out.
                             onOpenMembers = if (isArchived || data.kameti.status != KametiStatus.Active) {
                                 null
@@ -198,6 +210,7 @@ internal fun OwnerTabs(data: KametiDetailData, model: KametiDetailViewModel, mod
                         )
                         OwnerTab.Members -> MembersTab(
                             data,
+                            model = if (isArchived) null else model,
                             onSelect = if (isArchived) null else ({ editingMember = it.id }),
                             onInviteAll = if (isArchived) null else ({ inviteBatch = InviteBatch.of(data) }),
                         )
@@ -341,11 +354,15 @@ private fun OverviewTab(
     onRecord: (String) -> Unit,
     /** Set for a running kameti: opens the Members tab from the setup card. */
     onOpenMembers: (() -> Unit)?,
+    model: KametiDetailViewModel,
+    /** Not for an archived kameti: nothing more is sent about it. */
+    showsGuests: Boolean = true,
 ) {
     // Prominent while anyone hasn't joined (members who don't use the app don't count). Recording stays
     // available either way: payments don't depend on anyone having the app.
     val progress = SetupProgress.of(data)
     if (onOpenMembers != null && !progress.isComplete) SetupCard(progress, onOpenMembers)
+    if (showsGuests) GuestsCard(data, model)
     val current = data.current
     val summary = if (current == null) DetailLogic.finalSummary(data) else null
     when {
@@ -581,6 +598,8 @@ private fun FinishedOverview(data: KametiDetailData, summary: DetailLogic.FinalS
 @Composable
 private fun MembersTab(
     data: KametiDetailData,
+    /** Set for the owner of a live kameti: a guest's row gets a one-tap Send. */
+    model: KametiDetailViewModel?,
     /** Opens the edit sheet for a member; `null` when the kameti is read-only. */
     onSelect: ((Member) -> Unit)?,
     onInviteAll: (() -> Unit)?,
@@ -660,21 +679,36 @@ private fun MembersTab(
         list.forEachIndexed { index, member ->
             val balance = balances[member.id]
             val slots = DetailLogic.slotCount(member, data.shares)
+            val isGuest = AccessState.of(member, data) is AccessState.Guest
+            // A sentence about the person, their name in bold: "You have 2 slots", "Ata Rabbi has 1 slot".
+            val isMe = member.profileId == data.userId
+            val what = when {
+                slots == 0 -> stringResource(if (isMe) R.string.detail_have_no_slot_yet else R.string.detail_has_no_slot_yet)
+                slots == 1 -> stringResource(if (isMe) R.string.detail_have_1_slot else R.string.detail_has_1_slot)
+                else -> stringResource(if (isMe) R.string.detail_have_n_slots else R.string.detail_has_n_slots, slots)
+            }
+            val dueLine = if (slots == 0) null else balance?.let { stringResource(R.string.detail_s_mo, it.monthlyDue.format()) }
+            val details = dueLine.orEmpty()
             MemberRow(
                 member = member,
                 members = data.members,
-                subtitle = when {
-                    slots == 0 -> stringResource(R.string.detail_no_slot_yet)
-                    balance == null -> null
-                    slots == 1 -> stringResource(R.string.detail_1_slot_s_mo, balance.monthlyDue.format())
-                    else -> stringResource(R.string.detail_n_slots_s_mo, slots, balance.monthlyDue.format())
-                },
+                title = if (isMe) stringResource(R.string.detail_you) else null,
+                pinTrailing = true,
+                titleRest = what,
+                subtitle = details.ifEmpty { null },
+                subtitleStyle = KTextToken.subtitleLg,
                 showsDivider = index < list.size - 1,
                 onClick = onSelect?.let { { it(member) } },
+                below = if (isGuest && model != null) ({ GuestQuickSend(member, data, model, style = QuickSendStyle.Plain) }) else null,
             ) {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (balance != null) BalanceChip(balance)
-                    JoinCaption(member)
+                    // A guest is tagged instead of captioned (they don't use the app, so there is no join status to show).
+                    if (isGuest) {
+                        KPill(stringResource(R.string.detail_guest), KColors.info, KColors.infoSubtle)
+                    } else {
+                        JoinCaption(member)
+                    }
                 }
             }
         }
@@ -727,6 +761,7 @@ private fun InviteAllSheet(batch: InviteBatch, model: KametiDetailViewModel, onD
     val context = LocalContext.current
     val sent by model.invitedThisRun.collectAsStateWithLifecycle()
     var sending by remember { mutableStateOf(false) }
+    var finished by remember { mutableStateOf(false) }
     val count = batch.people.size
     val base = stringResource(
         if (count == 0) R.string.detail_everyone_with_an_email_already_has_an_invite else R.string.detail_each_person_gets_an_email_with_a_link,
@@ -748,8 +783,10 @@ private fun InviteAllSheet(batch: InviteBatch, model: KametiDetailViewModel, onD
         onConfirm = {
             val ids = batch.people.map { it.id }
             sending = true
+            finished = false
             val result = model.inviteAll(ids)
-            // The last row shows its tick before the result takes its place.
+            // Every row leaves, the last one included, then the result takes the list's place.
+            finished = true
             if (result.invited > 0) delay(450)
             sending = false
             val emailed = ids.any { model.sentInvites.value[it]?.emailed == true }
@@ -787,13 +824,38 @@ private fun InviteAllSheet(batch: InviteBatch, model: KametiDetailViewModel, onD
             )
         },
         message = listOfNotNull(base, missing).joinToString(" "),
-        details = if (count == 0) null else ({ InviteList(batch.people, if (sending) sent else emptySet()) }),
+        details = if (count == 0) null else ({ InviteList(batch.people, if (sending) sent else emptySet(), finished) }),
     )
 }
 
-/** The people an invite goes to: avatar, name and email, or "Invite sent" once theirs has gone out. */
+/**
+ * The people an invite goes to: avatar, name and email. A row shows "Invite sent" with a tick once
+ * its invite has gone out, then fades away and the rows below move up; the last row waits for
+ * [finished] so the list never empties before the result takes its place.
+ */
 @Composable
-private fun InviteList(people: List<InviteBatch.Person>, sent: Set<String>) {
+private fun InviteList(people: List<InviteBatch.Person>, sent: Set<String>, finished: Boolean) {
+    // Rows that have shown their tick and left.
+    var removed by remember { mutableStateOf(emptySet<String>()) }
+    var previous by remember { mutableStateOf(emptySet<String>()) }
+    LaunchedEffect(sent) {
+        val fresh = sent - previous
+        previous = sent
+        for (id in fresh) {
+            if (id == people.lastOrNull()?.id && !finished) continue
+            launch {
+                delay(INVITE_TICK_HOLD_MS)
+                removed = removed + id
+            }
+        }
+    }
+    LaunchedEffect(finished) {
+        if (!finished) return@LaunchedEffect
+        delay(INVITE_TICK_HOLD_MS)
+        removed = removed + sent
+    }
+    val visible = people.filter { it.id !in removed }.ifEmpty { if (finished) emptyList() else people.takeLast(1) }
+    if (people.isEmpty()) return
     val shape = RoundedCornerShape(KRadius.card)
     Column(
         Modifier
@@ -802,39 +864,51 @@ private fun InviteList(people: List<InviteBatch.Person>, sent: Set<String>) {
             .clip(shape)
             .background(KColors.surface)
             .border(1.dp, KColors.border, shape)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .animateContentSize(),
     ) {
-        people.forEachIndexed { index, person ->
+        people.forEach { person ->
             val isSent = person.id in sent
-            if (index > 0) KDivider()
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(if (isSent) KColors.brandSubtle else KColors.surface)
-                    .padding(horizontal = KSpace.md, vertical = KSpace.sm),
-                horizontalArrangement = Arrangement.spacedBy(KSpace.md),
-                verticalAlignment = Alignment.CenterVertically,
+            AnimatedVisibility(
+                visible = person in visible,
+                enter = fadeIn(),
+                exit = fadeOut(tween(250)) + shrinkVertically(tween(350)),
             ) {
-                KAvatar(person.name, person.colorIndex)
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    KText(person.name, KTextToken.bodyStrong)
-                    if (isSent) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            KIcon(KIcons.check, tint = KColors.brand, size = 14.dp)
-                            KText(
-                                stringResource(R.string.detail_invite_sent),
-                                KTextStyle(size = 13f, weight = FontWeight.SemiBold),
-                                color = KColors.brand,
-                            )
+                Column {
+                    if (person.id != visible.firstOrNull()?.id) KDivider()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(if (isSent) KColors.brandSubtle else KColors.surface)
+                            .padding(horizontal = KSpace.md, vertical = KSpace.sm),
+                        horizontalArrangement = Arrangement.spacedBy(KSpace.md),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        KAvatar(person.name, person.colorIndex)
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            KText(person.name, KTextToken.bodyStrong)
+                            if (isSent) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    KIcon(KIcons.check, tint = KColors.brand, size = 14.dp)
+                                    KText(
+                                        stringResource(R.string.detail_invite_sent),
+                                        KTextStyle(size = 13f, weight = FontWeight.SemiBold),
+                                        color = KColors.brand,
+                                    )
+                                }
+                            } else if (person.email != null) {
+                                KText(person.email, KTextToken.subtitleSmall, color = KColors.textSubtitle)
+                            }
                         }
-                    } else if (person.email != null) {
-                        KText(person.email, KTextToken.subtitleSmall, color = KColors.textSubtitle)
                     }
                 }
             }
         }
     }
 }
+
+/** How long a row shows "Invite sent" before it fades. */
+private const val INVITE_TICK_HOLD_MS = 450L
 
 // Payments
 

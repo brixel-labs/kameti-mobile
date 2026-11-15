@@ -149,7 +149,7 @@ fun KTopBar(
         modifier.fillMaxWidth().height(56.dp).padding(horizontal = KSpace.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        KIconButton(KIcons.chevronLeft, stringResource(R.string.ui_android_back), onBack, tint = KColors.textPrimary)
+        KNavButton(KIcons.chevronLeft, stringResource(R.string.ui_android_back), onBack)
         Column(Modifier.weight(1f).padding(end = KSpace.sm)) {
             KText(title, KTextToken.title, maxLines = 1)
             if (!subtitle.isNullOrEmpty()) {

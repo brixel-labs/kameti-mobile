@@ -23,6 +23,29 @@ public final class SupabaseInvitesRepository: InvitesRepository {
         try await run { try await client.rpc("revoke_invite", params: memberParam(memberId)).execute().value }
     }
 
+    public func viewLink(memberId: String, rotate: Bool) async throws(Failure) -> MemberViewLink {
+        try await run {
+            try await client.rpc("member_view_link", params: ["p_member_id": JSONValue.string(memberId), "p_rotate": JSONValue.bool(rotate)]).execute().value
+        }
+    }
+
+    private struct ViewLinkRow: Decodable {
+        let memberId: String
+        let token: String
+        let lastViewedAt: Date?
+    }
+
+    public func viewLinks(kametiId: String) async throws(Failure) -> [MemberViewLink] {
+        let rows: [ViewLinkRow] = try await run {
+            try await client.from("member_view_links").select("member_id, token, last_viewed_at").eq("kameti_id", value: kametiId).execute().value
+        }
+        return rows.map { MemberViewLink(memberId: $0.memberId, link: MemberViewLink.base + $0.token, lastViewedAt: $0.lastViewedAt) }
+    }
+
+    public func turnOffViewLink(memberId: String) async throws(Failure) {
+        try await run { _ = try await client.rpc("turn_off_member_view_link", params: memberParam(memberId)).execute() }
+    }
+
     public func approveJoin(memberId: String) async throws(Failure) -> Member {
         try await run { try await client.rpc("approve_join", params: memberParam(memberId)).execute().value }
     }

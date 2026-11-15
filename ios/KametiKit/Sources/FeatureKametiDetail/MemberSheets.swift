@@ -314,7 +314,7 @@ struct EditMemberSheet: View {
             KAvatar(name: member.name, colorIndex: DetailRow<KAvatar, EmptyView>.colorIndex(of: member, in: data.members), size: .medium)
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.name).kText(KTextToken.title)
-                Text(summary(slots: slots, due: due)).kText(KTextToken.subtitleSmall, color: KColors.textSubtitle)
+                Text(summary(slots: slots, due: due)).kText(KTextToken.subtitleLg, color: KColors.textSubtitle)
             }
             Spacer(minLength: 0)
         }

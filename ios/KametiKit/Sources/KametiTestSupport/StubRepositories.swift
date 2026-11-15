@@ -33,6 +33,9 @@ public struct UnusedRepositories: LedgerRepository, PaymentsRepository, InvitesR
     public func unlinkMember(memberId: String) async throws(Failure) -> Member { throw notStubbed }
     public func sendInviteEmail(_ link: InviteLink) async throws(Failure) -> Bool { throw notStubbed }
     public func invites(kametiId: String) async throws(Failure) -> [Invite] { throw notStubbed }
+    public func viewLink(memberId: String, rotate: Bool) async throws(Failure) -> MemberViewLink { throw notStubbed }
+    public func turnOffViewLink(memberId: String) async throws(Failure) { throw notStubbed }
+    public func viewLinks(kametiId: String) async throws(Failure) -> [MemberViewLink] { throw notStubbed }
     public func previewInvite(token: String?, inviteId: String?) async throws(Failure) -> InvitePreview { throw notStubbed }
     public func acceptInvite(token: String?, inviteId: String?) async throws(Failure) -> Member { throw notStubbed }
     public func declineInvite(token: String?, inviteId: String?) async throws(Failure) -> Member { throw notStubbed }

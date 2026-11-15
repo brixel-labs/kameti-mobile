@@ -17,6 +17,7 @@ import com.brixel.kameti.domain.KametiDependencies
 import com.brixel.kameti.domain.Member
 import com.brixel.kameti.domain.MemberBalanceRow
 import com.brixel.kameti.domain.MemberChanges
+import com.brixel.kameti.domain.MemberViewLink
 import com.brixel.kameti.domain.MemberMonthRow
 import com.brixel.kameti.domain.MonthCollectionRow
 import com.brixel.kameti.domain.NewMember
@@ -155,6 +156,9 @@ class KametiDetailViewModel(
         }
         val contactsCall = async { attempt { if (owner) deps.contacts.contacts() else emptyList() } }
         val invitesCall = async { attempt { if (owner) deps.invites.invites(id) else emptyList() } }
+        val linksCall = async { attempt { if (owner) deps.invites.viewLinks(id) else emptyList() } }
+        // Links the owner already made: kept for guests, never created here.
+        linksCall.await().getOrNull()?.let { list -> viewLinkState.value = list.associateBy { it.memberId } }
         KametiDetailData(
             kameti = kameti,
             userId = userId,
@@ -327,6 +331,39 @@ class KametiDetailViewModel(
 
     /** Invites made on this screen, by member id. */
     val sentInvites: StateFlow<Map<String, SentInvite>> = sent.asStateFlow()
+
+    private val viewLinkState = MutableStateFlow<Map<String, MemberViewLink>>(emptyMap())
+
+    /** Guests' private view-only links the owner has opened on this screen, by member id. */
+    val viewLinks: StateFlow<Map<String, MemberViewLink>> = viewLinkState.asStateFlow()
+
+    /** The member's view-only link, created on first use. */
+    suspend fun openViewLink(memberId: String): Failure? {
+        try {
+            val link = dependencies.invites.viewLink(memberId)
+            viewLinkState.update { it + (memberId to link) }
+        } catch (failure: Failure) {
+            return failure
+        }
+        return null
+    }
+
+    /** The member's view-only link for a quick send: the one that exists, or a new one; `null` when it can't be made. */
+    suspend fun ensureViewLink(memberId: String): MemberViewLink? {
+        viewLinkState.value[memberId]?.let { return it }
+        openViewLink(memberId)
+        return viewLinkState.value[memberId]
+    }
+
+    suspend fun turnOffViewLink(memberId: String): Failure? {
+        try {
+            dependencies.invites.turnOffViewLink(memberId)
+            viewLinkState.update { it - memberId }
+        } catch (failure: Failure) {
+            return failure
+        }
+        return null
+    }
 
     private val invitedNow = MutableStateFlow<Set<String>>(emptySet())
 

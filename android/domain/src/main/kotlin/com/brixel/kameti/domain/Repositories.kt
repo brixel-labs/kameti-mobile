@@ -123,6 +123,13 @@ interface InvitesRepository {
     suspend fun sendInviteEmail(link: InviteLink): Boolean
     suspend fun invites(kametiId: String): List<Invite>
 
+    /** A guest's private view-only link: created on first use, the same link afterwards. [rotate] replaces it. */
+    suspend fun viewLink(memberId: String, rotate: Boolean = false): MemberViewLink
+    suspend fun turnOffViewLink(memberId: String)
+
+    /** The links that already exist in this kameti (owner only), so they can be shared without a tap each. */
+    suspend fun viewLinks(kametiId: String): List<MemberViewLink>
+
     // Invitee: exactly one of `token` (or the 6-character code) and `inviteId`.
     suspend fun previewInvite(token: String?, inviteId: String?): InvitePreview
     suspend fun acceptInvite(token: String?, inviteId: String?): Member

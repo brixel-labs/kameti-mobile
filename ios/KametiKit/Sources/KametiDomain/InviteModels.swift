@@ -52,6 +52,21 @@ public struct Invite: Codable, Hashable, Identifiable, Sendable {
     }
 }
 
+/// A guest's private view-only page (a member who doesn't use the app). Unlike an invite, the owner
+/// can read the same link again later, and turning it off deletes it.
+public struct MemberViewLink: Codable, Hashable, Sendable {
+    /// Where a guest's page lives; the token is appended.
+    public static let base = "https://kameti.fhbtechservices.com/v/"
+
+    public let memberId: String
+    public let link: String
+    public let lastViewedAt: Date?
+
+    public init(memberId: String, link: String, lastViewedAt: Date? = nil) {
+        self.memberId = memberId; self.link = link; self.lastViewedAt = lastViewedAt
+    }
+}
+
 /// Result of `create_invite` / `resend_invite`. `token` and `code` are
 /// readable exactly once: hand them to the email function or the owner.
 public struct InviteLink: Codable, Hashable, Sendable {
