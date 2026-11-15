@@ -106,8 +106,8 @@ Full details and the next steps are in `docs/ANDROID_RELEASE_HANDOFF.md`. In sho
 
 - A signed release bundle exists: **versionCode 2, versionName 1.0**, prod config, signed with the new upload key (SHA-1 `89:A2:44:D1:99:8C:A7:96:76:C7:14:DE:40:CA:24:27:28:5C:7F:BA`). Build it with `cd android && export JAVA_HOME=$(/usr/libexec/java_home -v 21) && ./gradlew :app:bundleRelease`; the result is `android/app/build/outputs/bundle/release/app-release.aab`. versionCode only ever goes up: the next upload needs 3.
 - **Not confirmed:** whether the owner has uploaded it to Play Console (Internal testing). Claude in Chrome was never connected, and the built-in browser was signed in to the wrong Google account, so the owner does the Play Console steps by hand.
-- Store listing assets and texts, the data safety answers and the privacy page update were prepared (see the handoff). The privacy page is edited in the working tree but **not deployed** (the site is a Cloudflare Worker deployed by hand).
-- An Android layout fix went in the same working tree: the big pot amount on Home and Overview used to wrap and show only "Rs" for long amounts (`ui/.../KMoney.kt`, `PotHeadline`); it now stacks under the amount like iOS.
+- Store listing assets and texts, the data safety answers and the privacy page update were prepared (see the handoff). The privacy page is merged (kameti-mobile#47) but **not deployed** (the site is a Cloudflare Worker deployed by hand).
+- An Android layout fix went in the same PR (#47): the big pot amount on Home and Overview used to wrap and show only "Rs" for long amounts (`ui/.../KMoney.kt`, `PotHeadline`); it now stacks under the amount like iOS.
 
 ## Technical notes worth keeping
 

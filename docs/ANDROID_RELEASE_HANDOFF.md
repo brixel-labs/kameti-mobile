@@ -11,15 +11,18 @@ Get the Android app (`com.brixel.kameti`) into **Google Play Console → Testing
 
 ## State right now
 
-**Git** (repo `kameti-mobile`): branch `feature/privacy-push-update`, cut from `develop` at `9795dbe` ("feat(reminders): one list on the remind sheet ... (#46)"). **Uncommitted** changes, three files, all the owner's to commit when they ask:
+**Git** (repo `kameti-mobile`): everything below is **merged into `develop`** as PR #47 (`5da11d7`, "build(release): first Play release prep ..."), and the working tree was clean after it. Start new work from `develop` on a `feature/<slug>` branch.
 
-| File | Change |
+What #47 contained:
+
+| Change | Where |
 |---|---|
-| `legal-site/privacy/index.html` | Privacy page: notifications and device token, read-only guest links, Firebase Cloud Messaging, Cloudflare instead of Vercel, date 2026-11-15. **Not deployed** (the site is a Cloudflare Worker deployed by hand: `cd legal-site && npx wrangler deploy`, after `npx wrangler login` once). |
-| `android/ui/src/main/kotlin/com/brixel/kameti/ui/components/KMoney.kt` | Bug fix: the big pot amount wrapped and showed only "Rs" when long (e.g. "Rs 10,00,000" beside "of Rs 15,00,000"). A `PotHeadline` layout now puts the two side by side when they fit and stacks them otherwise, like iOS. |
-| `android/app/build.gradle.kts` | `versionCode` 1 to 2 (versionName stays 1.0). |
+| Privacy page: notifications and device token, read-only guest links, Firebase Cloud Messaging, Cloudflare instead of Vercel, date 2026-11-15 | `legal-site/privacy/index.html` |
+| Bug fix: the big pot amount wrapped and showed only "Rs" when long (e.g. "Rs 10,00,000" beside "of Rs 15,00,000"); a `PotHeadline` layout now puts the two side by side when they fit and stacks them otherwise, like iOS | `android/ui/src/main/kotlin/com/brixel/kameti/ui/components/KMoney.kt` |
+| `versionCode` 1 to 2 (versionName stays 1.0) | `android/app/build.gradle.kts` |
+| This handoff and the "First Play release" section of the status doc | `docs/` |
 
-These are two different changes plus a version bump. When the owner says "commit and push", split them: a `fix(ds)` commit for KMoney (+ the versionCode bump as `build(release)`), and a `docs(legal)`/`feat(legal)` commit for the privacy page. Keep the privacy page on its own PR if they prefer. Also `docs/ANDROID_PORT_STATUS.md` and this file are new/edited and uncommitted.
+**The privacy page is merged but NOT deployed.** The site is a Cloudflare Worker deployed by hand: `cd legal-site && npx wrangler deploy` (after `npx wrangler login` once). Do this before the data safety form or the store listing is submitted. Ask the owner whether it has been done.
 
 Watch for noise: `xcodebuild` rewrites `ios/Kameti/Kameti.xcodeproj/project.xcproj` and the `Localizable.xcstrings` catalogs (reordering, "state" fields). That is not a real change: `git checkout --` those files before committing.
 
@@ -40,7 +43,7 @@ Watch for noise: `xcodebuild` rewrites `ios/Kameti/Kameti.xcodeproj/project.xcpr
 2. **After Play enrolls the app**, go to App integrity → App signing and copy the SHA-1 and SHA-256 of the *app signing* key:
    - add the SHA-1 to the Google Cloud Android OAuth client and to the Firebase Android app (without it **Google sign-in fails in the store build**; debug SHA-1 is already there: `46:AE:62:40:60:E6:68:3F:60:FB:3A:BA:CD:69:4D:D3:96:3C:7B:11`);
    - add the SHA-256 to `legal-site/.well-known/assetlinks.json` (today it lists the debug fingerprint only) and deploy the site, so invite links open the store build.
-3. **Deploy the privacy page** (`cd legal-site && npx wrangler deploy`) before the data safety form or store listing is submitted: Play compares the policy with the declarations.
+3. **Deploy the privacy page** (merged, not yet deployed: `cd legal-site && npx wrangler deploy`) before the data safety form or store listing is submitted: Play compares the policy with the declarations.
 4. **Finish the store listing and App content** (needed for production, and Play may ask for some of it before an internal release). Prepared material is below.
 5. A real push to an Android phone has still not been tried; the Internal testing build is the first chance (Firebase `google-services.json` is in `android/app/`, git-ignored).
 
