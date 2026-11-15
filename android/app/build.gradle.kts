@@ -12,7 +12,7 @@ if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google
 android {
     defaultConfig {
         // versionCode is one integer that only ever increases (see git-workflow.md).
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0"
     }
     // The upload key is not in git. Put its details in android/keystore.properties:
