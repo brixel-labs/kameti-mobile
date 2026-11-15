@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -58,6 +59,36 @@ fun KMoneyText(
         maxLines = 1,
         overflow = TextOverflow.Clip,
     )
+}
+
+/**
+ * The big amount with "of Rs 50,00,000" at the end of its line; when they don't
+ * both fit, the second sits under the first (as on iOS) instead of the amount wrapping.
+ */
+@Composable
+private fun PotHeadline(content: @Composable () -> Unit) {
+    Layout(content, Modifier.fillMaxWidth()) { measurables, constraints ->
+        val gap = KSpace.sm.roundToPx()
+        val stackGap = KSpace.xs.roundToPx()
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val placeables = measurables.map { it.measure(loose) }
+        val first = placeables[0]
+        val second = placeables.getOrNull(1)
+        val width = constraints.maxWidth
+        val sideBySide = second == null || first.width + gap + second.width <= width
+        val height = when {
+            second == null -> first.height
+            sideBySide -> maxOf(first.height, second.height)
+            else -> first.height + stackGap + second.height
+        }
+        layout(width, height) {
+            first.placeRelative(0, if (second != null && sideBySide) height - first.height else 0)
+            if (second != null) {
+                if (sideBySide) second.placeRelative(width - second.width, height - second.height)
+                else second.placeRelative(0, first.height + stackGap)
+            }
+        }
+    }
 }
 
 /** What sits beside the big amount of a [KPotProgress]. */
@@ -131,13 +162,12 @@ fun KPotProgress(
         modifier = modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
         verticalArrangement = Arrangement.spacedBy(KSpace.sm),
     ) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            KMoneyText(total, style = KMoneyStyle.Display, modifier = Modifier.weight(1f, fill = false))
-            Spacer(Modifier.weight(1f))
+        PotHeadline {
+            KMoneyText(total, style = KMoneyStyle.Display)
             if (ofTarget != null) {
                 KText(
                     ofTarget, KTextToken.subtitle.copy(tabular = true), color = KColors.textSubtitle,
-                    modifier = Modifier.padding(start = KSpace.sm, bottom = 5.dp), maxLines = 1,
+                    modifier = Modifier.padding(bottom = 5.dp), maxLines = 1,
                 )
             }
         }
